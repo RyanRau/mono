@@ -1,0 +1,45 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  bandit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install bandit
+        run: pip install bandit
+
+      - name: Run bandit
+        run: bandit -r . -x './.venv,./node_modules,./.git' --severity-level medium
+
+  pip-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Audit dependencies
+        run: |
+          pip install pip-audit
+          # Find and audit all requirements files in the monorepo
+          found=false
+          for req in $(find . -name 'requirements*.txt' -not -path './.venv/*'); do
+            echo "Auditing $req"
+            pip-audit -r "$req"
+            found=true
+          done
+          if [ "$found" = false ]; then
+            echo "No requirements files found, skipping"
+          fi
