@@ -19,23 +19,18 @@ jobs:
           python-version: "3.12"
 
       - name: Install readme-ai
-        run: pip install "readmeai[anthropic]"
+        run: pip install readmeai
 
       - name: Generate root README
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           readmeai \
-            --api anthropic \
-            --model claude-sonnet-4-20250514 \
+            --api offline \
             --repository . \
             --output README.md \
             --badge-style flat-square \
             --tree-max-depth 2
 
       - name: Generate project READMEs
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           # Find top-level directories that contain Python or JS/TS projects
           # (have a requirements.txt, pyproject.toml, package.json, etc.)
@@ -51,8 +46,7 @@ jobs:
                [ -f "$dir/go.mod" ]; then
               echo "Generating README for $dir"
               readmeai \
-                --api anthropic \
-                --model claude-sonnet-4-20250514 \
+                --api offline \
                 --repository "$dir" \
                 --output "$dir/README.md" \
                 --badge-style flat-square \
