@@ -12,9 +12,7 @@ from email.mime.text import MIMEText
 import markdown
 
 
-def build_email(
-    subject: str, body_md: str, sender: str, recipients: list[str]
-) -> MIMEMultipart:
+def build_email(subject: str, body_md: str, sender: str, recipients: list[str]) -> MIMEMultipart:
     """Build a multipart email with both plain-text and HTML versions.
 
     The body is expected in markdown; an HTML version is generated automatically.

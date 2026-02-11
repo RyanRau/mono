@@ -59,8 +59,7 @@ def main() -> None:
         description="Generate and email a weekly local events digest."
     )
     parser.add_argument(
-        "-s",
-        "--sources",
+        "-s", "--sources",
         default=str(DEFAULT_SOURCES_FILE),
         help="Path to the markdown sources file (default: sources.md in project dir)",
     )
