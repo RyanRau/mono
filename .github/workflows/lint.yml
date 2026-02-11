@@ -18,3 +18,38 @@ jobs:
         uses: astral-sh/ruff-action@v3
         with:
           args: "format --check"
+
+  autofix:
+    runs-on: ubuntu-latest
+    needs: ruff
+    # Only runs on main when the lint job fails
+    if: ${{ always() && needs.ruff.result == 'failure' && github.ref == 'refs/heads/main' }}
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Ruff
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "format"
+
+      - name: Fix lint issues
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "check --fix"
+
+      - name: Create PR with fixes
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "style: auto-fix lint and formatting issues"
+          title: "style: auto-fix lint and formatting issues"
+          body: |
+            Automated PR created by the lint workflow.
+
+            Fixes applied:
+            - `ruff format` — formatting corrections
+            - `ruff check --fix` — auto-fixable lint issues
+          branch: autofix/lint
+          delete-branch: true
