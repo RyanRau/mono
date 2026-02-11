@@ -2,11 +2,11 @@
 # Set enabled: true to deploy an app, false to take it offline
 
 domain: mydomain.com
-registry: ghcr.io/ryanrau/mono
+registry: ghcr.io/ryanzrau/mono
 letsencrypt_email: me@mydomain.com
 
 apps:
-  ryanrau:
-    subdomain: ryanrau
+  ryanzrau:
+    subdomain: ryanzrau
     enabled: true
     port: 80

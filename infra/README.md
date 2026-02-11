@@ -50,7 +50,7 @@ chmod 700 /home/deploy/.ssh
 su - deploy
 mkdir -p /opt/apps
 cd /opt/apps
-git clone https://github.com/RyanRau/mono.git .
+git clone https://github.com/RyanZRau/mono.git .
 ```
 
 ## 2. SSH Key Pair
@@ -92,7 +92,7 @@ Point your domain (or subdomains) to the droplet.
 
 | Type | Name     | Value            |
 |------|----------|------------------|
-| A    | ryanrau  | YOUR_DROPLET_IP  |
+| A    | ryanzrau  | YOUR_DROPLET_IP  |
 
 ## 5. Configure deploy.yml
 
@@ -100,12 +100,12 @@ Edit `deploy.yml` in the repo root with your actual values:
 
 ```yaml
 domain: yourdomain.com
-registry: ghcr.io/ryanrau/mono
+registry: ghcr.io/ryanzrau/mono
 letsencrypt_email: you@yourdomain.com
 
 apps:
-  ryanrau:
-    subdomain: ryanrau
+  ryanzrau:
+    subdomain: ryanzrau
     enabled: true
     port: 80
 ```
@@ -132,7 +132,7 @@ cd /opt/apps
 docker compose ps
 
 # View logs for a specific app
-docker compose logs -f ryanrau
+docker compose logs -f ryanzrau
 
 # View Traefik logs (routing issues)
 docker compose logs -f traefik
