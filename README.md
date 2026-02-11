@@ -1,319 +1,60 @@
-<div id="top">
+# mono
 
-<!-- HEADER STYLE: CLASSIC -->
-<div align="center">
+A monorepo for web apps, services, and projects. Each app lives in its own directory and can be independently deployed as a Docker container to a single Digital Ocean droplet, with automatic HTTPS and subdomain routing via Traefik.
 
-<img src="readmeai/assets/logos/purple.svg" width="30%" style="position: relative; top: 0; right: 0;" alt="Project Logo"/>
+## Structure
 
-# <code>❯ REPLACE-ME</code>
-
-<em></em>
-
-<!-- BADGES -->
-<!-- local repository, no metadata badges. -->
-
-<em>Built with the tools and technologies:</em>
-
-<img src="https://img.shields.io/badge/Markdown-000000.svg?style=flat-square&logo=Markdown&logoColor=white" alt="Markdown">
-<img src="https://img.shields.io/badge/Anthropic-191919.svg?style=flat-square&logo=Anthropic&logoColor=white" alt="Anthropic">
-<img src="https://img.shields.io/badge/Python-3776AB.svg?style=flat-square&logo=Python&logoColor=white" alt="Python">
-<img src="https://img.shields.io/badge/GitHub%20Actions-2088FF.svg?style=flat-square&logo=GitHub-Actions&logoColor=white" alt="GitHub%20Actions">
-
-</div>
-<br>
-
----
-
-## Table of Contents
-
-- [Table of Contents](#table-of-contents)
-- [Overview](#overview)
-- [Features](#features)
-- [Project Structure](#project-structure)
-    - [Project Index](#project-index)
-- [Getting Started](#getting-started)
-    - [Prerequisites](#prerequisites)
-    - [Installation](#installation)
-    - [Usage](#usage)
-    - [Testing](#testing)
-- [Roadmap](#roadmap)
-- [Contributing](#contributing)
-- [License](#license)
-- [Acknowledgments](#acknowledgments)
-
----
-
-## Overview
-
-
-
----
-
-## Features
-
-<code>❯ REPLACE-ME</code>
-
----
-
-## Project Structure
-
-```sh
-└── /
-    ├── .github
-    │   └── workflows
-    ├── README.md
-    └── local-event-digest
-        ├── .env.example
-        ├── .gitignore
-        ├── README.md
-        ├── email_sender.py
-        ├── event_summarizer.py
-        ├── main.py
-        ├── requirements.txt
-        ├── sources.md
-        └── web_scraper.py
+```
+mono/
+├── web/                    # Web applications
+│   └── ryanrau/            # React TypeScript app → ryanrau.mydomain.com
+├── local-event-digest/     # Weekly local event digest emailer
+├── infra/                  # Deployment infrastructure
+│   └── generate-compose.py # Generates docker-compose.yml from deploy.yml
+├── deploy.yml              # Controls which apps are live
+└── .github/workflows/
+    ├── deploy.yml          # CI/CD: build, push, deploy on merge to main
+    └── weekly-digest.yml   # Scheduled digest workflow
 ```
 
-### Project Index
+## Deployment
 
-<details open>
-	<summary><b><code>/</code></b></summary>
-	<!-- __root__ Submodule -->
-	<details>
-		<summary><b>__root__</b></summary>
-		<blockquote>
-			<div class='directory-path' style='padding: 8px 0; color: #666;'>
-				<code><b>⦿ __root__</b></code>
-			<table style='width: 100%; border-collapse: collapse;'>
-			<thead>
-				<tr style='background-color: #f8f9fa;'>
-					<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
-					<th style='text-align: left; padding: 8px;'>Summary</th>
-				</tr>
-			</thead>
-			</table>
-		</blockquote>
-	</details>
-	<!-- local-event-digest Submodule -->
-	<details>
-		<summary><b>local-event-digest</b></summary>
-		<blockquote>
-			<div class='directory-path' style='padding: 8px 0; color: #666;'>
-				<code><b>⦿ local-event-digest</b></code>
-			<table style='width: 100%; border-collapse: collapse;'>
-			<thead>
-				<tr style='background-color: #f8f9fa;'>
-					<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
-					<th style='text-align: left; padding: 8px;'>Summary</th>
-				</tr>
-			</thead>
-				<tr style='border-bottom: 1px solid #eee;'>
-					<td style='padding: 8px;'><b><a href='/local-event-digest/requirements.txt'>requirements.txt</a></b></td>
-					<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
-				</tr>
-				<tr style='border-bottom: 1px solid #eee;'>
-					<td style='padding: 8px;'><b><a href='/local-event-digest/web_scraper.py'>web_scraper.py</a></b></td>
-					<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
-				</tr>
-				<tr style='border-bottom: 1px solid #eee;'>
-					<td style='padding: 8px;'><b><a href='/local-event-digest/email_sender.py'>email_sender.py</a></b></td>
-					<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
-				</tr>
-				<tr style='border-bottom: 1px solid #eee;'>
-					<td style='padding: 8px;'><b><a href='/local-event-digest/main.py'>main.py</a></b></td>
-					<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
-				</tr>
-				<tr style='border-bottom: 1px solid #eee;'>
-					<td style='padding: 8px;'><b><a href='/local-event-digest/.env.example'>.env.example</a></b></td>
-					<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
-				</tr>
-				<tr style='border-bottom: 1px solid #eee;'>
-					<td style='padding: 8px;'><b><a href='/local-event-digest/event_summarizer.py'>event_summarizer.py</a></b></td>
-					<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
-				</tr>
-			</table>
-		</blockquote>
-	</details>
-	<!-- .github Submodule -->
-	<details>
-		<summary><b>.github</b></summary>
-		<blockquote>
-			<div class='directory-path' style='padding: 8px 0; color: #666;'>
-				<code><b>⦿ .github</b></code>
-			<!-- workflows Submodule -->
-			<details>
-				<summary><b>workflows</b></summary>
-				<blockquote>
-					<div class='directory-path' style='padding: 8px 0; color: #666;'>
-						<code><b>⦿ .github.workflows</b></code>
-					<table style='width: 100%; border-collapse: collapse;'>
-					<thead>
-						<tr style='background-color: #f8f9fa;'>
-							<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
-							<th style='text-align: left; padding: 8px;'>Summary</th>
-						</tr>
-					</thead>
-						<tr style='border-bottom: 1px solid #eee;'>
-							<td style='padding: 8px;'><b><a href='/.github/workflows/codeql.yml'>codeql.yml</a></b></td>
-							<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
-						</tr>
-						<tr style='border-bottom: 1px solid #eee;'>
-							<td style='padding: 8px;'><b><a href='/.github/workflows/scrape-only-digest.yml'>scrape-only-digest.yml</a></b></td>
-							<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
-						</tr>
-						<tr style='border-bottom: 1px solid #eee;'>
-							<td style='padding: 8px;'><b><a href='/.github/workflows/security.yml'>security.yml</a></b></td>
-							<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
-						</tr>
-						<tr style='border-bottom: 1px solid #eee;'>
-							<td style='padding: 8px;'><b><a href='/.github/workflows/lint.yml'>lint.yml</a></b></td>
-							<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
-						</tr>
-						<tr style='border-bottom: 1px solid #eee;'>
-							<td style='padding: 8px;'><b><a href='/.github/workflows/weekly-digest.yml'>weekly-digest.yml</a></b></td>
-							<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
-						</tr>
-						<tr style='border-bottom: 1px solid #eee;'>
-							<td style='padding: 8px;'><b><a href='/.github/workflows/generate-readme.yml'>generate-readme.yml</a></b></td>
-							<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
-						</tr>
-					</table>
-				</blockquote>
-			</details>
-		</blockquote>
-	</details>
-</details>
+Apps in `web/` are deployed as Docker containers behind a Traefik reverse proxy. The entire system is controlled by a single config file.
 
----
+### How it works
 
-## Getting Started
-
-### Prerequisites
-
-This project requires the following dependencies:
-
-- **Programming Language:** Python
-- **Package Manager:** Pip
-
-### Installation
-
-Build  from the source and intsall dependencies:
-
-1. **Clone the repository:**
-
-    ```sh
-    ❯ git clone ../
-    ```
-
-2. **Navigate to the project directory:**
-
-    ```sh
-    ❯ cd 
-    ```
-
-3. **Install the dependencies:**
-
-<!-- SHIELDS BADGE CURRENTLY DISABLED -->
-	<!-- [![pip][pip-shield]][pip-link] -->
-	<!-- REFERENCE LINKS -->
-	<!-- [pip-shield]: https://img.shields.io/badge/Pip-3776AB.svg?style={badge_style}&logo=pypi&logoColor=white -->
-	<!-- [pip-link]: https://pypi.org/project/pip/ -->
-
-	**Using [pip](https://pypi.org/project/pip/):**
-
-	```sh
-	❯ pip install -r local-event-digest/requirements.txt
-	```
-
-### Usage
-
-Run the project with:
-
-**Using [pip](https://pypi.org/project/pip/):**
-```sh
-python {entrypoint}
+```
+Internet → Traefik (ports 80/443, auto HTTPS)
+             └── ryanrau.mydomain.com → ryanrau container
 ```
 
-### Testing
+1. Push to `main`
+2. GitHub Actions builds Docker images for enabled apps that changed
+3. Images are pushed to GitHub Container Registry (`ghcr.io`)
+4. Actions SSHs into the droplet, regenerates `docker-compose.yml`, and deploys
 
- uses the {__test_framework__} test framework. Run the test suite with:
+### Adding a new app
 
-**Using [pip](https://pypi.org/project/pip/):**
-```sh
-pytest
-```
-
----
-
-## Roadmap
-
-- [X] **`Task 1`**: <strike>Implement feature one.</strike>
-- [ ] **`Task 2`**: Implement feature two.
-- [ ] **`Task 3`**: Implement feature three.
-
----
-
-## Contributing
-
-- **💬 [Join the Discussions](https://LOCAL///discussions)**: Share your insights, provide feedback, or ask questions.
-- **🐛 [Report Issues](https://LOCAL///issues)**: Submit bugs found or log feature requests for the `` project.
-- **💡 [Submit Pull Requests](https://LOCAL///blob/main/CONTRIBUTING.md)**: Review open PRs, and submit your own PRs.
-
-<details closed>
-<summary>Contributing Guidelines</summary>
-
-1. **Fork the Repository**: Start by forking the project repository to your LOCAL account.
-2. **Clone Locally**: Clone the forked repository to your local machine using a git client.
-   ```sh
-   git clone .
+1. Create `web/<name>/` with a `Dockerfile` and source code
+2. Add an entry to `deploy.yml`:
+   ```yaml
+   myapp:
+     subdomain: myapp
+     enabled: false
+     port: 3000
    ```
-3. **Create a New Branch**: Always work on a new branch, giving it a descriptive name.
-   ```sh
-   git checkout -b new-feature-x
-   ```
-4. **Make Your Changes**: Develop and test your changes locally.
-5. **Commit Your Changes**: Commit with a clear message describing your updates.
-   ```sh
-   git commit -m 'Implemented new feature x.'
-   ```
-6. **Push to LOCAL**: Push the changes to your forked repository.
-   ```sh
-   git push origin new-feature-x
-   ```
-7. **Submit a Pull Request**: Create a PR against the original project repository. Clearly describe the changes and their motivations.
-8. **Review**: Once your PR is reviewed and approved, it will be merged into the main branch. Congratulations on your contribution!
-</details>
+3. Push to `main` — nothing deploys yet
 
-<details closed>
-<summary>Contributor Graph</summary>
-<br>
-<p align="left">
-   <a href="https://LOCAL{///}graphs/contributors">
-      <img src="https://contrib.rocks/image?repo=/">
-   </a>
-</p>
-</details>
+### Taking an app live
 
----
+1. Set `enabled: true` in `deploy.yml`
+2. Push to `main` — it's live at `<subdomain>.mydomain.com` with HTTPS
 
-## License
+### Taking an app offline
 
- is protected under the [LICENSE](https://choosealicense.com/licenses) License. For more details, refer to the [LICENSE](https://choosealicense.com/licenses/) file.
+1. Set `enabled: false` in `deploy.yml`
+2. Push to `main` — the container is removed
 
----
+## Setup
 
-## Acknowledgments
-
-- Credit `contributors`, `inspiration`, `references`, etc.
-
-<div align="right">
-
-[![][back-to-top]](#top)
-
-</div>
-
-
-[back-to-top]: https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square
-
-
----
+See [infra/README.md](infra/README.md) for full droplet and deployment setup instructions.
