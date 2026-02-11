@@ -92,7 +92,10 @@ Point your domain (or subdomains) to the droplet.
 
 | Type | Name     | Value            |
 |------|----------|------------------|
-| A    | ryanzrau  | YOUR_DROPLET_IP  |
+| A    | @        | YOUR_DROPLET_IP  |
+| A    | subdomain| YOUR_DROPLET_IP  |
+
+_(Use `@` for the root domain, or specific names for subdomains)_
 
 ## 5. Configure deploy.yml
 
@@ -105,9 +108,14 @@ letsencrypt_email: you@yourdomain.com
 
 apps:
   ryanzrau:
-    subdomain: ryanzrau
+    subdomain: ""  # Empty string for root domain (yourdomain.com)
     enabled: true
     port: 80
+  # Example of a subdomain app (would be at subdomain.yourdomain.com):
+  # apping:
+  #   subdomain: app
+  #   enabled: true
+  #   port: 80
 ```
 
 ## 6. First Deploy

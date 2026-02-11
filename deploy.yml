@@ -7,6 +7,6 @@ letsencrypt_email: me@ryanzrau.dev
 
 apps:
   ryanzrau:
-    subdomain: ryanzrau
+    subdomain: ""
     enabled: true
     port: 80

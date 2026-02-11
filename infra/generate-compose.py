@@ -53,7 +53,7 @@ for name, app in config.get("apps", {}).items():
 
     subdomain = app["subdomain"]
     port = app.get("port", 3000)
-    fqdn = f"{subdomain}.{domain}"
+    fqdn = f"{subdomain}.{domain}" if subdomain else domain
     enabled_apps.append(name)
 
     services[name] = {
