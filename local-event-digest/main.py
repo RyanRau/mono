@@ -3,8 +3,9 @@ main.py
 
 Orchestrates the full pipeline:
   1. Read the sources markdown file
-  2. Pass it to Claude (with web search) to find this week's events
-  3. Email the resulting digest
+  2. Scrape each source website for event content
+  3. Pass scraped content to Claude for summarisation
+  4. Email the resulting digest
 """
 
 import argparse
@@ -15,6 +16,7 @@ from dotenv import load_dotenv
 
 from event_summarizer import summarize_events
 from email_sender import send_email
+from web_scraper import scrape_sources
 
 DEFAULT_SOURCES_FILE = Path(__file__).parent / "sources.md"
 
@@ -34,12 +36,17 @@ def run(sources_file: str, dry_run: bool = False) -> str:
     sources_md = read_sources(sources_file)
     print(f"  Loaded {sources_file}")
 
-    # Step 2 - Send to Claude with web search
-    print("Searching sources and summarising events with Claude...")
-    digest = summarize_events(sources_md)
+    # Step 2 - Scrape source websites
+    print("Scraping event sources...")
+    scraped_content = scrape_sources(sources_md)
+    print("  Scraping complete.")
+
+    # Step 3 - Summarise with Claude (Haiku, no web search)
+    print("Summarising events with Claude...")
+    digest = summarize_events(scraped_content)
     print("  Digest ready.")
 
-    # Step 3 - Send email (or print in dry-run mode)
+    # Step 4 - Send email (or print in dry-run mode)
     if dry_run:
         print("\n--- DRY RUN: Email would contain the following ---\n")
         print(digest)
