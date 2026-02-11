@@ -6,7 +6,6 @@ Reads deploy.yml and generates a docker-compose.yml with:
 """
 
 import yaml
-import sys
 import os
 
 CONFIG_PATH = os.environ.get("CONFIG_PATH", "deploy.yml")
