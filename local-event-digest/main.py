@@ -29,7 +29,7 @@ def read_sources(filepath: str) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def run(sources_file: str, dry_run: bool = False) -> str:
+def run(sources_file: str, dry_run: bool = False, scrape_only: bool = False) -> str:
     """Execute the full pipeline and return the digest text."""
     # Step 1 - Read sources file
     print("Reading sources file...")
@@ -40,6 +40,18 @@ def run(sources_file: str, dry_run: bool = False) -> str:
     print("Scraping event sources...")
     scraped_content = scrape_sources(sources_md)
     print("  Scraping complete.")
+
+    # If scrape-only, email/print just the raw scraped data and stop
+    if scrape_only:
+        if dry_run:
+            print("\n--- DRY RUN: Scraped content ---\n")
+            print(scraped_content)
+        else:
+            today = datetime.now().strftime("%B %d, %Y")
+            subject = f"Scraped Event Data - Week of {today}"
+            print("Sending scraped data email...")
+            send_email(subject, scraped_content)
+        return scraped_content
 
     # Step 3 - Summarise with Claude (Haiku, no web search)
     print("Summarising events with Claude...")
@@ -75,9 +87,14 @@ def main() -> None:
         action="store_true",
         help="Print the digest to stdout instead of sending email.",
     )
+    parser.add_argument(
+        "--scrape-only",
+        action="store_true",
+        help="Only scrape sources and email/print the raw data (skip LLM summarisation).",
+    )
     args = parser.parse_args()
 
-    run(args.sources, dry_run=args.dry_run)
+    run(args.sources, dry_run=args.dry_run, scrape_only=args.scrape_only)
 
 
 if __name__ == "__main__":
