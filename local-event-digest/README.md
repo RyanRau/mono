@@ -1,4 +1,4 @@
-# Local Event Notifier
+# Local Event Digest
 
 A weekly digest pipeline that uses Claude to search your local event sources and emails you a summary of what's happening in your area.
 
@@ -11,7 +11,7 @@ A weekly digest pipeline that uses Claude to search your local event sources and
 ## Project Structure
 
 ```
-local-event-notifier/
+local-event-digest/
 ├── main.py               # Orchestrator — reads file, calls summarizer, sends email
 ├── event_summarizer.py   # Passes sources to Claude API with web search
 ├── email_sender.py       # Formats and sends the digest via SMTP
@@ -26,7 +26,7 @@ local-event-notifier/
 ### 1. Install dependencies
 
 ```bash
-cd local-event-notifier
+cd local-event-digest
 pip install -r requirements.txt
 ```
 
@@ -90,7 +90,7 @@ Gmail requires an **App Password**, which is a one-time 16-character code that l
 **Step 2 — Generate an App Password:**
 
 1. Go to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
-2. Enter an app name (e.g. `Local Event Notifier`)
+2. Enter an app name (e.g. `Local Event Digest`)
 3. Click **Create**
 4. Copy the 16-character password immediately — you cannot view it again
 
