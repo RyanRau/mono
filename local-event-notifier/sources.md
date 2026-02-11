@@ -5,8 +5,7 @@ A collection of websites and calendars for finding events in NWA (Bentonville, F
 ## Event Calendars & Aggregators
 
 - **NWA Motherlode** — Monthly event roundups: https://nwamotherlode.com/february-2026-northwest-arkansas-calendar-of-events/
-- **NWA Travel Guide — Weekly Events**: https://nwatravelguide.com/events-in-northwest-arkansas/
-- **NWA Travel Guide — Festivals & Special Events**: https://nwatravelguide.com/festivals-special-events-calendar-northwest-arkansas/
+- **NWA Travel Guide — Events**: https://nwatravelguide.com/events-in-northwest-arkansas/
 - **NWA Daily Events**: https://events.nwadaily.com/
 - **Northwest Arkansas Tourism (NATA)**: https://northwestarkansas.org/events-main/
 - **Arkansas.com — NW Region Events**: https://www.arkansas.com/natural-state/events
@@ -32,16 +31,3 @@ A collection of websites and calendars for finding events in NWA (Bentonville, F
 - **The Momentary (Bentonville) Calendar**: https://themomentary.org/calendar/
 - **Crystal Bridges Museum of American Art**: https://crystalbridges.org (check /calendar)
 - **Walton Arts Center (Fayetteville)**: https://waltonartscenter.org (check events/calendar)
-- **Scott Family Amazeum (Bentonville)**: https://www.amazeum.org
-- **Peel Compton Foundation (Coler, Quiver, Peel Museum)**: https://peelcompton.org/
-
-## Music & Concerts
-
-- **Songkick — Rogers/NWA Metro**: https://www.songkick.com/metro-areas/55478-us-rogers
-- **Fever / Candlelight Concerts — Fayetteville**: https://feverup.com/en/fayetteville/candlelight
-
-## Niche / Specialty
-
-- **NWA Car Shows & Cruise Nights**: https://carcruisefinder.com/car-shows/category/arkansas/northwest-arkansas/
-- **KNWA — Seasonal/Themed Event Lists** (e.g., Black History Month): https://www.nwahomepage.com/news/featured-stories/
-- **Kiva NWA Hub — Small Business Events**: https://kiva-nwa.org/events/month/
