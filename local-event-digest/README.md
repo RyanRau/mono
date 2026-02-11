@@ -1,158 +1,244 @@
-# Local Event Digest
+<div id="top">
 
-A weekly digest pipeline that uses Claude to search your local event sources and emails you a summary of what's happening in your area.
+<!-- HEADER STYLE: CLASSIC -->
+<div align="center">
 
-## How It Works
+<img src="readmeai/assets/logos/purple.svg" width="30%" style="position: relative; top: 0; right: 0;" alt="Project Logo"/>
 
-1. You maintain a `sources.md` file with categorized links to local event calendars
-2. The entire file is passed to Claude (with web search enabled) — Claude visits each source and extracts upcoming events
-3. The digest is formatted and emailed to your recipients
+# LOCAL-EVENT-DIGEST
+
+<em></em>
+
+<!-- BADGES -->
+<!-- local repository, no metadata badges. -->
+
+<em>Built with the tools and technologies:</em>
+
+<img src="https://img.shields.io/badge/Markdown-000000.svg?style=flat-square&logo=Markdown&logoColor=white" alt="Markdown">
+<img src="https://img.shields.io/badge/Anthropic-191919.svg?style=flat-square&logo=Anthropic&logoColor=white" alt="Anthropic">
+<img src="https://img.shields.io/badge/Python-3776AB.svg?style=flat-square&logo=Python&logoColor=white" alt="Python">
+
+</div>
+<br>
+
+---
+
+## Table of Contents
+
+- [Table of Contents](#table-of-contents)
+- [Overview](#overview)
+- [Features](#features)
+- [Project Structure](#project-structure)
+    - [Project Index](#project-index)
+- [Getting Started](#getting-started)
+    - [Prerequisites](#prerequisites)
+    - [Installation](#installation)
+    - [Usage](#usage)
+    - [Testing](#testing)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
+
+---
+
+## Overview
+
+
+
+---
+
+## Features
+
+<code>❯ REPLACE-ME</code>
+
+---
 
 ## Project Structure
 
-```
-local-event-digest/
-├── main.py               # Orchestrator — reads file, calls summarizer, sends email
-├── event_summarizer.py   # Passes sources to Claude API with web search
-├── email_sender.py       # Formats and sends the digest via SMTP
-├── sources.md            # Your categorized list of event source URLs
-├── requirements.txt      # Python dependencies
-├── .env.example          # Template for secrets
-└── .env                  # Your actual secrets (git-ignored)
-```
-
-## Local Setup
-
-### 1. Install dependencies
-
-```bash
-cd local-event-digest
-pip install -r requirements.txt
+```sh
+└── local-event-digest/
+    ├── README.md
+    ├── email_sender.py
+    ├── event_summarizer.py
+    ├── main.py
+    ├── requirements.txt
+    ├── sources.md
+    └── web_scraper.py
 ```
 
-### 2. Create your `.env` file
+### Project Index
 
-```bash
-cp .env.example .env
+<details open>
+	<summary><b><code>LOCAL-EVENT-DIGEST/</code></b></summary>
+	<!-- __root__ Submodule -->
+	<details>
+		<summary><b>__root__</b></summary>
+		<blockquote>
+			<div class='directory-path' style='padding: 8px 0; color: #666;'>
+				<code><b>⦿ __root__</b></code>
+			<table style='width: 100%; border-collapse: collapse;'>
+			<thead>
+				<tr style='background-color: #f8f9fa;'>
+					<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
+					<th style='text-align: left; padding: 8px;'>Summary</th>
+				</tr>
+			</thead>
+				<tr style='border-bottom: 1px solid #eee;'>
+					<td style='padding: 8px;'><b><a href='local-event-digest/blob/master/requirements.txt'>requirements.txt</a></b></td>
+					<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+				</tr>
+				<tr style='border-bottom: 1px solid #eee;'>
+					<td style='padding: 8px;'><b><a href='local-event-digest/blob/master/web_scraper.py'>web_scraper.py</a></b></td>
+					<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+				</tr>
+				<tr style='border-bottom: 1px solid #eee;'>
+					<td style='padding: 8px;'><b><a href='local-event-digest/blob/master/email_sender.py'>email_sender.py</a></b></td>
+					<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+				</tr>
+				<tr style='border-bottom: 1px solid #eee;'>
+					<td style='padding: 8px;'><b><a href='local-event-digest/blob/master/main.py'>main.py</a></b></td>
+					<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+				</tr>
+				<tr style='border-bottom: 1px solid #eee;'>
+					<td style='padding: 8px;'><b><a href='local-event-digest/blob/master/event_summarizer.py'>event_summarizer.py</a></b></td>
+					<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+				</tr>
+			</table>
+		</blockquote>
+	</details>
+</details>
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+This project requires the following dependencies:
+
+- **Programming Language:** Python
+- **Package Manager:** Pip
+
+### Installation
+
+Build local-event-digest from the source and intsall dependencies:
+
+1. **Clone the repository:**
+
+    ```sh
+    ❯ git clone ../local-event-digest
+    ```
+
+2. **Navigate to the project directory:**
+
+    ```sh
+    ❯ cd local-event-digest
+    ```
+
+3. **Install the dependencies:**
+
+<!-- SHIELDS BADGE CURRENTLY DISABLED -->
+	<!-- [![pip][pip-shield]][pip-link] -->
+	<!-- REFERENCE LINKS -->
+	<!-- [pip-shield]: https://img.shields.io/badge/Pip-3776AB.svg?style={badge_style}&logo=pypi&logoColor=white -->
+	<!-- [pip-link]: https://pypi.org/project/pip/ -->
+
+	**Using [pip](https://pypi.org/project/pip/):**
+
+	```sh
+	❯ pip install -r requirements.txt
+	```
+
+### Usage
+
+Run the project with:
+
+**Using [pip](https://pypi.org/project/pip/):**
+```sh
+python {entrypoint}
 ```
 
-Then fill in each value (see [Getting Your Secrets](#getting-your-secrets) below).
+### Testing
 
-### 3. Edit `sources.md`
+Local-event-digest uses the {__test_framework__} test framework. Run the test suite with:
 
-Replace the example URLs with real local event sources for your area:
-
-```markdown
-# Local Event Sources
-
-## Music & Concerts
-- https://your-city-venue.com/events
-- https://local-music-blog.com/shows
-
-## Community
-- https://your-city.gov/events
+**Using [pip](https://pypi.org/project/pip/):**
+```sh
+pytest
 ```
 
-### 4. Run it
+---
 
-```bash
-# Dry run — prints the digest to your terminal, no email sent
-python main.py --dry-run
+## Roadmap
 
-# Send the email
-python main.py
+- [X] **`Task 1`**: <strike>Implement feature one.</strike>
+- [ ] **`Task 2`**: Implement feature two.
+- [ ] **`Task 3`**: Implement feature three.
 
-# Use a different sources file
-python main.py -s /path/to/my-sources.md
-```
+---
 
-## Getting Your Secrets
+## Contributing
 
-### Anthropic API Key
+- **💬 [Join the Discussions](https://LOCAL//local-event-digest/discussions)**: Share your insights, provide feedback, or ask questions.
+- **🐛 [Report Issues](https://LOCAL//local-event-digest/issues)**: Submit bugs found or log feature requests for the `local-event-digest` project.
+- **💡 [Submit Pull Requests](https://LOCAL//local-event-digest/blob/main/CONTRIBUTING.md)**: Review open PRs, and submit your own PRs.
 
-1. Go to [console.anthropic.com](https://console.anthropic.com/)
-2. Sign up or log in
-3. Navigate to **Settings → API Keys**
-4. Click **Create Key**, give it a name
-5. Copy the key — it starts with `sk-ant-`
-6. Add credits under **Settings → Billing** (the digest costs roughly $0.30–0.65 per run)
+<details closed>
+<summary>Contributing Guidelines</summary>
 
-### Gmail SMTP (recommended for simplicity)
-
-Gmail requires an **App Password**, which is a one-time 16-character code that lets this script send email through your account.
-
-**Step 1 — Enable 2-Step Verification** (required first):
-
-1. Go to [myaccount.google.com](https://myaccount.google.com/)
-2. Navigate to **Security → How you sign in to Google**
-3. Enable **2-Step Verification** and follow the prompts
-
-**Step 2 — Generate an App Password:**
-
-1. Go to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
-2. Enter an app name (e.g. `Local Event Digest`)
-3. Click **Create**
-4. Copy the 16-character password immediately — you cannot view it again
-
-**Step 3 — Fill in your `.env`:**
-
-```
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=you@gmail.com
-SMTP_PASSWORD=abcd efgh ijkl mnop   # the 16-char app password
-EMAIL_FROM=you@gmail.com
-EMAIL_TO=you@gmail.com,friend@example.com
-```
-
-### Other Email Providers
-
-| Provider | SMTP Host | Port |
-|---|---|---|
-| Gmail | `smtp.gmail.com` | 587 |
-| Outlook / Hotmail | `smtp.office365.com` | 587 |
-| Yahoo | `smtp.mail.yahoo.com` | 587 |
-| FastMail | `smtp.fastmail.com` | 587 |
-
-For non-Gmail providers, use your normal email password (or an app-specific password if they offer one).
-
-## GitHub Actions (Automated Weekly Schedule)
-
-The included workflow runs the digest **every Monday at 8:00 AM UTC** automatically.
-
-### Setup
-
-1. Push this repo to GitHub
-
-2. Go to your repository's **Settings → Secrets and variables → Actions**
-
-3. Click **New repository secret** and add each one:
-
-   | Secret Name | Value |
-   |---|---|
-   | `ANTHROPIC_API_KEY` | Your `sk-ant-...` key |
-   | `SMTP_HOST` | `smtp.gmail.com` |
-   | `SMTP_PORT` | `587` |
-   | `SMTP_USER` | `you@gmail.com` |
-   | `SMTP_PASSWORD` | Your 16-char app password |
-   | `EMAIL_FROM` | `you@gmail.com` |
-   | `EMAIL_TO` | `recipient1@example.com,recipient2@example.com` |
-
-4. The workflow file is at `.github/workflows/weekly-digest.yml`. To change the schedule, edit the cron expression:
-
-   ```yaml
-   # Examples:
-   cron: "0 8 * * 1"   # Monday 8am UTC
-   cron: "0 14 * * 0"  # Sunday 2pm UTC
-   cron: "0 8 * * 1,4" # Monday and Thursday 8am UTC
+1. **Fork the Repository**: Start by forking the project repository to your LOCAL account.
+2. **Clone Locally**: Clone the forked repository to your local machine using a git client.
+   ```sh
+   git clone local-event-digest
    ```
+3. **Create a New Branch**: Always work on a new branch, giving it a descriptive name.
+   ```sh
+   git checkout -b new-feature-x
+   ```
+4. **Make Your Changes**: Develop and test your changes locally.
+5. **Commit Your Changes**: Commit with a clear message describing your updates.
+   ```sh
+   git commit -m 'Implemented new feature x.'
+   ```
+6. **Push to LOCAL**: Push the changes to your forked repository.
+   ```sh
+   git push origin new-feature-x
+   ```
+7. **Submit a Pull Request**: Create a PR against the original project repository. Clearly describe the changes and their motivations.
+8. **Review**: Once your PR is reviewed and approved, it will be merged into the main branch. Congratulations on your contribution!
+</details>
 
-5. You can also trigger it manually from the **Actions** tab → **Weekly Local Events Digest** → **Run workflow**.
+<details closed>
+<summary>Contributor Graph</summary>
+<br>
+<p align="left">
+   <a href="https://LOCAL{//local-event-digest/}graphs/contributors">
+      <img src="https://contrib.rocks/image?repo=/local-event-digest">
+   </a>
+</p>
+</details>
 
-## Cost Estimate
+---
 
-| | Per Run | Monthly (4x) | Yearly |
-|---|---|---|---|
-| Anthropic API | ~$0.30–0.65 | ~$1.20–2.60 | ~$15–35 |
-| GitHub Actions | Free | Free | Free |
-| Email (Gmail) | Free | Free | Free |
+## License
+
+Local-event-digest is protected under the [LICENSE](https://choosealicense.com/licenses) License. For more details, refer to the [LICENSE](https://choosealicense.com/licenses/) file.
+
+---
+
+## Acknowledgments
+
+- Credit `contributors`, `inspiration`, `references`, etc.
+
+<div align="right">
+
+[![][back-to-top]](#top)
+
+</div>
+
+
+[back-to-top]: https://img.shields.io/badge/-BACK_TO_TOP-151515?style=flat-square
+
+
+---
