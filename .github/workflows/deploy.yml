@@ -1,0 +1,100 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  REPO: ${{ github.repository }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Determine which apps to build
+        id: apps
+        run: |
+          # Get list of enabled apps
+          ENABLED=$(yq '.apps | to_entries[] | select(.value.enabled == true) | .key' deploy.yml)
+
+          # Get list of changed files
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
+          CONFIG_CHANGED=$(echo "$CHANGED_FILES" | grep -c "deploy.yml" || true)
+          INFRA_CHANGED=$(echo "$CHANGED_FILES" | grep -c "^infra/" || true)
+
+          # Build an app if: it's enabled AND (its files changed OR deploy.yml changed OR infra changed)
+          BUILD_LIST=""
+          for app in $ENABLED; do
+            APP_CHANGED=$(echo "$CHANGED_FILES" | grep -c "^web/${app}/" || true)
+            if [ "$APP_CHANGED" -gt 0 ] || [ "$CONFIG_CHANGED" -gt 0 ] || [ "$INFRA_CHANGED" -gt 0 ]; then
+              BUILD_LIST="${BUILD_LIST} ${app}"
+            fi
+          done
+
+          # If this is the first commit or force deploy, build all enabled
+          if [ -z "$BUILD_LIST" ] && [ -z "$CHANGED_FILES" ]; then
+            BUILD_LIST="$ENABLED"
+          fi
+
+          echo "build_list=${BUILD_LIST}" >> $GITHUB_OUTPUT
+          echo "Apps to build: ${BUILD_LIST:-none}"
+
+      - name: Build and push images
+        run: |
+          for app in ${{ steps.apps.outputs.build_list }}; do
+            echo "=== Building $app ==="
+            IMAGE="${{ env.REGISTRY }}/${{ env.REPO }}/${app}:latest"
+            docker build -t "$IMAGE" ./web/${app}
+            docker push "$IMAGE"
+            echo "=== Pushed $IMAGE ==="
+          done
+
+      - name: Deploy to droplet
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DROPLET_IP }}
+          username: deploy
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /opt/apps
+
+            # Pull latest repo changes
+            git pull origin main
+
+            # Login to GHCR
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # Generate fresh docker-compose.yml from config
+            python3 infra/generate-compose.py
+
+            # Pull latest images and deploy
+            docker compose pull
+            docker compose up -d --remove-orphans
+
+            # Clean up old images
+            docker image prune -f
+
+            echo "=== Deployment complete ==="
