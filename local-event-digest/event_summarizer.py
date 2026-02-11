@@ -1,8 +1,8 @@
 """
 event_summarizer.py
 
-Passes the full sources markdown file to Claude with web search enabled.
-Claude searches each source directly and compiles the weekly events digest.
+Takes pre-scraped event source content and sends it to Claude for
+summarisation into a weekly digest.  Uses Haiku for low cost.
 """
 
 import os
@@ -13,18 +13,16 @@ import anthropic
 
 SYSTEM_PROMPT = (
     "You are a helpful local events assistant. "
-    "You will be given a markdown file listing local event source websites, "
-    "organised by category. Use the web search tool to look up each source "
-    "and find events happening during the specified date range. "
-    "Produce a concise, friendly weekly events digest suitable for email. "
-    "Use markdown formatting. Group events by day. "
+    "You will be given scraped text from local event source websites. "
+    "Using this content, compile a concise, friendly weekly events digest "
+    "suitable for email. Use markdown formatting. Group events by day. "
     "For each event include: name, date/time, location, a one-sentence "
     "description, and the source URL."
 )
 
 
-def build_prompt(sources_markdown: str) -> str:
-    """Build the user prompt containing the date range and the full sources file."""
+def build_prompt(scraped_content: str) -> str:
+    """Build the user prompt containing the date range and the scraped content."""
     today = datetime.now()
     week_end = today + timedelta(days=7)
     date_range = (
@@ -35,18 +33,17 @@ def build_prompt(sources_markdown: str) -> str:
     return (
         f"Today's date is {today.strftime('%Y-%m-%d')}. "
         f"The upcoming week covers {date_range}.\n\n"
-        "Here is my list of local event sources:\n\n"
-        f"{sources_markdown}\n\n"
-        "Please search each of these sources for events happening this week "
-        "and compile them into a well-organised digest."
+        "Here is the scraped content from local event sources:\n\n"
+        f"{scraped_content}\n\n"
+        "Please compile events happening this week into a well-organised digest."
     )
 
 
 def summarize_events(
-    sources_markdown: str,
-    model: str = "claude-sonnet-4-20250514",
+    scraped_content: str,
+    model: str = "claude-haiku-4-20250414",
 ) -> str:
-    """Send the sources markdown to Claude with web search and return the digest.
+    """Send pre-scraped content to Claude and return the digest.
 
     Requires ANTHROPIC_API_KEY to be set in the environment.
     """
@@ -60,15 +57,13 @@ def summarize_events(
 
     message = client.messages.create(
         model=model,
-        max_tokens=16000,
+        max_tokens=4096,
         system=SYSTEM_PROMPT,
-        tools=[{"type": "web_search_20250305", "name": "web_search"}],
         messages=[
-            {"role": "user", "content": build_prompt(sources_markdown)},
+            {"role": "user", "content": build_prompt(scraped_content)},
         ],
     )
 
-    # Extract text blocks from the response (skip tool-use blocks)
     text_parts = [
         block.text
         for block in message.content
