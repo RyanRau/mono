@@ -50,7 +50,7 @@ chmod 700 /home/deploy/.ssh
 su - deploy
 mkdir -p /opt/apps
 cd /opt/apps
-git clone https://github.com/RyanZRau/mono.git .
+git clone https://github.com/RyanRau/mono.git .
 ```
 
 ## 2. SSH Key Pair
@@ -103,7 +103,7 @@ Edit `deploy.yml` in the repo root with your actual values:
 
 ```yaml
 domain: yourdomain.com
-registry: ghcr.io/ryanzrau/mono
+registry: ghcr.io/ryanrau/mono
 letsencrypt_email: you@yourdomain.com
 
 apps:

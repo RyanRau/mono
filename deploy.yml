@@ -2,7 +2,7 @@
 # Set enabled: true to deploy an app, false to take it offline
 
 domain: ryanzrau.dev
-registry: ghcr.io/ryanzrau/mono
+registry: ghcr.io/ryanrau/mono
 letsencrypt_email: me@ryanzrau.dev
 
 apps:
