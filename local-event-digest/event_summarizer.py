@@ -28,8 +28,7 @@ def build_prompt(sources_markdown: str) -> str:
     today = datetime.now()
     week_end = today + timedelta(days=7)
     date_range = (
-        f"{today.strftime('%A %B %d, %Y')} to "
-        f"{week_end.strftime('%A %B %d, %Y')}"
+        f"{today.strftime('%A %B %d, %Y')} to {week_end.strftime('%A %B %d, %Y')}"
     )
 
     return (
@@ -69,9 +68,5 @@ def summarize_events(
     )
 
     # Extract text blocks from the response (skip tool-use blocks)
-    text_parts = [
-        block.text
-        for block in message.content
-        if block.type == "text"
-    ]
+    text_parts = [block.text for block in message.content if block.type == "text"]
     return "\n\n".join(text_parts)
