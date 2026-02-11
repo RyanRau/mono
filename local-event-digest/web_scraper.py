@@ -30,8 +30,7 @@ def fetch_page_text(url: str, timeout: float = 20.0) -> str:
     """
     headers = {
         "User-Agent": (
-            "Mozilla/5.0 (compatible; LocalEventDigestBot/1.0; "
-            "+https://github.com)"
+            "Mozilla/5.0 (compatible; LocalEventDigestBot/1.0; +https://github.com)"
         ),
     }
     try:
