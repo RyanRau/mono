@@ -57,19 +57,17 @@ jobs:
           args: "check --fix"
         continue-on-error: true
 
-      - name: Install Prettier and ESLint
-        run: |
-          npm install -g prettier
-          npm install -g eslint @eslint/js typescript-eslint eslint-plugin-react eslint-plugin-react-hooks globals
+      - name: Install Node dependencies
+        run: npm install
 
       - name: Apply Prettier formatting (JS/TS/CSS/JSON/MD)
         run: |
-          prettier --write "web/**/*.{ts,tsx,js,jsx,json,css,md}" "*.md" || true
+          npm run format || true
         continue-on-error: true
 
       - name: Apply ESLint fixes (TS/TSX/JS/JSX)
         run: |
-          eslint --fix "web/**/*.{ts,tsx,js,jsx}" || true
+          npm run lint:fix || true
         continue-on-error: true
 
       # Commit fixes if any were made
@@ -97,12 +95,10 @@ jobs:
           args: "format --check"
 
       - name: Final format check (JS/TS/CSS/JSON/MD)
-        run: |
-          prettier --check "web/**/*.{ts,tsx,js,jsx,json,css,md}" "*.md"
+        run: npm run format:check
 
       - name: Final lint check (TS/TSX/JS/JSX)
-        run: |
-          eslint "web/**/*.{ts,tsx,js,jsx}"
+        run: npm run lint
 
       # Validate Docker builds
       - name: Build Docker images
