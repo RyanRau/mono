@@ -1,0 +1,169 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.join-container,
+.game-container {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 600px;
+  width: 100%;
+}
+
+.join-container h1,
+.game-container h1 {
+  text-align: center;
+  color: #667eea;
+  margin-bottom: 30px;
+  font-size: 36px;
+}
+
+.join-container form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.session-input {
+  padding: 15px;
+  font-size: 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  transition: border-color 0.2s;
+}
+
+.session-input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.join-button,
+.reset-button,
+.copy-button {
+  padding: 15px 30px;
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.join-button:hover,
+.reset-button:hover,
+.copy-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.join-button:active,
+.reset-button:active,
+.copy-button:active {
+  transform: translateY(0);
+}
+
+.game-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.player-info {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin: 15px 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.session-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin: 15px 0;
+  padding: 10px;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 10px;
+}
+
+.session-info p {
+  margin: 0;
+  color: #667eea;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.copy-button {
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+.waiting {
+  text-align: center;
+  padding: 20px;
+  background: #fff3cd;
+  border: 2px solid #ffc107;
+  border-radius: 10px;
+  margin: 20px 0;
+  color: #856404;
+  font-weight: bold;
+}
+
+.game-status {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.status-text {
+  font-size: 24px;
+  font-weight: bold;
+  color: #667eea;
+  margin-bottom: 15px;
+}
+
+.reset-button {
+  margin-top: 10px;
+}
+
+.error {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 10px;
+  color: #721c24;
+  text-align: center;
+  font-weight: 500;
+}
+
+@media (max-width: 600px) {
+  .join-container,
+  .game-container {
+    padding: 20px;
+  }
+
+  .join-container h1,
+  .game-container h1 {
+    font-size: 28px;
+  }
+
+  .player-info {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .session-info {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
