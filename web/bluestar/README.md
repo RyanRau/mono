@@ -23,7 +23,7 @@ npm install bluestar goober react
 ## Quick Start
 
 ```tsx
-import { ThemeProvider, Button, Card, defaultTheme } from 'bluestar';
+import { ThemeProvider, Button, Card, defaultTheme } from "bluestar";
 
 function App() {
   return (
@@ -45,19 +45,15 @@ Bluestar includes 5 built-in theme presets:
 ```tsx
 import {
   ThemeProvider,
-  defaultTheme,   // Blue theme
-  darkTheme,      // Dark mode
-  purpleTheme,    // Purple accent
-  greenTheme,     // Green/nature
-  warmTheme       // Orange/warm
-} from 'bluestar';
+  defaultTheme, // Blue theme
+  darkTheme, // Dark mode
+  purpleTheme, // Purple accent
+  greenTheme, // Green/nature
+  warmTheme, // Orange/warm
+} from "bluestar";
 
 function App() {
-  return (
-    <ThemeProvider theme={darkTheme}>
-      {/* Your app */}
-    </ThemeProvider>
-  );
+  return <ThemeProvider theme={darkTheme}>{/* Your app */}</ThemeProvider>;
 }
 ```
 
@@ -66,15 +62,15 @@ function App() {
 Create your own theme by extending or overriding the default:
 
 ```tsx
-import { ThemeProvider, defaultTheme, type Theme } from 'bluestar';
+import { ThemeProvider, defaultTheme, type Theme } from "bluestar";
 
 const customTheme: Theme = {
   ...defaultTheme,
   colors: {
     ...defaultTheme.colors,
-    primary: '#ff6b6b',
-    primaryHover: '#ff5252',
-    primaryActive: '#ff3838',
+    primary: "#ff6b6b",
+    primaryHover: "#ff5252",
+    primaryActive: "#ff3838",
   },
 };
 
@@ -88,8 +84,8 @@ function App() {
 Access theme values in your own components using the `useTheme` hook:
 
 ```tsx
-import { useTheme } from 'bluestar';
-import { css } from 'goober';
+import { useTheme } from "bluestar";
+import { css } from "goober";
 
 function MyComponent() {
   const { theme } = useTheme();
@@ -141,21 +137,33 @@ interface Theme {
   typography: {
     fontFamily: string;
     fontFamilyMono: string;
-    fontSize: { xs: string; sm: string; base: string; lg: string; xl: string; '2xl': string };
+    fontSize: { xs: string; sm: string; base: string; lg: string; xl: string; "2xl": string };
     fontWeight: { normal: number; medium: number; semibold: number; bold: number };
     lineHeight: { tight: number; normal: number; relaxed: number };
   };
 
   spacing: {
-    xs: string; sm: string; md: string; lg: string; xl: string; '2xl': string;
+    xs: string;
+    sm: string;
+    md: string;
+    lg: string;
+    xl: string;
+    "2xl": string;
   };
 
   borderRadius: {
-    none: string; sm: string; md: string; lg: string; full: string;
+    none: string;
+    sm: string;
+    md: string;
+    lg: string;
+    full: string;
   };
 
   shadows: {
-    none: string; sm: string; md: string; lg: string;
+    none: string;
+    sm: string;
+    md: string;
+    lg: string;
   };
 }
 ```
@@ -165,14 +173,15 @@ interface Theme {
 ### Button
 
 ```tsx
-import { Button } from 'bluestar';
+import { Button } from "bluestar";
 
 <Button variant="primary" size="md">
   Click me
-</Button>
+</Button>;
 ```
 
 **Props:**
+
 - `variant`: `'primary' | 'secondary' | 'outline' | 'ghost'`
 - `size`: `'sm' | 'md' | 'lg'`
 - Standard button HTML attributes
@@ -180,14 +189,13 @@ import { Button } from 'bluestar';
 ### Card
 
 ```tsx
-import { Card } from 'bluestar';
+import { Card } from "bluestar";
 
-<Card>
-  Card content goes here
-</Card>
+<Card>Card content goes here</Card>;
 ```
 
 **Props:**
+
 - `children`: React.ReactNode
 - `className`: string (optional)
 - Standard div HTML attributes
@@ -202,6 +210,7 @@ import { Header } from 'bluestar';
 ```
 
 **Props:**
+
 - `level`: `1 | 2 | 3 | 4 | 5 | 6`
 - `children`: React.ReactNode
 - `className`: string (optional)
@@ -216,6 +225,7 @@ import { Text } from 'bluestar';
 ```
 
 **Props:**
+
 - `variant`: `'body' | 'caption' | 'small'`
 - `color`: `'primary' | 'secondary' | 'disabled'`
 - `className`: string (optional)
@@ -223,15 +233,16 @@ import { Text } from 'bluestar';
 ### Flexbox
 
 ```tsx
-import { Flexbox } from 'bluestar';
+import { Flexbox } from "bluestar";
 
 <Flexbox direction="row" gap="md" justify="center" align="center">
   <div>Item 1</div>
   <div>Item 2</div>
-</Flexbox>
+</Flexbox>;
 ```
 
 **Props:**
+
 - `direction`: `'row' | 'column'`
 - `gap`: Theme spacing key
 - `justify`: CSS justify-content value

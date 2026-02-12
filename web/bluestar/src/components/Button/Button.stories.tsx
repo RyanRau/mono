@@ -11,8 +11,8 @@ const meta = {
   tags: ["autodocs"],
   argTypes: {
     variant: {
-      control: 'select',
-      options: ['primary', 'secondary'],
+      control: "select",
+      options: ["primary", "secondary"],
     },
   },
 } satisfies Meta<typeof Button>;
@@ -25,7 +25,7 @@ export const Primary: Story = {
   args: {
     label: "Primary Button",
     variant: "primary",
-    onClick: () => console.log('clicked'),
+    onClick: () => console.log("clicked"),
   },
 };
 
@@ -33,7 +33,7 @@ export const Secondary: Story = {
   args: {
     label: "Secondary Button",
     variant: "secondary",
-    onClick: () => console.log('clicked'),
+    onClick: () => console.log("clicked"),
   },
 };
 
@@ -42,6 +42,6 @@ export const Disabled: Story = {
     label: "Disabled Button",
     variant: "primary",
     disabled: true,
-    onClick: () => console.log('clicked'),
+    onClick: () => console.log("clicked"),
   },
 };

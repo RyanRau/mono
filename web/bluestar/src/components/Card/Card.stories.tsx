@@ -12,23 +12,23 @@ const meta = {
   tags: ["autodocs"],
   argTypes: {
     padding: {
-      control: 'select',
-      options: ['none', 'sm', 'md', 'lg', 'xl'],
+      control: "select",
+      options: ["none", "sm", "md", "lg", "xl"],
     },
     elevation: {
-      control: 'select',
-      options: ['none', 'sm', 'md', 'lg', 'xl'],
+      control: "select",
+      options: ["none", "sm", "md", "lg", "xl"],
     },
     variant: {
-      control: 'select',
-      options: ['default', 'outlined'],
+      control: "select",
+      options: ["default", "outlined"],
     },
     borderRadius: {
-      control: 'select',
-      options: ['none', 'sm', 'md', 'lg'],
+      control: "select",
+      options: ["none", "sm", "md", "lg"],
     },
     hoverable: {
-      control: 'boolean',
+      control: "boolean",
     },
   },
 } satisfies Meta<typeof Card>;
@@ -102,7 +102,7 @@ export const NoPadding: Story = {
     padding: "none",
     elevation: "md",
     children: (
-      <div style={{ padding: '16px' }}>
+      <div style={{ padding: "16px" }}>
         <H3 marginBottom="sm">No Padding</H3>
         <Text>This card has no default padding (custom padding applied via div).</Text>
       </div>
@@ -116,24 +116,28 @@ export const ProductCard: Story = {
     padding: "lg",
     elevation: "sm",
     children: (
-      <div style={{ width: '250px' }}>
-        <div style={{
-          width: '100%',
-          height: '150px',
-          backgroundColor: '#e2e8f0',
-          borderRadius: '8px',
-          marginBottom: '16px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
+      <div style={{ width: "250px" }}>
+        <div
+          style={{
+            width: "100%",
+            height: "150px",
+            backgroundColor: "#e2e8f0",
+            borderRadius: "8px",
+            marginBottom: "16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
           <Text color="secondary">Image Placeholder</Text>
         </div>
         <H3 marginBottom="xs">Product Name</H3>
-        <Text variant="bodySmall" color="secondary" as="p" style={{ marginBottom: '8px' }}>
+        <Text variant="bodySmall" color="secondary" as="p" style={{ marginBottom: "8px" }}>
           Short product description goes here.
         </Text>
-        <Text weight="bold" as="div" style={{ fontSize: '1.25rem' }}>$49.99</Text>
+        <Text weight="bold" as="div" style={{ fontSize: "1.25rem" }}>
+          $49.99
+        </Text>
       </div>
     ),
   },

@@ -1,20 +1,20 @@
-import * as React from 'react';
-import { css } from 'goober';
-import { useTheme } from '../../theme';
+import * as React from "react";
+import { css } from "goober";
+import { useTheme } from "../../theme";
 
 export interface TextProps extends React.HTMLAttributes<HTMLSpanElement> {
   /** Text content */
   children: React.ReactNode;
   /** Text variant */
-  variant?: 'body' | 'bodyLarge' | 'bodySmall' | 'caption' | 'overline';
+  variant?: "body" | "bodyLarge" | "bodySmall" | "caption" | "overline";
   /** Text color */
-  color?: 'primary' | 'secondary' | 'disabled' | 'inverse';
+  color?: "primary" | "secondary" | "disabled" | "inverse";
   /** Font weight */
-  weight?: 'light' | 'normal' | 'medium' | 'semibold' | 'bold';
+  weight?: "light" | "normal" | "medium" | "semibold" | "bold";
   /** Text alignment */
-  align?: 'left' | 'center' | 'right';
+  align?: "left" | "center" | "right";
   /** Render as a different element */
-  as?: 'span' | 'p' | 'div';
+  as?: "span" | "p" | "div";
 }
 
 /**
@@ -29,11 +29,11 @@ export interface TextProps extends React.HTMLAttributes<HTMLSpanElement> {
  */
 export default function Text({
   children,
-  variant = 'body',
-  color = 'primary',
-  weight = 'normal',
-  align = 'left',
-  as: Component = 'span',
+  variant = "body",
+  color = "primary",
+  weight = "normal",
+  align = "left",
+  as: Component = "span",
   className,
   ...props
 }: TextProps) {
@@ -66,8 +66,8 @@ export default function Text({
     overline: {
       fontSize: theme.typography.fontSize.xs,
       lineHeight: theme.typography.lineHeight.tight,
-      textTransform: 'uppercase' as const,
-      letterSpacing: '0.1em',
+      textTransform: "uppercase" as const,
+      letterSpacing: "0.1em",
     },
   }[variant];
 
@@ -79,12 +79,12 @@ export default function Text({
     font-weight: ${theme.typography.fontWeight[weight]};
     text-align: ${align};
     margin: 0;
-    ${variantStyles.textTransform ? `text-transform: ${variantStyles.textTransform};` : ''}
-    ${variantStyles.letterSpacing ? `letter-spacing: ${variantStyles.letterSpacing};` : ''}
+    ${variantStyles.textTransform ? `text-transform: ${variantStyles.textTransform};` : ""}
+    ${variantStyles.letterSpacing ? `letter-spacing: ${variantStyles.letterSpacing};` : ""}
   `;
 
   return (
-    <Component className={`${textClass} ${className || ''}`} {...props}>
+    <Component className={`${textClass} ${className || ""}`} {...props}>
       {children}
     </Component>
   );

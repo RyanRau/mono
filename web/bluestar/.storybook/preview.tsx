@@ -18,17 +18,17 @@ const preview: Preview = {
   },
   globalTypes: {
     theme: {
-      name: 'Theme',
-      description: 'Global theme for components',
-      defaultValue: 'default',
+      name: "Theme",
+      description: "Global theme for components",
+      defaultValue: "default",
       toolbar: {
-        icon: 'paintbrush',
+        icon: "paintbrush",
         items: [
-          { value: 'default', title: 'Default (Blue)', icon: 'circlehollow' },
-          { value: 'dark', title: 'Dark', icon: 'moon' },
-          { value: 'purple', title: 'Purple', icon: 'hearthollow' },
-          { value: 'green', title: 'Green', icon: 'growmedium' },
-          { value: 'warm', title: 'Warm (Orange)', icon: 'sun' },
+          { value: "default", title: "Default (Blue)", icon: "circlehollow" },
+          { value: "dark", title: "Dark", icon: "moon" },
+          { value: "purple", title: "Purple", icon: "hearthollow" },
+          { value: "green", title: "Green", icon: "growmedium" },
+          { value: "warm", title: "Warm (Orange)", icon: "sun" },
         ],
         dynamicTitle: true,
       },
@@ -36,7 +36,7 @@ const preview: Preview = {
   },
   decorators: [
     ((Story, context) => {
-      const themeName = (context.globals.theme || 'default') as ThemePresetName;
+      const themeName = (context.globals.theme || "default") as ThemePresetName;
       const theme = themePresets[themeName];
 
       return (
@@ -45,9 +45,9 @@ const preview: Preview = {
             style={{
               backgroundColor: theme.colors.background,
               color: theme.colors.textPrimary,
-              minHeight: '100vh',
-              padding: '1rem',
-              transition: 'background-color 0.3s ease, color 0.3s ease',
+              minHeight: "100vh",
+              padding: "1rem",
+              transition: "background-color 0.3s ease, color 0.3s ease",
             }}
           >
             <Story />

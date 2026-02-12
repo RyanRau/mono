@@ -5,7 +5,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   /** Button contents */
   label: string;
   /** Button variant */
-  variant?: 'primary' | 'secondary';
+  variant?: "primary" | "secondary";
 }
 
 /**
@@ -17,10 +17,10 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
  * <Button label="Secondary" variant="secondary" onClick={() => {}} />
  * ```
  */
-export default function Button({ label, variant = 'primary', ...props }: ButtonProps) {
+export default function Button({ label, variant = "primary", ...props }: ButtonProps) {
   const { theme } = useTheme();
 
-  const isPrimary = variant === 'primary';
+  const isPrimary = variant === "primary";
 
   return (
     <button

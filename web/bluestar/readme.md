@@ -13,17 +13,21 @@ A modern React component library with comprehensive theming support using goober
 ## 📦 Components
 
 ### Layout
+
 - **Flexbox**: Flexible layout container with configurable direction, gap, alignment
 
 ### Typography
+
 - **Text**: Body text with variants (body, bodyLarge, bodySmall, caption, overline)
 - **Header**: Semantic headings (H1-H6) with theme-based sizing
 - **H1, H2, H3, H4, H5, H6**: Convenience components for each heading level
 
 ### Interactive
+
 - **Button**: Primary and secondary variants with hover/active/disabled states
 
 ### Containers
+
 - **Card**: Content container with configurable padding, elevation, and hover effects
 
 ## 🚀 Installation
@@ -33,6 +37,7 @@ npm install bluestar
 ```
 
 Peer dependencies:
+
 - react >= 18.0.0
 - react-dom >= 18.0.0
 - goober >= 2.1.18
@@ -44,7 +49,7 @@ Peer dependencies:
 Wrap your application with the `ThemeProvider`:
 
 ```tsx
-import { ThemeProvider, defaultTheme } from 'bluestar';
+import { ThemeProvider, defaultTheme } from "bluestar";
 
 function App() {
   return (
@@ -58,20 +63,14 @@ function App() {
 ### Using Components
 
 ```tsx
-import { Button, Card, H2, Text } from 'bluestar';
+import { Button, Card, H2, Text } from "bluestar";
 
 function MyComponent() {
   return (
     <Card padding="lg" elevation="md">
       <H2>Welcome to Bluestar</H2>
-      <Text variant="body">
-        This is a modern component library with comprehensive theming.
-      </Text>
-      <Button
-        label="Get Started"
-        variant="primary"
-        onClick={() => console.log('clicked')}
-      />
+      <Text variant="body">This is a modern component library with comprehensive theming.</Text>
+      <Button label="Get Started" variant="primary" onClick={() => console.log("clicked")} />
     </Card>
   );
 }
@@ -82,8 +81,8 @@ function MyComponent() {
 Use the `useTheme` hook to access theme values in your components:
 
 ```tsx
-import { useTheme } from 'bluestar';
-import { css } from 'goober';
+import { useTheme } from "bluestar";
+import { css } from "goober";
 
 function CustomComponent() {
   const { theme } = useTheme();
@@ -103,15 +102,15 @@ function CustomComponent() {
 Create and provide a custom theme:
 
 ```tsx
-import { ThemeProvider, defaultTheme, Theme } from 'bluestar';
+import { ThemeProvider, defaultTheme, Theme } from "bluestar";
 
 const customTheme: Theme = {
   ...defaultTheme,
   colors: {
     ...defaultTheme.colors,
-    primary: '#ff6b6b',
-    primaryHover: '#ee5a52',
-    primaryActive: '#dc4c3f',
+    primary: "#ff6b6b",
+    primaryHover: "#ee5a52",
+    primaryActive: "#dc4c3f",
   },
 };
 
@@ -131,6 +130,7 @@ View the interactive component documentation:
 **Production**: [ui.ryanzrau.dev](https://ui.ryanzrau.dev)
 
 **Local Development**:
+
 ```bash
 npm run storybook
 ```
@@ -170,6 +170,7 @@ This allows you to preview your changes in a production-like environment before 
 ## 📖 Theme Tokens
 
 ### Colors
+
 - Primary colors: `primary`, `primaryHover`, `primaryActive`
 - Secondary colors: `secondary`, `secondaryHover`
 - Semantic: `success`, `warning`, `error`, `info`
@@ -177,20 +178,25 @@ This allows you to preview your changes in a production-like environment before 
 - Text: `textPrimary`, `textSecondary`, `textDisabled`, `textInverse`
 
 ### Typography
+
 - Font sizes: `xs`, `sm`, `base`, `lg`, `xl`, `2xl`, `3xl`, `4xl`, `5xl`, `6xl`
 - Font weights: `light`, `normal`, `medium`, `semibold`, `bold`
 - Line heights: `tight`, `normal`, `relaxed`
 
 ### Spacing
+
 `xs`, `sm`, `md`, `lg`, `xl`, `2xl`, `3xl`
 
 ### Border Radius
+
 `none`, `sm`, `md`, `lg`, `full`
 
 ### Shadows
+
 `sm`, `md`, `lg`, `xl`
 
 ### Transitions
+
 `fast`, `normal`, `slow`
 
 ## 📝 License

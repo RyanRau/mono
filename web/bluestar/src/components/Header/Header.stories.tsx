@@ -10,24 +10,24 @@ const meta = {
   tags: ["autodocs"],
   argTypes: {
     level: {
-      control: 'select',
+      control: "select",
       options: [1, 2, 3, 4, 5, 6],
     },
     color: {
-      control: 'select',
-      options: ['primary', 'secondary', 'disabled', 'inverse'],
+      control: "select",
+      options: ["primary", "secondary", "disabled", "inverse"],
     },
     weight: {
-      control: 'select',
-      options: ['light', 'normal', 'medium', 'semibold', 'bold'],
+      control: "select",
+      options: ["light", "normal", "medium", "semibold", "bold"],
     },
     align: {
-      control: 'select',
-      options: ['left', 'center', 'right'],
+      control: "select",
+      options: ["left", "center", "right"],
     },
     marginBottom: {
-      control: 'select',
-      options: ['none', 'xs', 'sm', 'md', 'lg', 'xl'],
+      control: "select",
+      options: ["none", "xs", "sm", "md", "lg", "xl"],
     },
   },
 } satisfies Meta<typeof Header>;
@@ -104,7 +104,7 @@ export const Centered: Story = {
 
 // Showcase all heading levels together
 export const AllLevels = () => (
-  <div style={{ padding: '20px' }}>
+  <div style={{ padding: "20px" }}>
     <H1>Heading 1 - Main Title</H1>
     <H2>Heading 2 - Section Title</H2>
     <H3>Heading 3 - Subsection</H3>

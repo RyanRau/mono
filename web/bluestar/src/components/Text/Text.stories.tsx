@@ -10,24 +10,24 @@ const meta = {
   tags: ["autodocs"],
   argTypes: {
     variant: {
-      control: 'select',
-      options: ['body', 'bodyLarge', 'bodySmall', 'caption', 'overline'],
+      control: "select",
+      options: ["body", "bodyLarge", "bodySmall", "caption", "overline"],
     },
     color: {
-      control: 'select',
-      options: ['primary', 'secondary', 'disabled', 'inverse'],
+      control: "select",
+      options: ["primary", "secondary", "disabled", "inverse"],
     },
     weight: {
-      control: 'select',
-      options: ['light', 'normal', 'medium', 'semibold', 'bold'],
+      control: "select",
+      options: ["light", "normal", "medium", "semibold", "bold"],
     },
     align: {
-      control: 'select',
-      options: ['left', 'center', 'right'],
+      control: "select",
+      options: ["left", "center", "right"],
     },
     as: {
-      control: 'select',
-      options: ['span', 'p', 'div'],
+      control: "select",
+      options: ["span", "p", "div"],
     },
   },
 } satisfies Meta<typeof Text>;
