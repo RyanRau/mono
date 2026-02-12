@@ -120,7 +120,9 @@ if os.path.exists(TEST_CONFIG_PATH):
         }
         print(f"Test deployment: {test_app} → {test_fqdn}")
     elif test_app:
-        print(f"Warning: test app '{test_app}' not found in deploy.yml, skipping test overlay")
+        print(
+            f"Warning: test app '{test_app}' not found in deploy.yml, skipping test overlay"
+        )
 
 compose = {
     "version": "3.8",

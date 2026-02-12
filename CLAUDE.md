@@ -30,7 +30,7 @@ All deployment is config-driven via `deploy.yml` at the repo root. The CI pipeli
    ```yaml
    apps:
      new_app:
-       subdomain: "my-app"  # → my-app.ryanzrau.dev (use "" for root domain)
+       subdomain: "my-app" # → my-app.ryanzrau.dev (use "" for root domain)
        enabled: true
        port: 80
    ```
@@ -45,9 +45,11 @@ Any app can be deployed to a test subdomain from a feature branch without impact
 ### How to use
 
 1. Add `test-deploy.yml` to your feature branch:
+
    ```yaml
    app: bluestar
    ```
+
    The `app` value must match a key in `deploy.yml`.
 
 2. Push the branch, then go to **Actions > Test Deploy > Run workflow** and select the branch.
