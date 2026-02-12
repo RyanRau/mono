@@ -1,0 +1,60 @@
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, 120px);
+  grid-template-rows: repeat(3, 120px);
+  gap: 10px;
+  margin: 20px auto;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+}
+
+.square {
+  width: 120px;
+  height: 120px;
+  font-size: 48px;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  color: #667eea;
+}
+
+.square:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  background: #f0f0f0;
+}
+
+.square:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.square:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.square.filled {
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .board {
+    grid-template-columns: repeat(3, 90px);
+    grid-template-rows: repeat(3, 90px);
+    gap: 8px;
+    padding: 15px;
+  }
+
+  .square {
+    width: 90px;
+    height: 90px;
+    font-size: 36px;
+  }
+}
