@@ -1,7 +1,7 @@
 {
   "name": "bluestar",
   "version": "1.0.0",
-  "description": "(Ozark) Bluestar a react component library",
+  "description": "Lightweight React component library with goober styling and flexible theming",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
