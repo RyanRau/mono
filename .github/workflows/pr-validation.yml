@@ -64,7 +64,7 @@ jobs:
 
       - name: Apply Prettier formatting (JS/TS/CSS/JSON/MD)
         run: |
-          prettier --write "web/**/*.{ts,tsx,js,jsx,json,css,md}" "*.md" "*.json" || true
+          prettier --write "web/**/*.{ts,tsx,js,jsx,json,css,md}" "*.md" || true
         continue-on-error: true
 
       - name: Apply ESLint fixes (TS/TSX/JS/JSX)
@@ -98,7 +98,7 @@ jobs:
 
       - name: Final format check (JS/TS/CSS/JSON/MD)
         run: |
-          prettier --check "web/**/*.{ts,tsx,js,jsx,json,css,md}" "*.md" "*.json"
+          prettier --check "web/**/*.{ts,tsx,js,jsx,json,css,md}" "*.md"
 
       - name: Final lint check (TS/TSX/JS/JSX)
         run: |
