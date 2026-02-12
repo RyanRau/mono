@@ -71,7 +71,7 @@ for name, app in config.get("apps", {}).items():
             f"traefik.http.middlewares.{name}-security.headers.stsIncludeSubdomains=true",
             f"traefik.http.middlewares.{name}-security.headers.stsPreload=true",
             # Additional security headers
-            f"traefik.http.middlewares.{name}-security.headers.frameDeny=true",
+            f"traefik.http.middlewares.{name}-security.headers.customFrameOptionsValue=ALLOWALL",
             f"traefik.http.middlewares.{name}-security.headers.contentTypeNosniff=true",
             f"traefik.http.middlewares.{name}-security.headers.browserXssFilter=true",
             f"traefik.http.middlewares.{name}-security.headers.referrerPolicy=strict-origin-when-cross-origin",
