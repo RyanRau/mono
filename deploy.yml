@@ -1,12 +1,12 @@
 # deploy.yml — The control plane for deployments
 # Set enabled: true to deploy an app, false to take it offline
 
-domain: mydomain.com
+domain: ryanzrau.dev
 registry: ghcr.io/ryanrau/mono
-letsencrypt_email: me@mydomain.com
+letsencrypt_email: me@ryanzrau.dev
 
 apps:
-  ryanrau:
-    subdomain: ryanrau
+  ryanzrau:
+    subdomain: ""
     enabled: true
     port: 80

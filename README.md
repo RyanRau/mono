@@ -83,7 +83,7 @@
     │   ├── sources.md
     │   └── web_scraper.py
     └── web
-        └── ryanrau
+        └── ryanzrau
 ```
 
 ### Project Index
@@ -176,12 +176,12 @@
 		<blockquote>
 			<div class='directory-path' style='padding: 8px 0; color: #666;'>
 				<code><b>⦿ web</b></code>
-			<!-- ryanrau Submodule -->
+			<!-- ryanzrau Submodule -->
 			<details>
-				<summary><b>ryanrau</b></summary>
+				<summary><b>ryanzrau</b></summary>
 				<blockquote>
 					<div class='directory-path' style='padding: 8px 0; color: #666;'>
-						<code><b>⦿ web.ryanrau</b></code>
+						<code><b>⦿ web.ryanzrau</b></code>
 					<table style='width: 100%; border-collapse: collapse;'>
 					<thead>
 						<tr style='background-color: #f8f9fa;'>
@@ -190,23 +190,23 @@
 						</tr>
 					</thead>
 						<tr style='border-bottom: 1px solid #eee;'>
-							<td style='padding: 8px;'><b><a href='/web/ryanrau/Dockerfile'>Dockerfile</a></b></td>
+							<td style='padding: 8px;'><b><a href='/web/ryanzrau/Dockerfile'>Dockerfile</a></b></td>
 							<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
 						</tr>
 						<tr style='border-bottom: 1px solid #eee;'>
-							<td style='padding: 8px;'><b><a href='/web/ryanrau/nginx.conf'>nginx.conf</a></b></td>
+							<td style='padding: 8px;'><b><a href='/web/ryanzrau/nginx.conf'>nginx.conf</a></b></td>
 							<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
 						</tr>
 						<tr style='border-bottom: 1px solid #eee;'>
-							<td style='padding: 8px;'><b><a href='/web/ryanrau/package-lock.json'>package-lock.json</a></b></td>
+							<td style='padding: 8px;'><b><a href='/web/ryanzrau/package-lock.json'>package-lock.json</a></b></td>
 							<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
 						</tr>
 						<tr style='border-bottom: 1px solid #eee;'>
-							<td style='padding: 8px;'><b><a href='/web/ryanrau/package.json'>package.json</a></b></td>
+							<td style='padding: 8px;'><b><a href='/web/ryanzrau/package.json'>package.json</a></b></td>
 							<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
 						</tr>
 						<tr style='border-bottom: 1px solid #eee;'>
-							<td style='padding: 8px;'><b><a href='/web/ryanrau/tsconfig.json'>tsconfig.json</a></b></td>
+							<td style='padding: 8px;'><b><a href='/web/ryanzrau/tsconfig.json'>tsconfig.json</a></b></td>
 							<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
 						</tr>
 					</table>
@@ -215,7 +215,7 @@
 						<summary><b>public</b></summary>
 						<blockquote>
 							<div class='directory-path' style='padding: 8px 0; color: #666;'>
-								<code><b>⦿ web.ryanrau.public</b></code>
+								<code><b>⦿ web.ryanzrau.public</b></code>
 							<table style='width: 100%; border-collapse: collapse;'>
 							<thead>
 								<tr style='background-color: #f8f9fa;'>
@@ -224,7 +224,7 @@
 								</tr>
 							</thead>
 								<tr style='border-bottom: 1px solid #eee;'>
-									<td style='padding: 8px;'><b><a href='/web/ryanrau/public/index.html'>index.html</a></b></td>
+									<td style='padding: 8px;'><b><a href='/web/ryanzrau/public/index.html'>index.html</a></b></td>
 									<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
 								</tr>
 							</table>
@@ -235,7 +235,7 @@
 						<summary><b>src</b></summary>
 						<blockquote>
 							<div class='directory-path' style='padding: 8px 0; color: #666;'>
-								<code><b>⦿ web.ryanrau.src</b></code>
+								<code><b>⦿ web.ryanzrau.src</b></code>
 							<table style='width: 100%; border-collapse: collapse;'>
 							<thead>
 								<tr style='background-color: #f8f9fa;'>
@@ -244,15 +244,15 @@
 								</tr>
 							</thead>
 								<tr style='border-bottom: 1px solid #eee;'>
-									<td style='padding: 8px;'><b><a href='/web/ryanrau/src/react-app-env.d.ts'>react-app-env.d.ts</a></b></td>
+									<td style='padding: 8px;'><b><a href='/web/ryanzrau/src/react-app-env.d.ts'>react-app-env.d.ts</a></b></td>
 									<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
 								</tr>
 								<tr style='border-bottom: 1px solid #eee;'>
-									<td style='padding: 8px;'><b><a href='/web/ryanrau/src/index.tsx'>index.tsx</a></b></td>
+									<td style='padding: 8px;'><b><a href='/web/ryanzrau/src/index.tsx'>index.tsx</a></b></td>
 									<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
 								</tr>
 								<tr style='border-bottom: 1px solid #eee;'>
-									<td style='padding: 8px;'><b><a href='/web/ryanrau/src/App.tsx'>App.tsx</a></b></td>
+									<td style='padding: 8px;'><b><a href='/web/ryanzrau/src/App.tsx'>App.tsx</a></b></td>
 									<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
 								</tr>
 							</table>

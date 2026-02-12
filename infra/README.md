@@ -92,7 +92,10 @@ Point your domain (or subdomains) to the droplet.
 
 | Type | Name     | Value            |
 |------|----------|------------------|
-| A    | ryanrau  | YOUR_DROPLET_IP  |
+| A    | @        | YOUR_DROPLET_IP  |
+| A    | subdomain| YOUR_DROPLET_IP  |
+
+_(Use `@` for the root domain, or specific names for subdomains)_
 
 ## 5. Configure deploy.yml
 
@@ -104,10 +107,15 @@ registry: ghcr.io/ryanrau/mono
 letsencrypt_email: you@yourdomain.com
 
 apps:
-  ryanrau:
-    subdomain: ryanrau
+  ryanzrau:
+    subdomain: ""  # Empty string for root domain (yourdomain.com)
     enabled: true
     port: 80
+  # Example of a subdomain app (would be at subdomain.yourdomain.com):
+  # apping:
+  #   subdomain: app
+  #   enabled: true
+  #   port: 80
 ```
 
 ## 6. First Deploy
@@ -132,7 +140,7 @@ cd /opt/apps
 docker compose ps
 
 # View logs for a specific app
-docker compose logs -f ryanrau
+docker compose logs -f ryanzrau
 
 # View Traefik logs (routing issues)
 docker compose logs -f traefik
