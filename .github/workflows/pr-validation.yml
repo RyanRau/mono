@@ -101,12 +101,25 @@ jobs:
         run: npm run lint
 
       # Validate Docker builds
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
       - name: Build Docker images
         run: |
-          echo "Building ryanzrau Docker image..."
-          docker build -t ryanzrau:pr-test web/ryanzrau
+          # Get list of enabled apps from deploy.yml
+          ENABLED=$(yq '.apps | to_entries[] | select(.value.enabled == true) | .key' deploy.yml)
 
-          echo "Building bluestar Docker image..."
-          docker build -t bluestar:pr-test web/bluestar
+          echo "Building Docker images for enabled apps: $ENABLED"
+
+          for app in $ENABLED; do
+            if [ -f "web/${app}/Dockerfile" ]; then
+              echo "Building ${app} Docker image..."
+              docker build -t ${app}:pr-test web/${app}
+            else
+              echo "⚠️  Skipping ${app} (no Dockerfile found)"
+            fi
+          done
 
           echo "✅ All Docker images built successfully"
