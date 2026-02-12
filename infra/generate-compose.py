@@ -66,6 +66,17 @@ for name, app in config.get("apps", {}).items():
             f"traefik.http.routers.{name}.entrypoints=websecure",
             f"traefik.http.routers.{name}.tls.certresolver=le",
             f"traefik.http.services.{name}.loadbalancer.server.port={port}",
+            # HSTS middleware - enforce HTTPS for 1 year
+            f"traefik.http.middlewares.{name}-security.headers.stsSeconds=31536000",
+            f"traefik.http.middlewares.{name}-security.headers.stsIncludeSubdomains=true",
+            f"traefik.http.middlewares.{name}-security.headers.stsPreload=true",
+            # Additional security headers
+            f"traefik.http.middlewares.{name}-security.headers.frameDeny=true",
+            f"traefik.http.middlewares.{name}-security.headers.contentTypeNosniff=true",
+            f"traefik.http.middlewares.{name}-security.headers.browserXssFilter=true",
+            f"traefik.http.middlewares.{name}-security.headers.referrerPolicy=strict-origin-when-cross-origin",
+            # Apply security middleware to router
+            f"traefik.http.routers.{name}.middlewares={name}-security",
         ],
         "networks": ["web"],
     }
