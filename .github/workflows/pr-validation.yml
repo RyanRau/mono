@@ -4,16 +4,12 @@ on:
   pull_request:
 
 jobs:
-  validate-and-fix:
+  validate:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-python@v5
         with:
@@ -23,7 +19,7 @@ jobs:
         with:
           node-version: "20"
 
-      # Run security checks (informational only)
+      # Security checks (informational only)
       - name: Run bandit security scan
         run: |
           pip install bandit
@@ -44,7 +40,68 @@ jobs:
           fi
         continue-on-error: true
 
-      # Apply auto-fixes
+      # Lint and format checks (read-only, no auto-fixing)
+      - name: Lint check (Python)
+        uses: astral-sh/ruff-action@v3
+
+      - name: Format check (Python)
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "format --check"
+
+      - name: Install Node dependencies
+        run: npm install
+
+      - name: Format check (JS/TS/CSS/JSON/MD)
+        run: npm run format:check
+
+      - name: Lint check (TS/TSX/JS/JSX)
+        run: npm run lint
+
+      # Validate Docker builds
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Build Docker images
+        run: |
+          # Get list of enabled apps from deploy.yml
+          ENABLED=$(yq '.apps | to_entries[] | select(.value.enabled == true) | .key' deploy.yml)
+
+          echo "Building Docker images for enabled apps: $ENABLED"
+
+          for app in $ENABLED; do
+            if [ -f "web/${app}/Dockerfile" ]; then
+              echo "Building ${app} Docker image..."
+              docker build -t ${app}:pr-test web/${app}
+            else
+              echo "⚠️  Skipping ${app} (no Dockerfile found)"
+            fi
+          done
+
+          echo "✅ All Docker images built successfully"
+
+  autofix:
+    needs: validate
+    if: failure()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
       - name: Apply ruff formatting (Python)
         uses: astral-sh/ruff-action@v3
         with:
@@ -61,16 +118,11 @@ jobs:
         run: npm install
 
       - name: Apply Prettier formatting (JS/TS/CSS/JSON/MD)
-        run: |
-          npm run format || true
-        continue-on-error: true
+        run: npm run format || true
 
       - name: Apply ESLint fixes (TS/TSX/JS/JSX)
-        run: |
-          npm run lint:fix || true
-        continue-on-error: true
+        run: npm run lint:fix || true
 
-      # Commit fixes if any were made
       - name: Commit fixes to PR
         run: |
           git config --global user.name "github-actions[bot]"
@@ -80,33 +132,7 @@ jobs:
             git add -A
             git commit -m "style: auto-fix lint and formatting issues"
             git push
-            echo "✅ Auto-fixes committed to PR"
+            echo "✅ Auto-fixes committed to PR — please re-run checks"
           else
-            echo "✅ No fixes needed"
+            echo "⚠️ No auto-fixable changes found — manual fixes may be needed"
           fi
-
-      # Final validation (must pass)
-      - name: Final lint check (Python)
-        uses: astral-sh/ruff-action@v3
-
-      - name: Final format check (Python)
-        uses: astral-sh/ruff-action@v3
-        with:
-          args: "format --check"
-
-      - name: Final format check (JS/TS/CSS/JSON/MD)
-        run: npm run format:check
-
-      - name: Final lint check (TS/TSX/JS/JSX)
-        run: npm run lint
-
-      # Validate Docker builds
-      - name: Build Docker images
-        run: |
-          echo "Building ryanzrau Docker image..."
-          docker build -t ryanzrau:pr-test web/ryanzrau
-
-          echo "Building bluestar Docker image..."
-          docker build -t bluestar:pr-test web/bluestar
-
-          echo "✅ All Docker images built successfully"
