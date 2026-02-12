@@ -1,7 +1,12 @@
-const express = require("express");
-const { WebSocketServer } = require("ws");
-const path = require("path");
-const http = require("http");
+import express from "express";
+import { WebSocketServer } from "ws";
+import path from "path";
+import http from "http";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 const server = http.createServer(app);

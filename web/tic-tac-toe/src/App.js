@@ -7,7 +7,7 @@ function App() {
   const [sessionId, setSessionId] = useState("");
   const [joined, setJoined] = useState(false);
   const [playerSymbol, setPlayerSymbol] = useState("");
-  const [playerId, setPlayerId] = useState("");
+  const [_playerId, setPlayerId] = useState("");
   const [gameState, setGameState] = useState({
     board: Array(9).fill(null),
     currentPlayer: "X",
@@ -46,7 +46,7 @@ function App() {
       console.log("Received:", message);
 
       switch (message.type) {
-        case "joined":
+        case "joined": {
           setJoined(true);
           setPlayerSymbol(message.playerSymbol);
           setPlayerId(message.playerId);
@@ -55,6 +55,7 @@ function App() {
           window.history.pushState({}, "", newUrl);
           setError("");
           break;
+        }
 
         case "gameState":
           setGameState({
