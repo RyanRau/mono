@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import Card from "./Card";
 import { H3 } from "../Header";
-import Text from "../Text";
+import { Text } from "../Text";
 
 const meta = {
   title: "Bluestar/Card",
