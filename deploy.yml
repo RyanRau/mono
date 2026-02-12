@@ -10,3 +10,7 @@ apps:
     subdomain: ""
     enabled: true
     port: 80
+  bluestar:
+    subdomain: "ui"
+    enabled: true
+    port: 80
