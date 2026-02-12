@@ -1,0 +1,95 @@
+name: Test Deploy
+
+on:
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  REPO: ${{ github.repository }}
+
+jobs:
+  test-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Read test config
+        id: config
+        run: |
+          if [ ! -f test-deploy.yml ]; then
+            echo "::error::test-deploy.yml not found on this branch. Add it with an 'app' field to specify which app to test deploy."
+            exit 1
+          fi
+
+          APP=$(yq '.app' test-deploy.yml)
+          if [ -z "$APP" ] || [ "$APP" = "null" ]; then
+            echo "::error::No 'app' field found in test-deploy.yml"
+            exit 1
+          fi
+
+          # Validate the app exists in deploy.yml
+          ENABLED=$(yq ".apps.${APP}.enabled" deploy.yml)
+          if [ "$ENABLED" = "null" ]; then
+            echo "::error::App '${APP}' not found in deploy.yml"
+            exit 1
+          fi
+
+          echo "app=${APP}" >> $GITHUB_OUTPUT
+          echo "Test deploying app: ${APP}"
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push test image
+        run: |
+          APP="${{ steps.config.outputs.app }}"
+          IMAGE=$(echo "${{ env.REGISTRY }}/${{ env.REPO }}/${APP}:test" | tr '[:upper:]' '[:lower:]')
+          echo "=== Building ${APP} (test) ==="
+          docker build -t "$IMAGE" ./web/${APP}
+          docker push "$IMAGE"
+          echo "=== Pushed $IMAGE ==="
+
+      - name: Deploy to droplet
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DROPLET_IP }}
+          username: deploy
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/apps
+
+            # Pull latest main for prod config
+            git pull origin main
+
+            # Write active test config to the droplet (gitignored runtime file)
+            echo "app: ${{ steps.config.outputs.app }}" > test-deploy.active.yml
+
+            # Login to GHCR
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # Generate docker-compose.yml (picks up both deploy.yml and test-deploy.active.yml)
+            python3 infra/generate-compose.py
+
+            # Pull latest images and deploy
+            docker compose pull
+            docker compose up -d --remove-orphans
+
+            # Clean up old images
+            docker image prune -f
+
+            echo "=== Test deployment complete ==="
