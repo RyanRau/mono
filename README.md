@@ -303,6 +303,30 @@
 							<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
 						</tr>
 					</table>
+					<!-- .storybook Submodule -->
+					<details>
+						<summary><b>.storybook</b></summary>
+						<blockquote>
+							<div class='directory-path' style='padding: 8px 0; color: #666;'>
+								<code><b>⦿ web.bluestar..storybook</b></code>
+							<table style='width: 100%; border-collapse: collapse;'>
+							<thead>
+								<tr style='background-color: #f8f9fa;'>
+									<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
+									<th style='text-align: left; padding: 8px;'>Summary</th>
+								</tr>
+							</thead>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='/web/bluestar/.storybook/main.ts'>main.ts</a></b></td>
+									<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+								</tr>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='/web/bluestar/.storybook/preview.ts'>preview.ts</a></b></td>
+									<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+								</tr>
+							</table>
+						</blockquote>
+					</details>
 					<!-- src Submodule -->
 					<details>
 						<summary><b>src</b></summary>
