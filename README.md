@@ -17,6 +17,7 @@ Monorepo hosting web apps and services deployed to ryanzrau.dev via Docker and T
 ### Web Apps
 
 **ryanzrau (Main Site)**
+
 ```bash
 cd web/ryanzrau
 npm install
@@ -25,6 +26,7 @@ npm run build          # Production build
 ```
 
 **bluestar (Component Library)**
+
 ```bash
 cd web/bluestar
 npm install
@@ -55,6 +57,7 @@ python main.py --scrape-only # Scrape only, no AI
 ## Deployment
 
 Configured via `deploy.yml`. GitHub Actions automatically:
+
 1. Build Docker images for changed apps
 2. Push to GitHub Container Registry
 3. SSH to droplet and deploy via docker-compose
@@ -87,6 +90,7 @@ docker compose up -d
 ## DNS Setup
 
 Point DNS to droplet IP:
+
 - `ryanzrau.dev` → A record
 - `*.ryanzrau.dev` → A record (wildcard)
 

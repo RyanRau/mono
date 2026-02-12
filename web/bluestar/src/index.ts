@@ -1,4 +1,4 @@
 import "./styling";
 
-export * from "./components/Flexbox"
-export * from "./components/Button"
+export * from "./components/Flexbox";
+export * from "./components/Button";
