@@ -37,16 +37,12 @@ function App() {
   const [nextImageUrl, setNextImageUrl] = useState<string | null>(null);
   const [saying, setSaying] = useState("");
   const [fading, setFading] = useState(false);
-  const [sayingOrder, setSayingOrder] = useState<string[]>(() =>
-    shuffle(SAYINGS)
-  );
+  const [sayingOrder, setSayingOrder] = useState<string[]>(() => shuffle(SAYINGS));
   const [sayingIndex, setSayingIndex] = useState(0);
 
   const fetchDogImage = useCallback(async (): Promise<string | null> => {
     try {
-      const res = await fetch(
-        "https://dog.ceo/api/breed/retriever/golden/images/random"
-      );
+      const res = await fetch("https://dog.ceo/api/breed/retriever/golden/images/random");
       const data = await res.json();
       if (data.status === "success") {
         return data.message;
