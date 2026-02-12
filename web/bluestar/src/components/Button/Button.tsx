@@ -2,17 +2,14 @@ import { css } from "goober";
 
 type ButtonProps = {
   /** Button contents */
-  label: string,
-  onClick: () => void
-}
+  label: string;
+  onClick: () => void;
+};
 
-export default function Button({
-  label,
-  ...props  
-}: ButtonProps) {
+export default function Button({ label, ...props }: ButtonProps) {
   return (
-    <button   
-    className={css`
+    <button
+      className={css`
         border-radius: 4px;
         border: none;
         font-size: 14px;
@@ -25,11 +22,14 @@ export default function Button({
           box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.6);
         }
       `}
-    {...props}>
-      <span className={css` 
-        font-size: 14px;
-        color: #ffffff;
-      `}> 
+      {...props}
+    >
+      <span
+        className={css`
+          font-size: 14px;
+          color: #ffffff;
+        `}
+      >
         {label}
       </span>
     </button>

@@ -22,13 +22,12 @@ type Props = {
     | "space-between"
     | "space-around";
   alignItems?: "flex-start" | "flex-end" | "center" | "stretch" | "baseline";
-  width?: number | string,
-  height?: number | string,
+  width?: number | string;
+  height?: number | string;
   style?: object;
-}
+};
 
-export default function Flexbox(
-{
+export default function Flexbox({
   children,
   direction = "row",
   grow,
@@ -41,8 +40,7 @@ export default function Flexbox(
   width,
   height,
   style,
-}: Props
-): React.ReactElement {
+}: Props): React.ReactElement {
   const styles = useMemo(() => {
     return {
       flexBox: {
@@ -60,7 +58,19 @@ export default function Flexbox(
         ...style,
       },
     };
-  }, [alignContent, alignItems, direction, flexWrap, gap, grow, height, justifyContent, shrink, style, width]);
+  }, [
+    alignContent,
+    alignItems,
+    direction,
+    flexWrap,
+    gap,
+    grow,
+    height,
+    justifyContent,
+    shrink,
+    style,
+    width,
+  ]);
 
   return <div style={styles.flexBox}>{children}</div>;
 }
