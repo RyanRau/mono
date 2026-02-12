@@ -92,7 +92,7 @@ jobs:
 
             # Pull latest images and deploy
             docker compose pull
-            docker compose up -d --remove-orphans
+            docker compose up -d --force-recreate --remove-orphans
 
             # Clean up old images
             docker image prune -f
