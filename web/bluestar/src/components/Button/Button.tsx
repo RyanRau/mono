@@ -1,37 +1,62 @@
 import { css } from "goober";
+import { useTheme } from "../../theme";
 
-type ButtonProps = {
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Button contents */
   label: string;
-  onClick: () => void;
-};
+  /** Button variant */
+  variant?: 'primary' | 'secondary';
+}
 
-export default function Button({ label, ...props }: ButtonProps) {
+/**
+ * Button component with theme-aware styling.
+ *
+ * @example
+ * ```tsx
+ * <Button label="Click me" onClick={() => console.log('clicked')} />
+ * <Button label="Secondary" variant="secondary" onClick={() => {}} />
+ * ```
+ */
+export default function Button({ label, variant = 'primary', ...props }: ButtonProps) {
+  const { theme } = useTheme();
+
+  const isPrimary = variant === 'primary';
+
   return (
     <button
       className={css`
-        border-radius: 4px;
+        border-radius: ${theme.borderRadius.sm};
         border: none;
-        font-size: 14px;
-        color: #ffffff;
-        padding: 8px 20px;
+        font-size: ${theme.typography.fontSize.sm};
+        font-family: ${theme.typography.fontFamily};
+        font-weight: ${theme.typography.fontWeight.medium};
+        color: ${isPrimary ? theme.colors.textInverse : theme.colors.textPrimary};
+        padding: ${theme.spacing.sm} ${theme.spacing.lg};
         display: inline-block;
-        background-color: #7da7d9;
+        background-color: ${isPrimary ? theme.colors.primary : theme.colors.secondary};
+        cursor: pointer;
+        transition: all ${theme.transitions.fast};
 
         &:hover {
-          box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.6);
+          background-color: ${isPrimary ? theme.colors.primaryHover : theme.colors.secondaryHover};
+          box-shadow: ${theme.shadows.md};
+        }
+
+        &:active {
+          background-color: ${isPrimary ? theme.colors.primaryActive : theme.colors.secondaryHover};
+          box-shadow: ${theme.shadows.sm};
+        }
+
+        &:disabled {
+          background-color: ${theme.colors.surfaceHover};
+          color: ${theme.colors.textDisabled};
+          cursor: not-allowed;
+          box-shadow: none;
         }
       `}
       {...props}
     >
-      <span
-        className={css`
-          font-size: 14px;
-          color: #ffffff;
-        `}
-      >
-        {label}
-      </span>
+      {label}
     </button>
   );
 }
