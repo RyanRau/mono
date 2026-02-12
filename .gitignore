@@ -208,6 +208,7 @@ __marimo__/
 
 # Node
 node_modules/
+storybook-static/
 
 # Docker
 docker-compose.yml
