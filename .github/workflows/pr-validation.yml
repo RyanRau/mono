@@ -1,0 +1,78 @@
+name: PR Validation
+
+on:
+  pull_request:
+
+jobs:
+  validate-and-fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Run security checks (informational only)
+      - name: Run bandit security scan
+        run: |
+          pip install bandit
+          bandit -r . -x './.venv,./node_modules,./.git' --severity-level medium
+        continue-on-error: true
+
+      - name: Audit dependencies
+        run: |
+          pip install pip-audit
+          found=false
+          for req in $(find . -name 'requirements*.txt' -not -path './.venv/*'); do
+            echo "Auditing $req"
+            pip-audit -r "$req" || true
+            found=true
+          done
+          if [ "$found" = false ]; then
+            echo "No requirements files found, skipping"
+          fi
+        continue-on-error: true
+
+      # Apply auto-fixes
+      - name: Apply ruff formatting
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "format"
+        continue-on-error: true
+
+      - name: Apply ruff lint fixes
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "check --fix"
+        continue-on-error: true
+
+      # Commit fixes if any were made
+      - name: Commit fixes to PR
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit -m "style: auto-fix lint and formatting issues"
+            git push
+            echo "✅ Auto-fixes committed to PR"
+          else
+            echo "✅ No fixes needed"
+          fi
+
+      # Final validation (must pass)
+      - name: Final lint check
+        uses: astral-sh/ruff-action@v3
+
+      - name: Final format check
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "format --check"
