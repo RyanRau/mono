@@ -19,6 +19,10 @@ jobs:
         with:
           python-version: "3.12"
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
       # Run security checks (informational only)
       - name: Run bandit security scan
         run: |
@@ -41,16 +45,24 @@ jobs:
         continue-on-error: true
 
       # Apply auto-fixes
-      - name: Apply ruff formatting
+      - name: Apply ruff formatting (Python)
         uses: astral-sh/ruff-action@v3
         with:
           args: "format"
         continue-on-error: true
 
-      - name: Apply ruff lint fixes
+      - name: Apply ruff lint fixes (Python)
         uses: astral-sh/ruff-action@v3
         with:
           args: "check --fix"
+        continue-on-error: true
+
+      - name: Install Prettier
+        run: npm install -g prettier
+
+      - name: Apply Prettier formatting (JS/TS/CSS/JSON/MD)
+        run: |
+          prettier --write "web/**/*.{ts,tsx,js,jsx,json,css,md}" "*.md" "*.json" || true
         continue-on-error: true
 
       # Commit fixes if any were made
@@ -69,13 +81,17 @@ jobs:
           fi
 
       # Final validation (must pass)
-      - name: Final lint check
+      - name: Final lint check (Python)
         uses: astral-sh/ruff-action@v3
 
-      - name: Final format check
+      - name: Final format check (Python)
         uses: astral-sh/ruff-action@v3
         with:
           args: "format --check"
+
+      - name: Final format check (JS/TS/CSS/JSON/MD)
+        run: |
+          prettier --check "web/**/*.{ts,tsx,js,jsx,json,css,md}" "*.md" "*.json"
 
       # Validate Docker builds
       - name: Build Docker images
