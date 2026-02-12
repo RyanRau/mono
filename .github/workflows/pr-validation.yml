@@ -1,0 +1,116 @@
+name: PR Validation
+
+on:
+  pull_request:
+
+jobs:
+  validate-and-fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # Run security checks (informational only)
+      - name: Run bandit security scan
+        run: |
+          pip install bandit
+          bandit -r . -x './.venv,./node_modules,./.git' --severity-level medium
+        continue-on-error: true
+
+      - name: Audit dependencies
+        run: |
+          pip install pip-audit
+          found=false
+          for req in $(find . -name 'requirements*.txt' -not -path './.venv/*'); do
+            echo "Auditing $req"
+            pip-audit -r "$req" || true
+            found=true
+          done
+          if [ "$found" = false ]; then
+            echo "No requirements files found, skipping"
+          fi
+        continue-on-error: true
+
+      # Apply auto-fixes
+      - name: Apply ruff formatting (Python)
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "format"
+        continue-on-error: true
+
+      - name: Apply ruff lint fixes (Python)
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "check --fix"
+        continue-on-error: true
+
+      - name: Install Prettier and ESLint
+        run: |
+          npm install -g prettier
+          npm install -g eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint-plugin-react eslint-plugin-react-hooks
+
+      - name: Apply Prettier formatting (JS/TS/CSS/JSON/MD)
+        run: |
+          prettier --write "web/**/*.{ts,tsx,js,jsx,json,css,md}" "*.md" "*.json" || true
+        continue-on-error: true
+
+      - name: Apply ESLint fixes (TS/TSX/JS/JSX)
+        run: |
+          eslint --fix "web/**/*.{ts,tsx,js,jsx}" || true
+        continue-on-error: true
+
+      # Commit fixes if any were made
+      - name: Commit fixes to PR
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit -m "style: auto-fix lint and formatting issues"
+            git push
+            echo "✅ Auto-fixes committed to PR"
+          else
+            echo "✅ No fixes needed"
+          fi
+
+      # Final validation (must pass)
+      - name: Final lint check (Python)
+        uses: astral-sh/ruff-action@v3
+
+      - name: Final format check (Python)
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "format --check"
+
+      - name: Final format check (JS/TS/CSS/JSON/MD)
+        run: |
+          prettier --check "web/**/*.{ts,tsx,js,jsx,json,css,md}" "*.md" "*.json"
+
+      - name: Final lint check (TS/TSX/JS/JSX)
+        run: |
+          eslint "web/**/*.{ts,tsx,js,jsx}"
+
+      # Validate Docker builds
+      - name: Build Docker images
+        run: |
+          echo "Building ryanzrau Docker image..."
+          docker build -t ryanzrau:pr-test web/ryanzrau
+
+          echo "Building bluestar Docker image..."
+          docker build -t bluestar:pr-test web/bluestar
+
+          echo "✅ All Docker images built successfully"

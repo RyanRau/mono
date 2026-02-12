@@ -1,0 +1,10 @@
+node_modules
+build
+dist
+.venv
+.git
+*.lock
+package-lock.json
+coverage
+.storybook-static
+docker-compose.yml
