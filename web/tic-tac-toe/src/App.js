@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
-import Board from "./Board";
+import Board from "./Board.js";
 
 function App() {
   const [ws, setWs] = useState(null);
