@@ -168,3 +168,58 @@ Traefik uses ~30MB RAM.
 - HTTP automatically redirects to HTTPS
 - Let's Encrypt certificates auto-renew
 - Consider adding UFW firewall rules: `ufw allow 22,80,443/tcp`
+
+## Test Subdomain Deployments
+
+You can deploy any app to a test subdomain from a feature branch without impacting production. This lets you preview changes on a real URL before merging.
+
+### How it works
+
+1. A `test-deploy.yml` file in your branch declares which app to test
+2. The **Test Deploy** workflow builds that app from your branch and pushes it with a `:test` image tag
+3. On the droplet, a `test-deploy.active.yml` runtime file is written (gitignored) so `generate-compose.py` adds a test service alongside all prod services
+4. On PR merge to main, the **Test Cleanup** workflow removes the test service automatically
+
+### Test subdomain naming
+
+The test subdomain is derived from the app's prod subdomain:
+
+| App        | Prod URL                | Test URL                     |
+|------------|-------------------------|------------------------------|
+| `ryanzrau` | `ryanzrau.dev`          | `test.ryanzrau.dev`          |
+| `bluestar` | `ui.ryanzrau.dev`       | `test-ui.ryanzrau.dev`       |
+| `be_mine`  | `be-mine.ryanzrau.dev`  | `test-be-mine.ryanzrau.dev`  |
+
+No DNS changes are needed — the wildcard `*.ryanzrau.dev` record covers all test subdomains.
+
+### Step by step
+
+**1. Add `test-deploy.yml` to your branch:**
+
+```yaml
+app: bluestar
+```
+
+The `app` value must match a key in `deploy.yml`.
+
+**2. Push your branch and trigger the workflow:**
+
+Go to **Actions > Test Deploy > Run workflow**, then select your branch from the dropdown.
+
+**3. Visit the test URL:**
+
+Your branch version is now live at the test subdomain (e.g., `test-ui.ryanzrau.dev`).
+
+**4. Iterate:**
+
+Push more changes to the branch, then re-run the Test Deploy workflow to update the test deployment.
+
+**5. Merge to main:**
+
+When your PR is merged, the **Test Cleanup** workflow runs automatically. It removes `test-deploy.active.yml` from the droplet, regenerates the compose file, and redeploys — the test container is removed by `--remove-orphans`.
+
+### Limitations
+
+- Only one test deployment can be active at a time (one `test-deploy.active.yml` on the droplet)
+- The test deploy workflow must be triggered manually — it does not run on push
+- If a prod deploy (`push to main`) happens while a test is active, the test service will persist because `test-deploy.active.yml` remains on the droplet
