@@ -1,0 +1,5 @@
+# Test Deploy Configuration
+# This file tells the test-deploy workflow which app to deploy for testing
+# Trigger test deployment via GitHub Actions workflow_dispatch
+
+app: bluestar

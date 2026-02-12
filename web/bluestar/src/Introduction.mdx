@@ -1,0 +1,82 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Getting Started/Introduction" />
+
+# Bluestar Component Library
+
+Welcome to **Bluestar**, a lightweight React component library built with [goober](https://github.com/cristianbote/goober) for CSS-in-JS styling and a flexible theming system.
+
+## 🎨 Interactive Theme Switcher
+
+Click the **paintbrush icon** in the toolbar (top right) to switch between different theme presets:
+
+- 🔵 **Default (Blue)** - Original blue theme
+- 🌙 **Dark** - Dark mode with light text on dark backgrounds
+- 💜 **Purple** - Purple accent colors
+- 🌿 **Green** - Green/nature theme
+- 🌅 **Warm (Orange)** - Warm orange tones
+
+All components automatically update to reflect the selected theme!
+
+## 📚 Features
+
+- **Flexible Theming** - Comprehensive theme tokens covering colors, typography, spacing, shadows, and border radii
+- **Lightweight** - Built on goober (under 1kb gzipped) for minimal bundle impact
+- **Type-Safe** - Full TypeScript support with exported types
+- **Tree-Shakeable** - Only bundle what you use
+- **Framework-Agnostic** - goober works with React, Preact, and more
+
+## 🚀 Quick Start
+
+```tsx
+import { ThemeProvider, Button, Card, defaultTheme } from 'bluestar';
+
+function App() {
+  return (
+    <ThemeProvider theme={defaultTheme}>
+      <Card>
+        <Button variant="primary">Click me</Button>
+      </Card>
+    </ThemeProvider>
+  );
+}
+```
+
+## 🎯 Components
+
+Explore the component library using the sidebar navigation:
+
+- **Theme** - View all theme tokens and color palettes
+- **Components** - Interactive examples of all available components
+  - Button - Multiple variants and sizes
+  - Card - Container component with surface styling
+  - Header - Semantic heading levels (h1-h6)
+  - Text - Typography variants
+  - Flexbox - Layout utility component
+
+## 🔧 Custom Themes
+
+Create your own theme by extending the default:
+
+```tsx
+import { ThemeProvider, defaultTheme, type Theme } from 'bluestar';
+
+const customTheme: Theme = {
+  ...defaultTheme,
+  colors: {
+    ...defaultTheme.colors,
+    primary: '#ff6b6b',
+    primaryHover: '#ff5252',
+  },
+};
+```
+
+## 📖 Resources
+
+- **Installation:** `npm install bluestar goober react`
+- **Repository:** [github.com/ryanrau/mono](https://github.com/ryanrau/mono/tree/main/web/bluestar)
+- **Live Demo:** [ui.ryanzrau.dev](https://ui.ryanzrau.dev)
+
+---
+
+**Try switching themes now!** Click the paintbrush icon in the toolbar and see how all components adapt to different color schemes.
