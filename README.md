@@ -19,11 +19,15 @@
 <img src="https://img.shields.io/badge/Anthropic-191919.svg?style=flat-square&logo=Anthropic&logoColor=white" alt="Anthropic">
 <img src="https://img.shields.io/badge/npm-CB3837.svg?style=flat-square&logo=npm&logoColor=white" alt="npm">
 <img src="https://img.shields.io/badge/React-61DAFB.svg?style=flat-square&logo=React&logoColor=black" alt="React">
-<br>
 <img src="https://img.shields.io/badge/Docker-2496ED.svg?style=flat-square&logo=Docker&logoColor=white" alt="Docker">
 <img src="https://img.shields.io/badge/Python-3776AB.svg?style=flat-square&logo=Python&logoColor=white" alt="Python">
+<br>
 <img src="https://img.shields.io/badge/TypeScript-3178C6.svg?style=flat-square&logo=TypeScript&logoColor=white" alt="TypeScript">
 <img src="https://img.shields.io/badge/GitHub%20Actions-2088FF.svg?style=flat-square&logo=GitHub-Actions&logoColor=white" alt="GitHub%20Actions">
+<img src="https://img.shields.io/badge/MDX-1B1F24.svg?style=flat-square&logo=MDX&logoColor=white" alt="MDX">
+<img src="https://img.shields.io/badge/Vite-646CFF.svg?style=flat-square&logo=Vite&logoColor=white" alt="Vite">
+<img src="https://img.shields.io/badge/CSS-663399.svg?style=flat-square&logo=CSS&logoColor=white" alt="CSS">
+<img src="https://img.shields.io/badge/Storybook-FF4785.svg?style=flat-square&logo=Storybook&logoColor=white" alt="Storybook">
 
 </div>
 <br>
@@ -83,6 +87,7 @@
     │   ├── sources.md
     │   └── web_scraper.py
     └── web
+        ├── bluestar
         └── ryanzrau
 ```
 
@@ -260,6 +265,186 @@
 					</details>
 				</blockquote>
 			</details>
+			<!-- bluestar Submodule -->
+			<details>
+				<summary><b>bluestar</b></summary>
+				<blockquote>
+					<div class='directory-path' style='padding: 8px 0; color: #666;'>
+						<code><b>⦿ web.bluestar</b></code>
+					<table style='width: 100%; border-collapse: collapse;'>
+					<thead>
+						<tr style='background-color: #f8f9fa;'>
+							<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
+							<th style='text-align: left; padding: 8px;'>Summary</th>
+						</tr>
+					</thead>
+						<tr style='border-bottom: 1px solid #eee;'>
+							<td style='padding: 8px;'><b><a href='/web/bluestar/Dockerfile'>Dockerfile</a></b></td>
+							<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+						</tr>
+						<tr style='border-bottom: 1px solid #eee;'>
+							<td style='padding: 8px;'><b><a href='/web/bluestar/nginx.conf'>nginx.conf</a></b></td>
+							<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+						</tr>
+						<tr style='border-bottom: 1px solid #eee;'>
+							<td style='padding: 8px;'><b><a href='/web/bluestar/tsup.config.ts'>tsup.config.ts</a></b></td>
+							<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+						</tr>
+						<tr style='border-bottom: 1px solid #eee;'>
+							<td style='padding: 8px;'><b><a href='/web/bluestar/package-lock.json'>package-lock.json</a></b></td>
+							<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+						</tr>
+						<tr style='border-bottom: 1px solid #eee;'>
+							<td style='padding: 8px;'><b><a href='/web/bluestar/package.json'>package.json</a></b></td>
+							<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+						</tr>
+						<tr style='border-bottom: 1px solid #eee;'>
+							<td style='padding: 8px;'><b><a href='/web/bluestar/tsconfig.json'>tsconfig.json</a></b></td>
+							<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+						</tr>
+					</table>
+					<!-- src Submodule -->
+					<details>
+						<summary><b>src</b></summary>
+						<blockquote>
+							<div class='directory-path' style='padding: 8px 0; color: #666;'>
+								<code><b>⦿ web.bluestar.src</b></code>
+							<table style='width: 100%; border-collapse: collapse;'>
+							<thead>
+								<tr style='background-color: #f8f9fa;'>
+									<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
+									<th style='text-align: left; padding: 8px;'>Summary</th>
+								</tr>
+							</thead>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='/web/bluestar/src/index.ts'>index.ts</a></b></td>
+									<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+								</tr>
+								<tr style='border-bottom: 1px solid #eee;'>
+									<td style='padding: 8px;'><b><a href='/web/bluestar/src/styling.ts'>styling.ts</a></b></td>
+									<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+								</tr>
+							</table>
+							<!-- stories Submodule -->
+							<details>
+								<summary><b>stories</b></summary>
+								<blockquote>
+									<div class='directory-path' style='padding: 8px 0; color: #666;'>
+										<code><b>⦿ web.bluestar.src.stories</b></code>
+									<table style='width: 100%; border-collapse: collapse;'>
+									<thead>
+										<tr style='background-color: #f8f9fa;'>
+											<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
+											<th style='text-align: left; padding: 8px;'>Summary</th>
+										</tr>
+									</thead>
+										<tr style='border-bottom: 1px solid #eee;'>
+											<td style='padding: 8px;'><b><a href='/web/bluestar/src/stories/Button.stories.ts'>Button.stories.ts</a></b></td>
+											<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+										</tr>
+										<tr style='border-bottom: 1px solid #eee;'>
+											<td style='padding: 8px;'><b><a href='/web/bluestar/src/stories/header.css'>header.css</a></b></td>
+											<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+										</tr>
+										<tr style='border-bottom: 1px solid #eee;'>
+											<td style='padding: 8px;'><b><a href='/web/bluestar/src/stories/Configure.mdx'>Configure.mdx</a></b></td>
+											<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+										</tr>
+										<tr style='border-bottom: 1px solid #eee;'>
+											<td style='padding: 8px;'><b><a href='/web/bluestar/src/stories/Page.stories.ts'>Page.stories.ts</a></b></td>
+											<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+										</tr>
+										<tr style='border-bottom: 1px solid #eee;'>
+											<td style='padding: 8px;'><b><a href='/web/bluestar/src/stories/Button.tsx'>Button.tsx</a></b></td>
+											<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+										</tr>
+										<tr style='border-bottom: 1px solid #eee;'>
+											<td style='padding: 8px;'><b><a href='/web/bluestar/src/stories/page.css'>page.css</a></b></td>
+											<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+										</tr>
+										<tr style='border-bottom: 1px solid #eee;'>
+											<td style='padding: 8px;'><b><a href='/web/bluestar/src/stories/Header.tsx'>Header.tsx</a></b></td>
+											<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+										</tr>
+										<tr style='border-bottom: 1px solid #eee;'>
+											<td style='padding: 8px;'><b><a href='/web/bluestar/src/stories/Page.tsx'>Page.tsx</a></b></td>
+											<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+										</tr>
+										<tr style='border-bottom: 1px solid #eee;'>
+											<td style='padding: 8px;'><b><a href='/web/bluestar/src/stories/button.css'>button.css</a></b></td>
+											<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+										</tr>
+										<tr style='border-bottom: 1px solid #eee;'>
+											<td style='padding: 8px;'><b><a href='/web/bluestar/src/stories/Header.stories.ts'>Header.stories.ts</a></b></td>
+											<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+										</tr>
+									</table>
+								</blockquote>
+							</details>
+							<!-- components Submodule -->
+							<details>
+								<summary><b>components</b></summary>
+								<blockquote>
+									<div class='directory-path' style='padding: 8px 0; color: #666;'>
+										<code><b>⦿ web.bluestar.src.components</b></code>
+									<!-- Flexbox Submodule -->
+									<details>
+										<summary><b>Flexbox</b></summary>
+										<blockquote>
+											<div class='directory-path' style='padding: 8px 0; color: #666;'>
+												<code><b>⦿ web.bluestar.src.components.Flexbox</b></code>
+											<table style='width: 100%; border-collapse: collapse;'>
+											<thead>
+												<tr style='background-color: #f8f9fa;'>
+													<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
+													<th style='text-align: left; padding: 8px;'>Summary</th>
+												</tr>
+											</thead>
+												<tr style='border-bottom: 1px solid #eee;'>
+													<td style='padding: 8px;'><b><a href='/web/bluestar/src/components/Flexbox/Flexbox.tsx'>Flexbox.tsx</a></b></td>
+													<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+												</tr>
+												<tr style='border-bottom: 1px solid #eee;'>
+													<td style='padding: 8px;'><b><a href='/web/bluestar/src/components/Flexbox/index.ts'>index.ts</a></b></td>
+													<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+												</tr>
+											</table>
+										</blockquote>
+									</details>
+									<!-- Button Submodule -->
+									<details>
+										<summary><b>Button</b></summary>
+										<blockquote>
+											<div class='directory-path' style='padding: 8px 0; color: #666;'>
+												<code><b>⦿ web.bluestar.src.components.Button</b></code>
+											<table style='width: 100%; border-collapse: collapse;'>
+											<thead>
+												<tr style='background-color: #f8f9fa;'>
+													<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
+													<th style='text-align: left; padding: 8px;'>Summary</th>
+												</tr>
+											</thead>
+												<tr style='border-bottom: 1px solid #eee;'>
+													<td style='padding: 8px;'><b><a href='/web/bluestar/src/components/Button/index.ts'>index.ts</a></b></td>
+													<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+												</tr>
+												<tr style='border-bottom: 1px solid #eee;'>
+													<td style='padding: 8px;'><b><a href='/web/bluestar/src/components/Button/Button.tsx'>Button.tsx</a></b></td>
+													<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+												</tr>
+												<tr style='border-bottom: 1px solid #eee;'>
+													<td style='padding: 8px;'><b><a href='/web/bluestar/src/components/Button/Button.stories.tsx'>Button.stories.tsx</a></b></td>
+													<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
+												</tr>
+											</table>
+										</blockquote>
+									</details>
+								</blockquote>
+							</details>
+						</blockquote>
+					</details>
+				</blockquote>
+			</details>
 		</blockquote>
 	</details>
 	<!-- .github Submodule -->
@@ -324,7 +509,7 @@
 
 This project requires the following dependencies:
 
-- **Programming Language:** Python
+- **Programming Language:** TypeScript
 - **Package Manager:** Pip, Npm
 - **Container Runtime:** Docker
 
@@ -360,24 +545,24 @@ Build  from the source and intsall dependencies:
 <!-- SHIELDS BADGE CURRENTLY DISABLED -->
 	<!-- [![pip][pip-shield]][pip-link] -->
 	<!-- REFERENCE LINKS -->
-	<!-- [pip-shield]: https://img.shields.io/badge/Pip-3776AB.svg?style={badge_style}&logo=pypi&logoColor=white -->
-	<!-- [pip-link]: https://pypi.org/project/pip/ -->
+	<!-- [pip-shield]: None -->
+	<!-- [pip-link]: None -->
 
-	**Using [pip](https://pypi.org/project/pip/):**
+	**Using [pip](None):**
 
 	```sh
-	❯ pip install -r local-event-digest/requirements.txt
+	❯ echo 'INSERT-INSTALL-COMMAND-HERE'
 	```
 <!-- SHIELDS BADGE CURRENTLY DISABLED -->
 	<!-- [![npm][npm-shield]][npm-link] -->
 	<!-- REFERENCE LINKS -->
-	<!-- [npm-shield]: None -->
-	<!-- [npm-link]: None -->
+	<!-- [npm-shield]: https://img.shields.io/badge/npm-CB3837.svg?style={badge_style}&logo=npm&logoColor=white -->
+	<!-- [npm-link]: https://www.npmjs.com/ -->
 
-	**Using [npm](None):**
+	**Using [npm](https://www.npmjs.com/):**
 
 	```sh
-	❯ echo 'INSERT-INSTALL-COMMAND-HERE'
+	❯ npm install
 	```
 
 ### Usage
@@ -388,26 +573,26 @@ Run the project with:
 ```sh
 docker run -it {image_name}
 ```
-**Using [pip](https://pypi.org/project/pip/):**
-```sh
-python {entrypoint}
-```
-**Using [npm](None):**
+**Using [pip](None):**
 ```sh
 echo 'INSERT-RUN-COMMAND-HERE'
+```
+**Using [npm](https://www.npmjs.com/):**
+```sh
+npm start
 ```
 
 ### Testing
 
  uses the {__test_framework__} test framework. Run the test suite with:
 
-**Using [pip](https://pypi.org/project/pip/):**
-```sh
-pytest
-```
-**Using [npm](None):**
+**Using [pip](None):**
 ```sh
 echo 'INSERT-TEST-COMMAND-HERE'
+```
+**Using [npm](https://www.npmjs.com/):**
+```sh
+npm test
 ```
 
 ---
