@@ -26,6 +26,8 @@
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "goober": "^2.1.18",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "storybook": "^10.0.7",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
