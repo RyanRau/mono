@@ -76,3 +76,14 @@ jobs:
         uses: astral-sh/ruff-action@v3
         with:
           args: "format --check"
+
+      # Validate Docker builds
+      - name: Build Docker images
+        run: |
+          echo "Building ryanzrau Docker image..."
+          docker build -t ryanzrau:pr-test web/ryanzrau
+
+          echo "Building bluestar Docker image..."
+          docker build -t bluestar:pr-test web/bluestar
+
+          echo "✅ All Docker images built successfully"
