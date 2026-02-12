@@ -1,79 +1,81 @@
-import React, { useState, useEffect, useRef } from 'react';
-import './App.css';
-import Board from './Board';
+import React, { useState, useEffect, useRef } from "react";
+import "./App.css";
+import Board from "./Board";
 
 function App() {
   const [ws, setWs] = useState(null);
-  const [sessionId, setSessionId] = useState('');
+  const [sessionId, setSessionId] = useState("");
   const [joined, setJoined] = useState(false);
-  const [playerSymbol, setPlayerSymbol] = useState('');
-  const [playerId, setPlayerId] = useState('');
+  const [playerSymbol, setPlayerSymbol] = useState("");
+  const [playerId, setPlayerId] = useState("");
   const [gameState, setGameState] = useState({
     board: Array(9).fill(null),
-    currentPlayer: 'X',
+    currentPlayer: "X",
     winner: null,
     gameOver: false,
-    playersCount: 0
+    playersCount: 0,
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const wsRef = useRef(null);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const urlSessionId = urlParams.get('session');
+    const urlSessionId = urlParams.get("session");
     if (urlSessionId) {
       setSessionId(urlSessionId);
     }
   }, []);
 
   const connect = (sessionToJoin) => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${protocol}//${window.location.host}/ws`;
     const websocket = new WebSocket(wsUrl);
 
     websocket.onopen = () => {
-      console.log('Connected to server');
-      websocket.send(JSON.stringify({
-        type: 'join',
-        sessionId: sessionToJoin || ''
-      }));
+      console.log("Connected to server");
+      websocket.send(
+        JSON.stringify({
+          type: "join",
+          sessionId: sessionToJoin || "",
+        })
+      );
     };
 
     websocket.onmessage = (event) => {
       const message = JSON.parse(event.data);
-      console.log('Received:', message);
+      console.log("Received:", message);
 
       switch (message.type) {
-        case 'joined':
+        case "joined":
           setJoined(true);
           setPlayerSymbol(message.playerSymbol);
           setPlayerId(message.playerId);
           setSessionId(message.sessionId);
           const newUrl = `${window.location.pathname}?session=${message.sessionId}`;
-          window.history.pushState({}, '', newUrl);
-          setError('');
+          window.history.pushState({}, "", newUrl);
+          setError("");
           break;
 
-        case 'gameState':
+        case "gameState":
           setGameState({
             board: message.board,
             currentPlayer: message.currentPlayer,
             winner: message.winner,
             gameOver: message.gameOver,
-            playersCount: message.playersCount
+            playersCount: message.playersCount,
           });
           break;
 
-        case 'playerLeft':
-          setGameState(prev => ({
+        case "playerLeft":
+          setGameState((prev) => ({
             ...prev,
-            playersCount: message.playersCount
+            playersCount: message.playersCount,
           }));
           break;
 
-        case 'error':
+        case "error":
           setError(message.message);
-          setTimeout(() => setError(''), 3000);
+          setTimeout(() => setError(""), 3000);
           break;
 
         default:
@@ -82,12 +84,12 @@ function App() {
     };
 
     websocket.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      setError('Connection error');
+      console.error("WebSocket error:", error);
+      setError("Connection error");
     };
 
     websocket.onclose = () => {
-      console.log('Disconnected from server');
+      console.log("Disconnected from server");
       setJoined(false);
       setWs(null);
     };
@@ -103,28 +105,32 @@ function App() {
 
   const handleMove = (position) => {
     if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({
-        type: 'move',
-        sessionId: sessionId,
-        position: position
-      }));
+      ws.send(
+        JSON.stringify({
+          type: "move",
+          sessionId: sessionId,
+          position: position,
+        })
+      );
     }
   };
 
   const handleReset = () => {
     if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({
-        type: 'reset',
-        sessionId: sessionId
-      }));
+      ws.send(
+        JSON.stringify({
+          type: "reset",
+          sessionId: sessionId,
+        })
+      );
     }
   };
 
   const copySessionLink = () => {
     const link = `${window.location.origin}${window.location.pathname}?session=${sessionId}`;
     navigator.clipboard.writeText(link);
-    setError('Link copied to clipboard!');
-    setTimeout(() => setError(''), 2000);
+    setError("Link copied to clipboard!");
+    setTimeout(() => setError(""), 2000);
   };
 
   if (!joined) {
@@ -156,8 +162,12 @@ function App() {
         <div className="game-header">
           <h1>Tic-Tac-Toe</h1>
           <div className="player-info">
-            <p>You are: <strong>{playerSymbol}</strong></p>
-            <p>Players: <strong>{gameState.playersCount}/2</strong></p>
+            <p>
+              You are: <strong>{playerSymbol}</strong>
+            </p>
+            <p>
+              Players: <strong>{gameState.playersCount}/2</strong>
+            </p>
           </div>
           <div className="session-info">
             <p>Session: {sessionId}</p>
@@ -168,27 +178,27 @@ function App() {
         </div>
 
         {gameState.playersCount < 2 && (
-          <div className="waiting">
-            Waiting for opponent to join...
-          </div>
+          <div className="waiting">Waiting for opponent to join...</div>
         )}
 
         <Board
           board={gameState.board}
           onMove={handleMove}
-          disabled={gameState.playersCount < 2 ||
-                   gameState.gameOver ||
-                   gameState.currentPlayer !== playerSymbol}
+          disabled={
+            gameState.playersCount < 2 ||
+            gameState.gameOver ||
+            gameState.currentPlayer !== playerSymbol
+          }
         />
 
         <div className="game-status">
           {gameState.gameOver ? (
             <>
-              {gameState.winner === 'draw' ? (
+              {gameState.winner === "draw" ? (
                 <p className="status-text">It's a draw!</p>
               ) : (
                 <p className="status-text">
-                  {gameState.winner === playerSymbol ? 'You win!' : 'You lose!'}
+                  {gameState.winner === playerSymbol ? "You win!" : "You lose!"}
                 </p>
               )}
               <button onClick={handleReset} className="reset-button">
@@ -197,9 +207,7 @@ function App() {
             </>
           ) : (
             <p className="status-text">
-              {gameState.currentPlayer === playerSymbol
-                ? "Your turn"
-                : "Opponent's turn"}
+              {gameState.currentPlayer === playerSymbol ? "Your turn" : "Opponent's turn"}
             </p>
           )}
         </div>
