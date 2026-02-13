@@ -1,14 +1,14 @@
-import * as React from "react";
+import { createContext, useContext, useMemo, ReactNode, FC } from "react";
 import { Theme, defaultTheme } from "./theme";
 
 interface ThemeContextValue {
   theme: Theme;
 }
 
-const ThemeContext = React.createContext<ThemeContextValue | undefined>(undefined);
+const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 export interface ThemeProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
   theme?: Theme;
 }
 
@@ -28,8 +28,8 @@ export interface ThemeProviderProps {
  * }
  * ```
  */
-export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children, theme = defaultTheme }) => {
-  const value = React.useMemo(() => ({ theme }), [theme]);
+export const ThemeProvider: FC<ThemeProviderProps> = ({ children, theme = defaultTheme }) => {
+  const value = useMemo(() => ({ theme }), [theme]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 };
@@ -48,7 +48,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children, theme = 
  * ```
  */
 export const useTheme = (): ThemeContextValue => {
-  const context = React.useContext(ThemeContext);
+  const context = useContext(ThemeContext);
 
   if (context === undefined) {
     throw new Error("useTheme must be used within a ThemeProvider");

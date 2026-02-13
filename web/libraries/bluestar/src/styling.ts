@@ -1,4 +1,4 @@
 import { setup } from "goober";
-import * as React from "react";
+import { createElement } from "react";
 
-setup(React.createElement);
+setup(createElement);
