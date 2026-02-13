@@ -1,10 +1,14 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Copy library dependencies first
-COPY libraries/bluestar /app/libraries/bluestar
+# Build bluestar library first
+COPY libraries/bluestar/package*.json /app/libraries/bluestar/
+WORKDIR /app/libraries/bluestar
+RUN npm ci
+COPY libraries/bluestar/ /app/libraries/bluestar/
+RUN npm run build
 
-# Copy ryanzrau app files
+# Copy and build ryanzrau app
 WORKDIR /app/ryanzrau
 COPY ryanzrau/package*.json ./
 RUN npm ci
