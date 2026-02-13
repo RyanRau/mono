@@ -59,8 +59,10 @@ jobs:
           APP="${{ steps.config.outputs.app }}"
           IMAGE=$(echo "${{ env.REGISTRY }}/${{ env.REPO }}/${APP}:test" | tr '[:upper:]' '[:lower:]')
           APP_PATH=$(yq ".apps.${APP}.path // \"web/${APP}\"" deploy.yml)
+          BUILD_CONTEXT=$(yq ".apps.${APP}.build_context // \"${APP_PATH}\"" deploy.yml)
+          DOCKERFILE=$(yq ".apps.${APP}.dockerfile // \"Dockerfile\"" deploy.yml)
           echo "=== Building ${APP} (test) ==="
-          docker build -t "$IMAGE" ./${APP_PATH}
+          docker build -t "$IMAGE" -f "${BUILD_CONTEXT}/${DOCKERFILE}" "./${BUILD_CONTEXT}"
           docker push "$IMAGE"
           echo "=== Pushed $IMAGE ==="
 

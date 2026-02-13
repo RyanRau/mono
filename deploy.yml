@@ -10,6 +10,8 @@ apps:
     subdomain: ""
     enabled: true
     port: 80
+    build_context: "web"
+    dockerfile: "ryanzrau/Dockerfile"
   bluestar:
     subdomain: "ui"
     enabled: true

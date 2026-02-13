@@ -69,7 +69,9 @@ jobs:
             echo "=== Building $app ==="
             IMAGE=$(echo "${{ env.REGISTRY }}/${{ env.REPO }}/${app}:latest" | tr '[:upper:]' '[:lower:]')
             APP_PATH=$(yq ".apps.${app}.path // \"web/${app}\"" deploy.yml)
-            docker build -t "$IMAGE" ./${APP_PATH}
+            BUILD_CONTEXT=$(yq ".apps.${app}.build_context // \"${APP_PATH}\"" deploy.yml)
+            DOCKERFILE=$(yq ".apps.${app}.dockerfile // \"Dockerfile\"" deploy.yml)
+            docker build -t "$IMAGE" -f "${BUILD_CONTEXT}/${DOCKERFILE}" "./${BUILD_CONTEXT}"
             docker push "$IMAGE"
             echo "=== Pushed $IMAGE ==="
           done
