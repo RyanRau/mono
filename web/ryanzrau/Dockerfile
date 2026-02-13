@@ -4,14 +4,14 @@ WORKDIR /app
 # Build bluestar library first
 COPY libraries/bluestar/package*.json /app/libraries/bluestar/
 WORKDIR /app/libraries/bluestar
-RUN npm ci
+RUN npm ci --ignore-scripts
 COPY libraries/bluestar/ /app/libraries/bluestar/
 RUN npm run build
 
 # Copy and build ryanzrau app
 WORKDIR /app/ryanzrau
 COPY ryanzrau/package*.json ./
-RUN npm ci
+RUN npm ci --ignore-scripts
 COPY ryanzrau/ .
 RUN npm run build
 
