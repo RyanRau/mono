@@ -2,10 +2,10 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Build bluestar library first
-COPY libraries/bluestar/package*.json /app/libraries/bluestar/
+COPY ../libraries/bluestar/package*.json /app/libraries/bluestar/
 WORKDIR /app/libraries/bluestar
 RUN npm ci --ignore-scripts
-COPY libraries/bluestar/ /app/libraries/bluestar/
+COPY ../libraries/bluestar/ /app/libraries/bluestar/
 RUN npm run build
 
 # Copy and build ryanzrau app
