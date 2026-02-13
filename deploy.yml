@@ -14,6 +14,7 @@ apps:
     subdomain: "ui"
     enabled: true
     port: 80
+    path: "web/libraries/bluestar"
   be_mine:
     subdomain: "be-mine"
     enabled: true

@@ -47,7 +47,9 @@ jobs:
           # Build an app if: it's enabled AND (its files changed OR deploy.yml changed OR infra changed)
           BUILD_LIST=""
           for app in $ENABLED; do
-            APP_CHANGED=$(echo "$CHANGED_FILES" | grep -c "^web/${app}/" || true)
+            # Check if app has custom path, otherwise use default web/${app}/
+            APP_PATH=$(yq ".apps.${app}.path // \"web/${app}\"" deploy.yml)
+            APP_CHANGED=$(echo "$CHANGED_FILES" | grep -c "^${APP_PATH}/" || true)
             if [ "$APP_CHANGED" -gt 0 ] || [ "$CONFIG_CHANGED" -gt 0 ] || [ "$INFRA_CHANGED" -gt 0 ]; then
               BUILD_LIST="${BUILD_LIST} ${app}"
             fi
@@ -66,7 +68,8 @@ jobs:
           for app in ${{ steps.apps.outputs.build_list }}; do
             echo "=== Building $app ==="
             IMAGE=$(echo "${{ env.REGISTRY }}/${{ env.REPO }}/${app}:latest" | tr '[:upper:]' '[:lower:]')
-            docker build -t "$IMAGE" ./web/${app}
+            APP_PATH=$(yq ".apps.${app}.path // \"web/${app}\"" deploy.yml)
+            docker build -t "$IMAGE" ./${APP_PATH}
             docker push "$IMAGE"
             echo "=== Pushed $IMAGE ==="
           done
