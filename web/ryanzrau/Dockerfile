@@ -9,7 +9,8 @@ COPY ../libraries/bluestar/ /app/libraries/bluestar/
 
 # Build bluestar (uses global tsup, no node_modules needed)
 WORKDIR /app/libraries/bluestar
-RUN tsup src/index.ts --dts --format esm,cjs --out-dir dist --external react,react-dom,goober
+RUN rm -f tsup.config.ts && \
+    tsup src/index.ts --dts --format esm,cjs --out-dir dist --external react,react-dom,goober
 
 # Copy and install ryanzrau dependencies (includes bluestar)
 WORKDIR /app/ryanzrau
