@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Lightweight React component library with goober styling and flexible theming",
   "main": "dist/index.js",
-  "module": "dist/index.mjs",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist",
@@ -16,8 +16,10 @@
     "build-storybook": "storybook build"
   },
   "license": "ISC",
+  "dependencies": {
+    "goober": "^2.1.18"
+  },
   "peerDependencies": {
-    "goober": "^2.1.18",
     "react": "^18 || ^19"
   },
   "devDependencies": {
@@ -25,9 +27,6 @@
     "@storybook/react-vite": "^10.0.7",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
-    "goober": "^2.1.18",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
     "storybook": "^10.0.7",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
