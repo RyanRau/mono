@@ -1,5 +1,3 @@
-import "./styling";
-
 // Theme exports
 export * from "./theme";
 
