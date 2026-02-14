@@ -1,14 +1,17 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Build bluestar library first
-COPY ../libraries/bluestar/package*.json /app/libraries/bluestar/
-WORKDIR /app/libraries/bluestar
-RUN npm ci --ignore-scripts
-COPY ../libraries/bluestar/ /app/libraries/bluestar/
-RUN npm run build
+# Install build tools globally
+RUN npm install -g tsup typescript
 
-# Copy and build ryanzrau app
+# Copy bluestar library source
+COPY ../libraries/bluestar/ /app/libraries/bluestar/
+
+# Build bluestar (uses global tsup, no node_modules needed)
+WORKDIR /app/libraries/bluestar
+RUN tsup src/index.ts --dts --format esm,cjs --out-dir dist --external react,react-dom,goober
+
+# Copy and install ryanzrau dependencies (includes bluestar)
 WORKDIR /app/ryanzrau
 COPY ryanzrau/package*.json ./
 RUN npm ci --ignore-scripts
