@@ -1,0 +1,7 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: web/ryanzrau/Dockerfile
+    ports:
+      - "3000:80"
