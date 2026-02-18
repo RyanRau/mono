@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "bluestar": "file:../../packages/bluestar",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

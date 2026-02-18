@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.esbuild/
+.turbo/
+
+# Storybook (optional)
+.storybook/out/
+storybook-static/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Editor settings
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# Coverage
+coverage/
+
+# Mac generated files
+*.swp
+*.swo
+
+# Local temp files
+tmp/
+temp/

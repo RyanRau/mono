@@ -1,0 +1,38 @@
+{
+  "name": "bluestar",
+  "version": "1.0.0",
+  "description": "(Ozark) Bluestar a react component library",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --dts --format esm,cjs --out-dir dist",
+    "prepare": "npm run build"
+  },
+  "license": "ISC",
+  "peerDependencies": {
+    "react": "^18 || ^19",
+    "goober": "^2.1.18"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.2",
+    "goober": "^2.1.18"
+  },
+  "dependencies": {
+  }
+}
