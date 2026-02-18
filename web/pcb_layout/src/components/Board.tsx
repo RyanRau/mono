@@ -23,7 +23,7 @@ interface BoardProps {
   placementCols: number;
   componentOrientation: "horizontal" | "vertical";
   drawingPoints: Point[];
-  autoConnectPoints: Point[];
+  autoConnectComponentIds: string[];
   hoveredHole: Point | null;
   selectedComponentId: string | null;
   selectedTraceId: string | null;
@@ -52,7 +52,7 @@ const Board: React.FC<BoardProps> = ({
   placementCols,
   componentOrientation,
   drawingPoints,
-  autoConnectPoints: acPoints,
+  autoConnectComponentIds: acComponentIds,
   hoveredHole,
   selectedComponentId,
   selectedTraceId,
@@ -177,7 +177,6 @@ const Board: React.FC<BoardProps> = ({
         const isOccupied = occupiedHoles.has(key);
         const isTrace = traceHoles.has(key);
         const isHovered = hoveredHole && hoveredHole.row === r && hoveredHole.col === c;
-        const isAutoSelected = acPoints.some((p) => p.row === r && p.col === c);
         const isDrawing = drawingPoints.some((p) => p.row === r && p.col === c);
 
         let fill = "#1a1a1a";
@@ -190,11 +189,6 @@ const Board: React.FC<BoardProps> = ({
         } else if (isTrace) {
           fill = "#666";
           stroke = "#888";
-        }
-        if (isAutoSelected) {
-          fill = "#ff6b6b";
-          stroke = "#ff4444";
-          radius = HOLE_RADIUS + 2;
         }
         if (isDrawing) {
           fill = "#4ecdc4";
@@ -231,6 +225,18 @@ const Board: React.FC<BoardProps> = ({
       const w = (bounds.cols - 1) * GRID_SPACING + GRID_SPACING * 0.8;
       const h = (bounds.rows - 1) * GRID_SPACING + GRID_SPACING * 0.8;
       const isSelected = selectedComponentId === comp.id;
+      const isAcSelected = acComponentIds.includes(comp.id);
+      const acIndex = acComponentIds.indexOf(comp.id);
+
+      let strokeColor = "#555";
+      let strokeW = 1;
+      if (isAcSelected) {
+        strokeColor = "#ff4444";
+        strokeW = 2;
+      } else if (isSelected) {
+        strokeColor = "#4ecdc4";
+        strokeW = 2;
+      }
 
       return (
         <g
@@ -239,7 +245,12 @@ const Board: React.FC<BoardProps> = ({
             e.stopPropagation();
             onComponentClick(comp.id);
           }}
-          style={{ cursor: mode === "select" || mode === "erase" ? "pointer" : "default" }}
+          style={{
+            cursor:
+              mode === "select" || mode === "erase" || mode === "auto-connect"
+                ? "pointer"
+                : "default",
+          }}
         >
           <rect
             x={x}
@@ -248,10 +259,23 @@ const Board: React.FC<BoardProps> = ({
             height={h}
             rx={3}
             ry={3}
-            fill="#2a2a2a"
-            stroke={isSelected ? "#4ecdc4" : "#555"}
-            strokeWidth={isSelected ? 2 : 1}
+            fill={isAcSelected ? "#2a1a1a" : "#2a2a2a"}
+            stroke={strokeColor}
+            strokeWidth={strokeW}
           />
+          {isAcSelected && (
+            <text
+              x={x + w / 2}
+              y={y + h + 14}
+              textAnchor="middle"
+              fontSize={10}
+              fontWeight="bold"
+              fill="#ff6b6b"
+              fontFamily="monospace"
+            >
+              #{acIndex + 1}
+            </text>
+          )}
           {getComponentHoles(comp).map((hole) => (
             <circle
               key={pointKey(hole)}
@@ -377,31 +401,7 @@ const Board: React.FC<BoardProps> = ({
     );
   };
 
-  const renderAutoConnectLabels = () => {
-    return acPoints.map((p, i) => (
-      <g key={`ac-${i}`}>
-        <circle
-          cx={holeX(p.col)}
-          cy={holeY(p.row)}
-          r={HOLE_RADIUS + 4}
-          fill="none"
-          stroke="#ff4444"
-          strokeWidth={1.5}
-        />
-        <text
-          x={holeX(p.col)}
-          y={holeY(p.row) - HOLE_RADIUS - 7}
-          textAnchor="middle"
-          fontSize={10}
-          fontWeight="bold"
-          fill="#ff6b6b"
-          fontFamily="monospace"
-        >
-          {i + 1}
-        </text>
-      </g>
-    ));
-  };
+  // Auto-connect labels are now rendered inline in renderComponents via acComponentIds
 
   const renderCoordinateLabels = () => {
     const labels: React.ReactElement[] = [];
@@ -466,7 +466,6 @@ const Board: React.FC<BoardProps> = ({
       {renderDrawingPreview()}
       {renderComponents()}
       {renderPlacementPreview()}
-      {renderAutoConnectLabels()}
     </svg>
   );
 };

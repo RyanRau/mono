@@ -116,3 +116,37 @@ export function autoConnectPoints(
 
   return allPathPoints;
 }
+
+/**
+ * Route corresponding pins between two headers.
+ * Pairs holes 1:1 (by index order) and routes each pair via A*.
+ * Each successfully routed trace is added to the blocked set
+ * so subsequent traces avoid it.
+ * Returns an array of paths (one per successfully routed pair).
+ */
+export function routeHeaderPairs(
+  holesA: Point[],
+  holesB: Point[],
+  rows: number,
+  cols: number,
+  existingBlocked: Set<string>
+): { paths: Point[][]; failed: number } {
+  const pairCount = Math.min(holesA.length, holesB.length);
+  const paths: Point[][] = [];
+  let failed = 0;
+  const dynamicBlocked = new Set(existingBlocked);
+
+  for (let i = 0; i < pairCount; i++) {
+    const path = findPath(holesA[i], holesB[i], rows, cols, dynamicBlocked);
+    if (path) {
+      paths.push(path);
+      for (const p of path) {
+        dynamicBlocked.add(pointKey(p));
+      }
+    } else {
+      failed++;
+    }
+  }
+
+  return { paths, failed };
+}

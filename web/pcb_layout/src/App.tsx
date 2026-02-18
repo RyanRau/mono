@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import Board from "./components/Board";
-import { autoConnectPoints } from "./utils/pathfinding";
+import { routeHeaderPairs } from "./utils/pathfinding";
 import {
   Point,
   PlacedComponent,
@@ -71,7 +71,7 @@ function App() {
   );
 
   const [drawingPoints, setDrawingPoints] = useState<Point[]>([]);
-  const [acPoints, setAcPoints] = useState<Point[]>([]);
+  const [acComponentIds, setAcComponentIds] = useState<string[]>([]);
   const [hoveredHole, setHoveredHole] = useState<Point | null>(null);
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
   const [selectedTraceId, setSelectedTraceId] = useState<string | null>(null);
@@ -168,13 +168,20 @@ function App() {
         }
 
         case "auto-connect": {
-          setAcPoints((prev) => {
-            const exists = prev.findIndex((p) => p.row === point.row && p.col === point.col);
-            if (exists >= 0) {
-              return prev.filter((_, i) => i !== exists);
-            }
-            return [...prev, point];
-          });
+          const pk = pointKey(point);
+          const clickedComp = components.find((comp) =>
+            getComponentHoles(comp).some((h) => pointKey(h) === pk)
+          );
+          if (clickedComp) {
+            setAcComponentIds((prev) => {
+              if (prev.includes(clickedComp.id)) {
+                return prev.filter((id) => id !== clickedComp.id);
+              }
+              return [...prev, clickedComp.id];
+            });
+          } else {
+            notify("Click on a header to select it", "info");
+          }
           break;
         }
 
@@ -253,6 +260,13 @@ function App() {
       if (mode === "erase") {
         setComponents((prev) => prev.filter((c) => c.id !== id));
         notify("Component removed", "info");
+      } else if (mode === "auto-connect") {
+        setAcComponentIds((prev) => {
+          if (prev.includes(id)) {
+            return prev.filter((cid) => cid !== id);
+          }
+          return [...prev, id];
+        });
       } else if (mode === "select") {
         setSelectedComponentId(id);
         setSelectedTraceId(null);
@@ -275,25 +289,56 @@ function App() {
   );
 
   const handleAutoRoute = useCallback(() => {
-    if (acPoints.length < 2) {
-      notify("Select at least 2 points to auto-connect", "error");
+    if (acComponentIds.length < 2) {
+      notify("Select at least 2 headers to auto-connect", "error");
       return;
     }
+
     const blocked = getBlockedSet();
-    const path = autoConnectPoints(acPoints, rows, cols, blocked);
-    if (!path) {
-      notify("No valid path found — try different points or clear obstacles", "error");
+    const newTraces: Trace[] = [];
+    let totalFailed = 0;
+    let colorIdx = traces.length;
+
+    // Route each consecutive pair of selected headers
+    for (let i = 0; i < acComponentIds.length - 1; i++) {
+      const compA = components.find((c) => c.id === acComponentIds[i]);
+      const compB = components.find((c) => c.id === acComponentIds[i + 1]);
+      if (!compA || !compB) continue;
+
+      const holesA = getComponentHoles(compA);
+      const holesB = getComponentHoles(compB);
+
+      const { paths, failed } = routeHeaderPairs(holesA, holesB, rows, cols, blocked);
+      totalFailed += failed;
+
+      for (const path of paths) {
+        const trace: Trace = {
+          id: generateId(),
+          points: path,
+          color: TRACE_COLORS[colorIdx % TRACE_COLORS.length],
+        };
+        newTraces.push(trace);
+        colorIdx++;
+        // Add to blocked so subsequent pairs avoid these traces
+        for (const p of path) {
+          blocked.add(pointKey(p));
+        }
+      }
+    }
+
+    if (newTraces.length === 0) {
+      notify("No valid paths found — try clearing obstacles", "error");
       return;
     }
-    const newTrace: Trace = {
-      id: generateId(),
-      points: path,
-      color: nextTraceColor(),
-    };
-    setTraces((prev) => [...prev, newTrace]);
-    setAcPoints([]);
-    notify("Auto-connected successfully", "success");
-  }, [acPoints, rows, cols, getBlockedSet, nextTraceColor, notify]);
+
+    setTraces((prev) => [...prev, ...newTraces]);
+    setAcComponentIds([]);
+
+    const msg = totalFailed > 0
+      ? `Routed ${newTraces.length} traces (${totalFailed} failed)`
+      : `Routed ${newTraces.length} traces`;
+    notify(msg, totalFailed > 0 ? "info" : "success");
+  }, [acComponentIds, components, rows, cols, traces.length, getBlockedSet, notify]);
 
   const finishDrawing = useCallback(() => {
     if (drawingPoints.length >= 2) {
@@ -310,7 +355,7 @@ function App() {
 
   const cancelDrawing = useCallback(() => {
     setDrawingPoints([]);
-    setAcPoints([]);
+    setAcComponentIds([]);
   }, []);
 
   useEffect(() => {
@@ -357,7 +402,7 @@ function App() {
         case "Escape":
           if (drawingPoints.length > 0) {
             cancelDrawing();
-          } else if (acPoints.length > 0) {
+          } else if (acComponentIds.length > 0) {
             cancelDrawing();
           } else {
             setSelectedComponentId(null);
@@ -393,7 +438,7 @@ function App() {
     selectedComponentId,
     selectedTraceId,
     drawingPoints,
-    acPoints,
+    acComponentIds,
     rows,
     cols,
     finishDrawing,
@@ -404,7 +449,7 @@ function App() {
 
   useEffect(() => {
     setDrawingPoints([]);
-    setAcPoints([]);
+    setAcComponentIds([]);
     setSelectedComponentId(null);
     setSelectedTraceId(null);
   }, [mode]);
@@ -413,7 +458,7 @@ function App() {
     setComponents([]);
     setTraces([]);
     setDrawingPoints([]);
-    setAcPoints([]);
+    setAcComponentIds([]);
     setSelectedComponentId(null);
     setSelectedTraceId(null);
     notify("Board cleared", "info");
@@ -594,12 +639,12 @@ function App() {
               <button
                 className="action-btn primary"
                 onClick={handleAutoRoute}
-                disabled={acPoints.length < 2}
+                disabled={acComponentIds.length < 2}
               >
-                Route Path (Enter)
+                Route All Pins (Enter)
               </button>
               <button className="action-btn" onClick={cancelDrawing}>
-                Clear Points (Esc)
+                Clear Selection (Esc)
               </button>
             </div>
             <p
@@ -609,8 +654,8 @@ function App() {
                 marginTop: 6,
               }}
             >
-              {acPoints.length} point{acPoints.length !== 1 ? "s" : ""} selected — click holes to
-              add/remove
+              {acComponentIds.length} header{acComponentIds.length !== 1 ? "s" : ""} selected —
+              click headers to add/remove
             </p>
           </div>
         )}
@@ -681,7 +726,7 @@ function App() {
           placementCols={headerCols}
           componentOrientation={componentOrientation}
           drawingPoints={drawingPoints}
-          autoConnectPoints={acPoints}
+          autoConnectComponentIds={acComponentIds}
           hoveredHole={hoveredHole}
           selectedComponentId={selectedComponentId}
           selectedTraceId={selectedTraceId}
