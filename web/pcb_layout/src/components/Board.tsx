@@ -4,14 +4,13 @@ import {
   PlacedComponent,
   Trace,
   ToolMode,
-  ComponentType,
-  COMPONENT_DEFS,
   GRID_SPACING,
   HOLE_RADIUS,
   BOARD_PADDING,
   pointKey,
   getComponentHoles,
   getComponentBounds,
+  getComponentLabel,
 } from "../types";
 
 interface BoardProps {
@@ -20,7 +19,8 @@ interface BoardProps {
   components: PlacedComponent[];
   traces: Trace[];
   mode: ToolMode;
-  selectedComponentType: ComponentType | null;
+  placementRows: number;
+  placementCols: number;
   componentOrientation: "horizontal" | "vertical";
   drawingPoints: Point[];
   autoConnectPoints: Point[];
@@ -48,7 +48,8 @@ const Board: React.FC<BoardProps> = ({
   components,
   traces,
   mode,
-  selectedComponentType,
+  placementRows,
+  placementCols,
   componentOrientation,
   drawingPoints,
   autoConnectPoints: acPoints,
@@ -142,10 +143,9 @@ const Board: React.FC<BoardProps> = ({
   );
 
   const placementPreview = useMemo(() => {
-    if (mode !== "place" || !selectedComponentType || !hoveredHole) return null;
-    const def = COMPONENT_DEFS[selectedComponentType];
-    const compRows = componentOrientation === "horizontal" ? def.rows : def.cols;
-    const compCols = componentOrientation === "horizontal" ? def.cols : def.rows;
+    if (mode !== "place" || !hoveredHole) return null;
+    const compRows = componentOrientation === "horizontal" ? placementRows : placementCols;
+    const compCols = componentOrientation === "horizontal" ? placementCols : placementRows;
 
     const endRow = hoveredHole.row + compRows - 1;
     const endCol = hoveredHole.col + compCols - 1;
@@ -167,7 +167,7 @@ const Board: React.FC<BoardProps> = ({
         })();
 
     return { compRows, compCols, valid: inBounds && !overlaps };
-  }, [mode, selectedComponentType, hoveredHole, componentOrientation, rows, cols, occupiedHoles]);
+  }, [mode, hoveredHole, placementRows, placementCols, componentOrientation, rows, cols, occupiedHoles]);
 
   const renderHoles = () => {
     const holes: React.ReactElement[] = [];
@@ -231,7 +231,6 @@ const Board: React.FC<BoardProps> = ({
       const w = (bounds.cols - 1) * GRID_SPACING + GRID_SPACING * 0.8;
       const h = (bounds.rows - 1) * GRID_SPACING + GRID_SPACING * 0.8;
       const isSelected = selectedComponentId === comp.id;
-      const def = COMPONENT_DEFS[comp.type];
 
       return (
         <g
@@ -272,7 +271,7 @@ const Board: React.FC<BoardProps> = ({
             fill="#aaa"
             fontFamily="monospace"
           >
-            {def.label}
+            {getComponentLabel(comp)}
           </text>
         </g>
       );

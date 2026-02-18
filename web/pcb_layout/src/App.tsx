@@ -6,8 +6,6 @@ import {
   PlacedComponent,
   Trace,
   ToolMode,
-  ComponentType,
-  COMPONENT_DEFS,
   TRACE_COLORS,
   pointKey,
   getComponentHoles,
@@ -40,6 +38,12 @@ function saveState(state: BoardState): void {
   }
 }
 
+function clampInt(value: string, min: number, max: number, fallback: number): number {
+  const n = parseInt(value, 10);
+  if (isNaN(n)) return fallback;
+  return Math.max(min, Math.min(max, n));
+}
+
 interface Notification {
   message: string;
   type: "info" | "error" | "success";
@@ -53,8 +57,15 @@ function App() {
   const [components, setComponents] = useState<PlacedComponent[]>(saved.current?.components ?? []);
   const [traces, setTraces] = useState<Trace[]>(saved.current?.traces ?? []);
 
+  // String state for number inputs so users can freely type values
+  const [rowsInput, setRowsInput] = useState(String(rows));
+  const [colsInput, setColsInput] = useState(String(cols));
+
   const [mode, setMode] = useState<ToolMode>("select");
-  const [selectedComponentType, setSelectedComponentType] = useState<ComponentType | null>(null);
+  const [headerRows, setHeaderRows] = useState(1);
+  const [headerCols, setHeaderCols] = useState(4);
+  const [headerRowsInput, setHeaderRowsInput] = useState("1");
+  const [headerColsInput, setHeaderColsInput] = useState("4");
   const [componentOrientation, setComponentOrientation] = useState<"horizontal" | "vertical">(
     "horizontal"
   );
@@ -98,10 +109,9 @@ function App() {
   }, [components, traces]);
 
   const canPlaceComponent = useCallback(
-    (type: ComponentType, position: Point, orientation: "horizontal" | "vertical"): boolean => {
-      const def = COMPONENT_DEFS[type];
-      const compRows = orientation === "horizontal" ? def.rows : def.cols;
-      const compCols = orientation === "horizontal" ? def.cols : def.rows;
+    (hRows: number, hCols: number, position: Point, orientation: "horizontal" | "vertical"): boolean => {
+      const compRows = orientation === "horizontal" ? hRows : hCols;
+      const compCols = orientation === "horizontal" ? hCols : hRows;
 
       if (position.row + compRows > rows || position.col + compCols > cols) return false;
 
@@ -128,22 +138,19 @@ function App() {
     (point: Point) => {
       switch (mode) {
         case "place": {
-          if (!selectedComponentType) {
-            notify("Select a component type first", "error");
-            return;
-          }
-          if (!canPlaceComponent(selectedComponentType, point, componentOrientation)) {
+          if (!canPlaceComponent(headerRows, headerCols, point, componentOrientation)) {
             notify("Cannot place component here", "error");
             return;
           }
           const newComp: PlacedComponent = {
             id: generateId(),
-            type: selectedComponentType,
+            headerRows,
+            headerCols,
             position: point,
             orientation: componentOrientation,
           };
           setComponents((prev) => [...prev, newComp]);
-          notify(`Placed ${COMPONENT_DEFS[selectedComponentType].label}`, "success");
+          notify(`Placed ${headerRows}x${headerCols} Header`, "success");
           break;
         }
 
@@ -215,7 +222,8 @@ function App() {
     },
     [
       mode,
-      selectedComponentType,
+      headerRows,
+      headerCols,
       componentOrientation,
       components,
       traces,
@@ -411,11 +419,6 @@ function App() {
     notify("Board cleared", "info");
   }, [notify]);
 
-  const componentTypes = Object.entries(COMPONENT_DEFS) as [
-    ComponentType,
-    (typeof COMPONENT_DEFS)[ComponentType],
-  ][];
-
   return (
     <div className="app">
       <div className="sidebar">
@@ -430,8 +433,13 @@ function App() {
                 type="number"
                 min={5}
                 max={80}
-                value={rows}
-                onChange={(e) => setRows(Math.max(5, Math.min(80, Number(e.target.value))))}
+                value={rowsInput}
+                onChange={(e) => setRowsInput(e.target.value)}
+                onBlur={() => {
+                  const v = clampInt(rowsInput, 5, 80, rows);
+                  setRows(v);
+                  setRowsInput(String(v));
+                }}
               />
             </div>
             <div className="config-field">
@@ -440,8 +448,13 @@ function App() {
                 type="number"
                 min={5}
                 max={80}
-                value={cols}
-                onChange={(e) => setCols(Math.max(5, Math.min(80, Number(e.target.value))))}
+                value={colsInput}
+                onChange={(e) => setColsInput(e.target.value)}
+                onBlur={() => {
+                  const v = clampInt(colsInput, 5, 80, cols);
+                  setCols(v);
+                  setColsInput(String(v));
+                }}
               />
             </div>
           </div>
@@ -490,18 +503,49 @@ function App() {
 
         {mode === "place" && (
           <div className="sidebar-section">
-            <h3>Components</h3>
-            <div className="component-grid">
-              {componentTypes.map(([type, def]) => (
-                <button
-                  key={type}
-                  className={`comp-btn ${selectedComponentType === type ? "active" : ""}`}
-                  onClick={() => setSelectedComponentType(type)}
-                >
-                  {def.label}
-                </button>
-              ))}
+            <h3>Header Size</h3>
+            <div className="board-config">
+              <div className="config-field">
+                <label>Rows</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={headerRowsInput}
+                  onChange={(e) => setHeaderRowsInput(e.target.value)}
+                  onBlur={() => {
+                    const v = clampInt(headerRowsInput, 1, 20, headerRows);
+                    setHeaderRows(v);
+                    setHeaderRowsInput(String(v));
+                  }}
+                />
+              </div>
+              <div className="config-field">
+                <label>Columns</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={headerColsInput}
+                  onChange={(e) => setHeaderColsInput(e.target.value)}
+                  onBlur={() => {
+                    const v = clampInt(headerColsInput, 1, 20, headerCols);
+                    setHeaderCols(v);
+                    setHeaderColsInput(String(v));
+                  }}
+                />
+              </div>
             </div>
+            <p
+              style={{
+                fontSize: 11,
+                color: "#888",
+                marginTop: 6,
+                textAlign: "center",
+              }}
+            >
+              Placing: {headerRows}x{headerCols} Header
+            </p>
             <div className="orientation-toggle">
               <button
                 className={componentOrientation === "horizontal" ? "active" : ""}
@@ -633,7 +677,8 @@ function App() {
           components={components}
           traces={traces}
           mode={mode}
-          selectedComponentType={selectedComponentType}
+          placementRows={headerRows}
+          placementCols={headerCols}
           componentOrientation={componentOrientation}
           drawingPoints={drawingPoints}
           autoConnectPoints={acPoints}
