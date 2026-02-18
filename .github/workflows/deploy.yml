@@ -66,7 +66,7 @@ jobs:
           for app in ${{ steps.apps.outputs.build_list }}; do
             echo "=== Building $app ==="
             IMAGE=$(echo "${{ env.REGISTRY }}/${{ env.REPO }}/${app}:latest" | tr '[:upper:]' '[:lower:]')
-            docker build -t "$IMAGE" ./web/${app}
+            docker build -t "$IMAGE" -f ./web/${app}/Dockerfile .
             docker push "$IMAGE"
             echo "=== Pushed $IMAGE ==="
           done
