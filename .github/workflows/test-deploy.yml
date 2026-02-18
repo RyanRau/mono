@@ -83,20 +83,38 @@ jobs:
             # Pull latest main for prod config
             git pull origin main
 
+            TEST_APP="${{ steps.config.outputs.app }}"
+            TEST_SUBDOMAIN="${{ steps.config.outputs.subdomain }}"
+            TEST_PORT="${{ steps.config.outputs.port }}"
+
             # Write active test config to the droplet (gitignored runtime file)
-            # Include subdomain and port from the feature branch so test deploys
-            # work even when the app hasn't been added to main's deploy.yml yet
-            cat > test-deploy.active.yml << EOF
-            app: ${{ steps.config.outputs.app }}
-            subdomain: "${{ steps.config.outputs.subdomain }}"
-            port: ${{ steps.config.outputs.port }}
-            EOF
+            echo "app: ${TEST_APP}" > test-deploy.active.yml
+
+            # If the test app isn't in main's deploy.yml yet (new app still on
+            # a feature branch), create a temporary config that includes it so
+            # generate-compose.py can build the test overlay. The app is added
+            # with enabled: false so no production service is created.
+            cp deploy.yml /tmp/deploy-for-test.yml
+            python3 -c "
+            import yaml
+            with open('/tmp/deploy-for-test.yml') as f:
+                c = yaml.safe_load(f)
+            if '${TEST_APP}' not in c.get('apps', {}):
+                c.setdefault('apps', {})['${TEST_APP}'] = {
+                    'subdomain': '${TEST_SUBDOMAIN}',
+                    'enabled': False,
+                    'port': int('${TEST_PORT}'),
+                }
+                with open('/tmp/deploy-for-test.yml', 'w') as f:
+                    yaml.dump(c, f, default_flow_style=False, sort_keys=False)
+                print('Added ${TEST_APP} to temp config for test overlay')
+            "
 
             # Login to GHCR
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            # Generate docker-compose.yml (picks up both deploy.yml and test-deploy.active.yml)
-            python3 infra/generate-compose.py
+            # Generate docker-compose.yml using temp config that includes test app
+            CONFIG_PATH=/tmp/deploy-for-test.yml python3 infra/generate-compose.py
 
             # Pull latest images and deploy
             docker compose pull
