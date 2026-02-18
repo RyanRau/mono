@@ -90,10 +90,26 @@ if os.path.exists(TEST_CONFIG_PATH):
         test_config = yaml.safe_load(f)
 
     test_app = test_config.get("app")
+    subdomain = None
+    port = 80
+
     if test_app and test_app in config.get("apps", {}):
+        # App exists in deploy.yml (already on main)
         app = config["apps"][test_app]
         subdomain = app["subdomain"]
-        port = app.get("port", 3000)
+        port = app.get("port", 80)
+    elif test_app and "subdomain" in test_config:
+        # App not yet in main's deploy.yml — use config passed from feature branch
+        subdomain = test_config["subdomain"]
+        port = test_config.get("port", 80)
+    elif test_app:
+        print(
+            f"Warning: test app '{test_app}' not found in deploy.yml "
+            f"and no subdomain in test config, skipping test overlay"
+        )
+        test_app = None
+
+    if test_app and subdomain is not None:
         test_fqdn = f"test-{subdomain}.{domain}" if subdomain else f"test.{domain}"
         test_name = f"{test_app}-test"
 
@@ -119,10 +135,6 @@ if os.path.exists(TEST_CONFIG_PATH):
             "networks": ["web"],
         }
         print(f"Test deployment: {test_app} → {test_fqdn}")
-    elif test_app:
-        print(
-            f"Warning: test app '{test_app}' not found in deploy.yml, skipping test overlay"
-        )
 
 compose = {
     "version": "3.8",
@@ -138,5 +150,5 @@ with open(output_path, "w") as f:
     yaml.dump(compose, f, default_flow_style=False, sort_keys=False)
 
 print(f"Generated docker-compose.yml with enabled apps: {enabled_apps}")
-if test_app and test_app in config.get("apps", {}):
+if test_app and subdomain is not None:
     print(f"  + test service: {test_app}-test")
