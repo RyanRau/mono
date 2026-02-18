@@ -3,7 +3,7 @@ FROM node:20-alpine AS builder
 # Build bluestar dependency first
 WORKDIR /app/packages/bluestar
 COPY packages/bluestar/package*.json ./
-RUN npm install
+RUN npm install --ignore-scripts
 COPY packages/bluestar/ .
 RUN npm run build
 
