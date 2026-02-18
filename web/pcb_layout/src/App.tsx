@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import Board from "./components/Board";
-import { routeHeaderPairs } from "./utils/pathfinding";
+import { autoConnectPoints } from "./utils/pathfinding";
 import {
   Point,
   PlacedComponent,
@@ -71,7 +71,9 @@ function App() {
   );
 
   const [drawingPoints, setDrawingPoints] = useState<Point[]>([]);
-  const [acComponentIds, setAcComponentIds] = useState<string[]>([]);
+  // Auto-connect: groups of pins to route as individual traces
+  const [acGroups, setAcGroups] = useState<Point[][]>([]);
+  const [acCurrentGroup, setAcCurrentGroup] = useState<Point[]>([]);
   const [hoveredHole, setHoveredHole] = useState<Point | null>(null);
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(null);
   const [selectedTraceId, setSelectedTraceId] = useState<string | null>(null);
@@ -169,19 +171,20 @@ function App() {
 
         case "auto-connect": {
           const pk = pointKey(point);
-          const clickedComp = components.find((comp) =>
-            getComponentHoles(comp).some((h) => pointKey(h) === pk)
-          );
-          if (clickedComp) {
-            setAcComponentIds((prev) => {
-              if (prev.includes(clickedComp.id)) {
-                return prev.filter((id) => id !== clickedComp.id);
-              }
-              return [...prev, clickedComp.id];
-            });
-          } else {
-            notify("Click on a header to select it", "info");
-          }
+          // Toggle pin in current group
+          setAcCurrentGroup((prev) => {
+            const exists = prev.findIndex((p) => pointKey(p) === pk);
+            if (exists >= 0) {
+              return prev.filter((_, i) => i !== exists);
+            }
+            // Don't allow the same pin in multiple groups
+            const alreadyGrouped = acGroups.some((g) => g.some((p) => pointKey(p) === pk));
+            if (alreadyGrouped) {
+              notify("Pin already assigned to a group", "error");
+              return prev;
+            }
+            return [...prev, point];
+          });
           break;
         }
 
@@ -234,6 +237,7 @@ function App() {
       componentOrientation,
       components,
       traces,
+      acGroups,
       canPlaceComponent,
       notify,
     ]
@@ -260,13 +264,6 @@ function App() {
       if (mode === "erase") {
         setComponents((prev) => prev.filter((c) => c.id !== id));
         notify("Component removed", "info");
-      } else if (mode === "auto-connect") {
-        setAcComponentIds((prev) => {
-          if (prev.includes(id)) {
-            return prev.filter((cid) => cid !== id);
-          }
-          return [...prev, id];
-        });
       } else if (mode === "select") {
         setSelectedComponentId(id);
         setSelectedTraceId(null);
@@ -288,9 +285,25 @@ function App() {
     [mode, notify]
   );
 
+  const finalizeGroup = useCallback(() => {
+    if (acCurrentGroup.length < 2) {
+      notify("A group needs at least 2 pins", "error");
+      return;
+    }
+    setAcGroups((prev) => [...prev, acCurrentGroup]);
+    setAcCurrentGroup([]);
+    notify(`Group ${acGroups.length + 1} saved (${acCurrentGroup.length} pins)`, "success");
+  }, [acCurrentGroup, acGroups.length, notify]);
+
   const handleAutoRoute = useCallback(() => {
-    if (acComponentIds.length < 2) {
-      notify("Select at least 2 headers to auto-connect", "error");
+    // Include current group if it has enough pins
+    const allGroups = [...acGroups];
+    if (acCurrentGroup.length >= 2) {
+      allGroups.push(acCurrentGroup);
+    }
+
+    if (allGroups.length === 0) {
+      notify("Define at least one group with 2+ pins", "error");
       return;
     }
 
@@ -299,19 +312,9 @@ function App() {
     let totalFailed = 0;
     let colorIdx = traces.length;
 
-    // Route each consecutive pair of selected headers
-    for (let i = 0; i < acComponentIds.length - 1; i++) {
-      const compA = components.find((c) => c.id === acComponentIds[i]);
-      const compB = components.find((c) => c.id === acComponentIds[i + 1]);
-      if (!compA || !compB) continue;
-
-      const holesA = getComponentHoles(compA);
-      const holesB = getComponentHoles(compB);
-
-      const { paths, failed } = routeHeaderPairs(holesA, holesB, rows, cols, blocked);
-      totalFailed += failed;
-
-      for (const path of paths) {
+    for (const group of allGroups) {
+      const path = autoConnectPoints(group, rows, cols, blocked);
+      if (path) {
         const trace: Trace = {
           id: generateId(),
           points: path,
@@ -319,10 +322,12 @@ function App() {
         };
         newTraces.push(trace);
         colorIdx++;
-        // Add to blocked so subsequent pairs avoid these traces
+        // Add to blocked so subsequent groups route around this one
         for (const p of path) {
           blocked.add(pointKey(p));
         }
+      } else {
+        totalFailed++;
       }
     }
 
@@ -332,13 +337,15 @@ function App() {
     }
 
     setTraces((prev) => [...prev, ...newTraces]);
-    setAcComponentIds([]);
+    setAcGroups([]);
+    setAcCurrentGroup([]);
 
-    const msg = totalFailed > 0
-      ? `Routed ${newTraces.length} traces (${totalFailed} failed)`
-      : `Routed ${newTraces.length} traces`;
+    const msg =
+      totalFailed > 0
+        ? `Routed ${newTraces.length} traces (${totalFailed} failed)`
+        : `Routed ${newTraces.length} traces`;
     notify(msg, totalFailed > 0 ? "info" : "success");
-  }, [acComponentIds, components, rows, cols, traces.length, getBlockedSet, notify]);
+  }, [acGroups, acCurrentGroup, rows, cols, traces.length, getBlockedSet, notify]);
 
   const finishDrawing = useCallback(() => {
     if (drawingPoints.length >= 2) {
@@ -353,10 +360,15 @@ function App() {
     setDrawingPoints([]);
   }, [drawingPoints, nextTraceColor, notify]);
 
-  const cancelDrawing = useCallback(() => {
-    setDrawingPoints([]);
-    setAcComponentIds([]);
+  const clearAutoConnect = useCallback(() => {
+    setAcGroups([]);
+    setAcCurrentGroup([]);
   }, []);
+
+  const cancelAction = useCallback(() => {
+    setDrawingPoints([]);
+    clearAutoConnect();
+  }, [clearAutoConnect]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -401,9 +413,9 @@ function App() {
           break;
         case "Escape":
           if (drawingPoints.length > 0) {
-            cancelDrawing();
-          } else if (acComponentIds.length > 0) {
-            cancelDrawing();
+            cancelAction();
+          } else if (acCurrentGroup.length > 0 || acGroups.length > 0) {
+            clearAutoConnect();
           } else {
             setSelectedComponentId(null);
             setSelectedTraceId(null);
@@ -413,7 +425,10 @@ function App() {
           if (mode === "draw") {
             finishDrawing();
           } else if (mode === "auto-connect") {
-            handleAutoRoute();
+            // Enter finalizes the current group
+            if (acCurrentGroup.length >= 2) {
+              finalizeGroup();
+            }
           }
           break;
         case "Delete":
@@ -438,31 +453,35 @@ function App() {
     selectedComponentId,
     selectedTraceId,
     drawingPoints,
-    acComponentIds,
+    acCurrentGroup,
+    acGroups,
     rows,
     cols,
     finishDrawing,
-    cancelDrawing,
-    handleAutoRoute,
+    finalizeGroup,
+    cancelAction,
+    clearAutoConnect,
     notify,
   ]);
 
   useEffect(() => {
     setDrawingPoints([]);
-    setAcComponentIds([]);
+    clearAutoConnect();
     setSelectedComponentId(null);
     setSelectedTraceId(null);
-  }, [mode]);
+  }, [mode, clearAutoConnect]);
 
   const handleClearAll = useCallback(() => {
     setComponents([]);
     setTraces([]);
     setDrawingPoints([]);
-    setAcComponentIds([]);
+    clearAutoConnect();
     setSelectedComponentId(null);
     setSelectedTraceId(null);
     notify("Board cleared", "info");
-  }, [notify]);
+  }, [notify, clearAutoConnect]);
+
+  const totalGroupCount = acGroups.length + (acCurrentGroup.length >= 2 ? 1 : 0);
 
   return (
     <div className="app">
@@ -615,7 +634,7 @@ function App() {
               <button className="action-btn primary" onClick={finishDrawing}>
                 Finish Trace (Enter)
               </button>
-              <button className="action-btn" onClick={cancelDrawing}>
+              <button className="action-btn" onClick={cancelAction}>
                 Cancel (Esc)
               </button>
             </div>
@@ -637,14 +656,21 @@ function App() {
             <h3>Auto Connect</h3>
             <div className="action-buttons">
               <button
+                className="action-btn"
+                onClick={finalizeGroup}
+                disabled={acCurrentGroup.length < 2}
+              >
+                Next Group (Enter)
+              </button>
+              <button
                 className="action-btn primary"
                 onClick={handleAutoRoute}
-                disabled={acComponentIds.length < 2}
+                disabled={totalGroupCount === 0}
               >
-                Route All Pins (Enter)
+                Route All ({totalGroupCount})
               </button>
-              <button className="action-btn" onClick={cancelDrawing}>
-                Clear Selection (Esc)
+              <button className="action-btn" onClick={clearAutoConnect}>
+                Clear (Esc)
               </button>
             </div>
             <p
@@ -654,8 +680,17 @@ function App() {
                 marginTop: 6,
               }}
             >
-              {acComponentIds.length} header{acComponentIds.length !== 1 ? "s" : ""} selected —
-              click headers to add/remove
+              {acGroups.length > 0 && (
+                <>
+                  {acGroups.length} group{acGroups.length !== 1 ? "s" : ""} saved
+                  {acCurrentGroup.length > 0 ? " — " : ""}
+                </>
+              )}
+              {acCurrentGroup.length > 0
+                ? `building group ${acGroups.length + 1}: ${acCurrentGroup.length} pin${acCurrentGroup.length !== 1 ? "s" : ""}`
+                : acGroups.length === 0
+                  ? "click pins to build a group"
+                  : ""}
             </p>
           </div>
         )}
@@ -726,7 +761,8 @@ function App() {
           placementCols={headerCols}
           componentOrientation={componentOrientation}
           drawingPoints={drawingPoints}
-          autoConnectComponentIds={acComponentIds}
+          acGroups={acGroups}
+          acCurrentGroup={acCurrentGroup}
           hoveredHole={hoveredHole}
           selectedComponentId={selectedComponentId}
           selectedTraceId={selectedTraceId}

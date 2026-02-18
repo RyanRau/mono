@@ -7,6 +7,7 @@ import {
   GRID_SPACING,
   HOLE_RADIUS,
   BOARD_PADDING,
+  TRACE_COLORS,
   pointKey,
   getComponentHoles,
   getComponentBounds,
@@ -23,7 +24,8 @@ interface BoardProps {
   placementCols: number;
   componentOrientation: "horizontal" | "vertical";
   drawingPoints: Point[];
-  autoConnectComponentIds: string[];
+  acGroups: Point[][];
+  acCurrentGroup: Point[];
   hoveredHole: Point | null;
   selectedComponentId: string | null;
   selectedTraceId: string | null;
@@ -52,7 +54,8 @@ const Board: React.FC<BoardProps> = ({
   placementCols,
   componentOrientation,
   drawingPoints,
-  autoConnectComponentIds: acComponentIds,
+  acGroups,
+  acCurrentGroup,
   hoveredHole,
   selectedComponentId,
   selectedTraceId,
@@ -86,6 +89,23 @@ const Board: React.FC<BoardProps> = ({
     }
     return set;
   }, [traces]);
+
+  // Build a lookup: pointKey -> { groupIndex, color } for all grouped pins
+  const groupedPinMap = useMemo(() => {
+    const map = new Map<string, { groupIndex: number; color: string }>();
+    for (let gi = 0; gi < acGroups.length; gi++) {
+      const color = TRACE_COLORS[gi % TRACE_COLORS.length];
+      for (const p of acGroups[gi]) {
+        map.set(pointKey(p), { groupIndex: gi, color });
+      }
+    }
+    // Current group (being built) gets the next index
+    const currentColor = TRACE_COLORS[acGroups.length % TRACE_COLORS.length];
+    for (const p of acCurrentGroup) {
+      map.set(pointKey(p), { groupIndex: acGroups.length, color: currentColor });
+    }
+    return map;
+  }, [acGroups, acCurrentGroup]);
 
   const snapToHole = useCallback(
     (e: React.MouseEvent<SVGSVGElement>): Point | null => {
@@ -225,18 +245,6 @@ const Board: React.FC<BoardProps> = ({
       const w = (bounds.cols - 1) * GRID_SPACING + GRID_SPACING * 0.8;
       const h = (bounds.rows - 1) * GRID_SPACING + GRID_SPACING * 0.8;
       const isSelected = selectedComponentId === comp.id;
-      const isAcSelected = acComponentIds.includes(comp.id);
-      const acIndex = acComponentIds.indexOf(comp.id);
-
-      let strokeColor = "#555";
-      let strokeW = 1;
-      if (isAcSelected) {
-        strokeColor = "#ff4444";
-        strokeW = 2;
-      } else if (isSelected) {
-        strokeColor = "#4ecdc4";
-        strokeW = 2;
-      }
 
       return (
         <g
@@ -245,12 +253,7 @@ const Board: React.FC<BoardProps> = ({
             e.stopPropagation();
             onComponentClick(comp.id);
           }}
-          style={{
-            cursor:
-              mode === "select" || mode === "erase" || mode === "auto-connect"
-                ? "pointer"
-                : "default",
-          }}
+          style={{ cursor: mode === "select" || mode === "erase" ? "pointer" : "default" }}
         >
           <rect
             x={x}
@@ -259,23 +262,10 @@ const Board: React.FC<BoardProps> = ({
             height={h}
             rx={3}
             ry={3}
-            fill={isAcSelected ? "#2a1a1a" : "#2a2a2a"}
-            stroke={strokeColor}
-            strokeWidth={strokeW}
+            fill="#2a2a2a"
+            stroke={isSelected ? "#4ecdc4" : "#555"}
+            strokeWidth={isSelected ? 2 : 1}
           />
-          {isAcSelected && (
-            <text
-              x={x + w / 2}
-              y={y + h + 14}
-              textAnchor="middle"
-              fontSize={10}
-              fontWeight="bold"
-              fill="#ff6b6b"
-              fontFamily="monospace"
-            >
-              #{acIndex + 1}
-            </text>
-          )}
           {getComponentHoles(comp).map((hole) => (
             <circle
               key={pointKey(hole)}
@@ -300,6 +290,39 @@ const Board: React.FC<BoardProps> = ({
         </g>
       );
     });
+  };
+
+  const renderGroupLabels = () => {
+    const elements: React.ReactElement[] = [];
+    groupedPinMap.forEach((info, key) => {
+      const [r, c] = key.split(",").map(Number);
+      const isCurrent = info.groupIndex === acGroups.length;
+      elements.push(
+        <g key={`grp-${key}`}>
+          <circle
+            cx={holeX(c)}
+            cy={holeY(r)}
+            r={HOLE_RADIUS + 4}
+            fill="none"
+            stroke={info.color}
+            strokeWidth={1.5}
+            strokeDasharray={isCurrent ? "3,2" : "none"}
+          />
+          <text
+            x={holeX(c)}
+            y={holeY(r) - HOLE_RADIUS - 7}
+            textAnchor="middle"
+            fontSize={9}
+            fontWeight="bold"
+            fill={info.color}
+            fontFamily="monospace"
+          >
+            {info.groupIndex + 1}
+          </text>
+        </g>
+      );
+    });
+    return elements;
   };
 
   const renderTraces = () => {
@@ -401,8 +424,6 @@ const Board: React.FC<BoardProps> = ({
     );
   };
 
-  // Auto-connect labels are now rendered inline in renderComponents via acComponentIds
-
   const renderCoordinateLabels = () => {
     const labels: React.ReactElement[] = [];
     for (let c = 0; c < cols; c++) {
@@ -466,6 +487,7 @@ const Board: React.FC<BoardProps> = ({
       {renderDrawingPreview()}
       {renderComponents()}
       {renderPlacementPreview()}
+      {renderGroupLabels()}
     </svg>
   );
 };
