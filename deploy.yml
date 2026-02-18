@@ -22,3 +22,7 @@ apps:
     subdomain: "tic-tac-toe"
     enabled: true
     port: 80
+  pcb_layout:
+    subdomain: "pcb"
+    enabled: true
+    port: 80
