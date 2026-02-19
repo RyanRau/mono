@@ -22,6 +22,7 @@ const screens = {
   guess: $("screen-guess"),
   waiting: $("screen-waiting"),
   reveal: $("screen-reveal"),
+  chain: $("screen-chain"),
   sandbox: $("screen-sandbox"),
 };
 
@@ -530,7 +531,6 @@ function showReveal(data) {
 function showRevealCard() {
   $("reveal-card").hidden = false;
   $("reveal-summary").hidden = true;
-  $("chain-scroll").hidden = true;
   $("reveal-nav").hidden = !isAdmin;
   $("reveal-host-msg").hidden = isAdmin;
 }
@@ -566,7 +566,6 @@ $("btn-reveal-prev").addEventListener("click", () => {
 // -- Summary table --
 function showSummary() {
   $("reveal-card").hidden = true;
-  $("chain-scroll").hidden = true;
   $("reveal-summary").hidden = false;
   $("btn-play-again").hidden = !isAdmin;
   $("reveal-wait").hidden = isAdmin;
@@ -759,22 +758,20 @@ async function exportChain(chainIdx) {
   });
 }
 
-// -- Browse a single chain vertically --
+// -- Browse a single chain (full-page) --
 function openBrowse(chainIdx) {
   browseChainIdx = chainIdx;
-  $("reveal-card").hidden = true;
-  $("reveal-summary").hidden = true;
-  $("chain-scroll").hidden = false;
+  showScreen("chain");
 
   const chain = revealData[chainIdx];
-  $("chain-scroll-title").textContent = `${chain.startedBy}'s chain`;
+  $("chain-page-title").textContent = `${chain.startedBy}'s chain`;
 
-  const container = $("chain-scroll-entries");
+  const container = $("chain-page-entries");
   container.innerHTML = "";
 
   chain.entries.forEach((entry) => {
     const el = document.createElement("div");
-    el.className = "chain-scroll-entry";
+    el.className = "chain-page-entry";
 
     if (entry.type === "drawing") {
       el.innerHTML = entry.content
@@ -785,7 +782,7 @@ function openBrowse(chainIdx) {
     }
 
     const author = document.createElement("p");
-    author.className = "text-muted chain-scroll-author";
+    author.className = "text-muted chain-page-author";
     author.textContent = `by ${entry.authorName}`;
     el.appendChild(author);
 
@@ -793,11 +790,12 @@ function openBrowse(chainIdx) {
   });
 }
 
-$("btn-scroll-back").addEventListener("click", () => {
+$("btn-chain-back").addEventListener("click", () => {
+  showScreen("reveal");
   showSummary();
 });
 
-$("btn-scroll-export").addEventListener("click", () => {
+$("btn-chain-export").addEventListener("click", () => {
   exportChain(browseChainIdx);
 });
 

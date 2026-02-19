@@ -203,11 +203,22 @@
         <p id="reveal-host-msg" class="text-muted" hidden>Host is presenting&hellip;</p>
       </div>
 
-      <!-- Vertical chain viewer (browse from summary) -->
-      <div class="card chain-scroll" id="chain-scroll" hidden>
-        <div class="chain-scroll-header">
-          <button id="btn-scroll-back" class="btn btn-secondary btn-sm">All Chains</button>
-          <button id="btn-scroll-export" class="chain-export-btn" title="Save as image">
+      <!-- Summary table (shown after host finishes all chains) -->
+      <div class="card reveal-summary" id="reveal-summary" hidden>
+        <h2>All Chains</h2>
+        <div id="chain-list" class="chain-list"></div>
+        <button id="btn-play-again" class="btn btn-primary" hidden>Play Again</button>
+        <p id="reveal-wait" class="text-muted" hidden>Waiting for host&hellip;</p>
+      </div>
+    </div>
+
+    <!-- Chain detail (full-page vertical chain view) -->
+    <div id="screen-chain" class="screen">
+      <div class="chain-page">
+        <div class="chain-page-header">
+          <button id="btn-chain-back" class="header-back">Back</button>
+          <h2 id="chain-page-title" class="chain-page-title"></h2>
+          <button id="btn-chain-export" class="chain-export-btn" title="Save as image">
             <svg
               viewBox="0 0 24 24"
               width="18"
@@ -224,16 +235,7 @@
             </svg>
           </button>
         </div>
-        <h2 id="chain-scroll-title"></h2>
-        <div id="chain-scroll-entries" class="chain-scroll-entries"></div>
-      </div>
-
-      <!-- Summary table (shown after host finishes all chains) -->
-      <div class="card reveal-summary" id="reveal-summary" hidden>
-        <h2>All Chains</h2>
-        <div id="chain-list" class="chain-list"></div>
-        <button id="btn-play-again" class="btn btn-primary" hidden>Play Again</button>
-        <p id="reveal-wait" class="text-muted" hidden>Waiting for host&hellip;</p>
+        <div id="chain-page-entries" class="chain-page-entries"></div>
       </div>
     </div>
 

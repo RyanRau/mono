@@ -237,6 +237,10 @@ input[type="text"]:focus {
   padding: 0;
 }
 
+#screen-chain {
+  justify-content: flex-start;
+}
+
 .draw-layout {
   position: relative;
   width: 100%;
@@ -719,22 +723,35 @@ input[type="text"]:focus {
   font-size: 1.2rem;
 }
 
-/* ---- Chain Scroll (vertical browse) ---- */
+/* ---- Chain Page (full-page vertical browse) ---- */
 
-.chain-scroll {
+.chain-page {
+  width: 100%;
   max-width: 500px;
-  max-height: 80dvh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 }
 
-.chain-scroll-header {
+.chain-page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  padding: 4px 0 8px;
+  z-index: 5;
 }
 
-.chain-scroll-entries {
+.chain-page-title {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.chain-page-entries {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -742,14 +759,14 @@ input[type="text"]:focus {
   width: 100%;
 }
 
-.chain-scroll-entry {
+.chain-page-entry {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
 }
 
-.chain-scroll-entry .reveal-word {
+.chain-page-entry .reveal-word {
   font-size: 1.3rem;
   font-weight: 700;
   word-break: break-word;
@@ -760,11 +777,11 @@ input[type="text"]:focus {
   width: 100%;
 }
 
-.chain-scroll-entry .reveal-img-wrap {
+.chain-page-entry .reveal-img-wrap {
   width: 100%;
 }
 
-.chain-scroll-author {
+.chain-page-author {
   font-size: 0.8rem;
   margin-top: 2px;
 }
