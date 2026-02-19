@@ -840,11 +840,29 @@ socket.on("game-started", () => {
 socket.on("new-round", (data) => {
   if (data.type === "write") {
     $("write-round-badge").textContent = `Round ${data.round + 1} of ${data.totalRounds}`;
-    $("write-heading").textContent = "Write a word or phrase";
+    $("write-heading").textContent = "Pick a word or phrase";
     $("word-input").value = "";
     $("btn-submit-word").disabled = false;
+
+    // Render word option buttons
+    const optBox = $("word-options");
+    optBox.innerHTML = "";
+    if (data.wordOptions && data.wordOptions.length) {
+      data.wordOptions.forEach((w) => {
+        const btn = document.createElement("button");
+        btn.className = "btn btn-word-option";
+        btn.textContent = w;
+        btn.addEventListener("click", () => {
+          optBox.querySelectorAll(".btn-word-option").forEach((b) => (b.disabled = true));
+          $("btn-submit-word").disabled = true;
+          socket.emit("submit-word", { word: w });
+          showScreen("waiting");
+        });
+        optBox.appendChild(btn);
+      });
+    }
+
     showScreen("write");
-    $("word-input").focus();
   } else if (data.type === "draw") {
     $("draw-round-badge").textContent = `Round ${data.round + 1} of ${data.totalRounds}`;
     $("draw-word").textContent = data.prompt ? data.prompt.content : "";

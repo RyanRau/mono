@@ -168,6 +168,43 @@ input[type="text"]:focus {
   transform: none;
 }
 
+.btn-word-option {
+  background: var(--card);
+  color: var(--text);
+  border: 2px solid var(--border);
+  width: 100%;
+  text-align: center;
+}
+
+.btn-word-option:active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.word-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.word-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.word-divider::before,
+.word-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
 /* ---- Error / Status ---- */
 
 .error {

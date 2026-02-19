@@ -1,5 +1,6 @@
 import express from "express";
 import http from "http";
+import { readFileSync } from "fs";
 import { Server } from "socket.io";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -13,6 +14,18 @@ const io = new Server(server);
 const PORT = process.env.PORT || 80;
 
 app.use(express.static(join(__dirname, "public")));
+
+// --------------- Word List ---------------
+
+const wordList = readFileSync(join(__dirname, "word_list.txt"), "utf-8")
+  .split("\n")
+  .map((w) => w.trim())
+  .filter(Boolean);
+
+function pickUniqueWords(count) {
+  const shuffled = [...wordList].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+}
 
 // --------------- Game State ---------------
 
@@ -71,6 +84,17 @@ function startRound() {
   lobby.submitted.clear();
   const type = roundType(lobby.currentRound);
 
+  // For the write round, pick unique word options so no player gets duplicates
+  let wordOptions = null;
+  if (type === "write") {
+    const totalNeeded = lobby.playerOrder.length * 3;
+    const words = pickUniqueWords(totalNeeded);
+    wordOptions = {};
+    lobby.playerOrder.forEach((id, i) => {
+      wordOptions[id] = words.slice(i * 3, i * 3 + 3);
+    });
+  }
+
   for (const playerId of lobby.playerOrder) {
     const s = io.sockets.sockets.get(playerId);
     if (!s) continue;
@@ -79,6 +103,7 @@ function startRound() {
       totalRounds: lobby.totalRounds,
       type,
       prompt: promptFor(playerId, lobby.currentRound),
+      wordOptions: wordOptions ? wordOptions[playerId] : undefined,
     });
   }
 
