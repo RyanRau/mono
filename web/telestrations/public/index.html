@@ -188,15 +188,24 @@
 
     <!-- Reveal -->
     <div id="screen-reveal" class="screen">
-      <div class="card reveal-card">
+      <!-- Live chain viewer (host-controlled) / Browse viewer -->
+      <div class="card reveal-card" id="reveal-card">
         <h2 id="reveal-title"></h2>
         <div id="reveal-entry" class="reveal-entry"></div>
         <p id="reveal-author" class="text-muted"></p>
-        <div class="reveal-nav">
+        <div class="reveal-nav" id="reveal-nav">
           <button id="btn-reveal-prev" class="btn btn-secondary btn-sm">Back</button>
           <span id="reveal-counter" class="text-muted"></span>
           <button id="btn-reveal-next" class="btn btn-primary btn-sm">Next</button>
         </div>
+        <p id="reveal-host-msg" class="text-muted" hidden>Host is presenting&hellip;</p>
+        <button id="btn-back-to-summary" class="btn btn-secondary btn-sm" hidden>All Chains</button>
+      </div>
+
+      <!-- Summary table (shown after host finishes all chains) -->
+      <div class="card reveal-summary" id="reveal-summary" hidden>
+        <h2>All Chains</h2>
+        <div id="chain-list" class="chain-list"></div>
         <button id="btn-play-again" class="btn btn-primary" hidden>Play Again</button>
         <p id="reveal-wait" class="text-muted" hidden>Waiting for host&hellip;</p>
       </div>

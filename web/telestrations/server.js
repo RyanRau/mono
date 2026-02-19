@@ -127,6 +127,9 @@ function revealChains() {
       authorName: e.authorName,
     })),
   }));
+  lobby.revealData = data;
+  lobby.revealChainIdx = 0;
+  lobby.revealEntryIdx = -1;
   io.emit("reveal", { chains: data });
 }
 
@@ -190,6 +193,43 @@ io.on("connection", (socket) => {
 
   socket.on("submit-drawing", ({ imageData }) => {
     handleSubmission(socket.id, imageData);
+  });
+
+  socket.on("reveal-navigate", ({ direction }) => {
+    if (!lobby || lobby.state !== "reveal") return;
+    if (socket.id !== lobby.adminId) return;
+
+    const chains = lobby.revealData;
+    if (!chains) return;
+
+    if (direction === "next") {
+      const chain = chains[lobby.revealChainIdx];
+      const atEnd =
+        lobby.revealChainIdx === chains.length - 1 &&
+        lobby.revealEntryIdx === chain.entries.length - 1;
+      if (atEnd) {
+        io.emit("reveal-done");
+        return;
+      }
+      if (lobby.revealEntryIdx < chain.entries.length - 1) {
+        lobby.revealEntryIdx++;
+      } else if (lobby.revealChainIdx < chains.length - 1) {
+        lobby.revealChainIdx++;
+        lobby.revealEntryIdx = -1;
+      }
+    } else if (direction === "prev") {
+      if (lobby.revealEntryIdx > -1) {
+        lobby.revealEntryIdx--;
+      } else if (lobby.revealChainIdx > 0) {
+        lobby.revealChainIdx--;
+        lobby.revealEntryIdx = chains[lobby.revealChainIdx].entries.length - 1;
+      }
+    }
+
+    io.emit("reveal-sync", {
+      chainIdx: lobby.revealChainIdx,
+      entryIdx: lobby.revealEntryIdx,
+    });
   });
 
   socket.on("play-again", () => {

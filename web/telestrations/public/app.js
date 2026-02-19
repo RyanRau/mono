@@ -8,6 +8,9 @@ let myName = "";
 let revealData = null;
 let revealChainIdx = 0;
 let revealEntryIdx = 0;
+let revealMode = "live"; // "live" = host-controlled, "browse" = free browsing from summary
+let browseChainIdx = 0;
+let browseEntryIdx = 0;
 let canvas = null;
 
 // ==================== DOM Refs ====================
@@ -487,72 +490,166 @@ $("guess-input").addEventListener("keydown", (e) => {
 });
 
 // ==================== Reveal ====================
-function showReveal(data) {
-  revealData = data.chains;
-  revealChainIdx = 0;
-  revealEntryIdx = -1; // start at -1 so first "next" shows entry 0
-  showScreen("reveal");
-  updateReveal();
 
-  $("btn-play-again").hidden = !isAdmin;
-  $("reveal-wait").hidden = isAdmin;
-}
-
-function updateReveal() {
-  const chain = revealData[revealChainIdx];
+// -- Render a single entry into the given DOM elements --
+function renderRevealEntry(chainIdx, entryIdx, titleEl, entryEl, authorEl, counterEl) {
+  const chain = revealData[chainIdx];
   const totalEntries = chain.entries.length;
 
-  if (revealEntryIdx < 0) {
-    // Show chain intro
-    $("reveal-title").textContent = `Chain ${revealChainIdx + 1} of ${revealData.length}`;
-    $("reveal-entry").innerHTML =
-      `<div class="reveal-word">Started by ${esc(chain.startedBy)}</div>`;
-    $("reveal-author").textContent = "Tap Next to begin";
-    $("reveal-counter").textContent = "";
+  if (entryIdx < 0) {
+    titleEl.textContent = `Chain ${chainIdx + 1} of ${revealData.length}`;
+    entryEl.innerHTML = `<div class="reveal-word">Started by ${esc(chain.startedBy)}</div>`;
+    authorEl.textContent = "";
+    counterEl.textContent = "";
   } else {
-    const entry = chain.entries[revealEntryIdx];
-    $("reveal-title").textContent = `Chain ${revealChainIdx + 1} of ${revealData.length}`;
-    $("reveal-author").textContent = `by ${entry.authorName}`;
-    $("reveal-counter").textContent = `${revealEntryIdx + 1} / ${totalEntries}`;
+    const entry = chain.entries[entryIdx];
+    titleEl.textContent = `Chain ${chainIdx + 1} of ${revealData.length}`;
+    authorEl.textContent = `by ${entry.authorName}`;
+    counterEl.textContent = `${entryIdx + 1} / ${totalEntries}`;
 
     if (entry.type === "drawing") {
       if (entry.content) {
-        $("reveal-entry").innerHTML =
-          `<div class="reveal-img-wrap"><img class="reveal-img" src="${entry.content}" alt="drawing" /></div>`;
+        entryEl.innerHTML = `<div class="reveal-img-wrap"><img class="reveal-img" src="${entry.content}" alt="drawing" /></div>`;
       } else {
-        $("reveal-entry").innerHTML = `<div class="reveal-word">(no drawing)</div>`;
+        entryEl.innerHTML = `<div class="reveal-word">(no drawing)</div>`;
       }
     } else {
-      $("reveal-entry").innerHTML = `<div class="reveal-word">${esc(entry.content)}</div>`;
+      entryEl.innerHTML = `<div class="reveal-word">${esc(entry.content)}</div>`;
     }
   }
+}
 
+// -- Show reveal screen (host-controlled live mode) --
+function showReveal(data) {
+  revealData = data.chains;
+  revealChainIdx = 0;
+  revealEntryIdx = -1;
+  revealMode = "live";
+  showScreen("reveal");
+  showRevealCard();
+  updateRevealLive();
+}
+
+function showRevealCard() {
+  $("reveal-card").hidden = false;
+  $("reveal-summary").hidden = true;
+
+  if (revealMode === "live") {
+    $("reveal-nav").hidden = !isAdmin;
+    $("reveal-host-msg").hidden = isAdmin;
+    $("btn-back-to-summary").hidden = true;
+  } else {
+    $("reveal-nav").hidden = false;
+    $("reveal-host-msg").hidden = true;
+    $("btn-back-to-summary").hidden = false;
+  }
+}
+
+function updateRevealLive() {
+  renderRevealEntry(
+    revealChainIdx,
+    revealEntryIdx,
+    $("reveal-title"),
+    $("reveal-entry"),
+    $("reveal-author"),
+    $("reveal-counter")
+  );
+
+  const chain = revealData[revealChainIdx];
   const isFirst = revealChainIdx === 0 && revealEntryIdx <= -1;
-  const isLast = revealChainIdx === revealData.length - 1 && revealEntryIdx === totalEntries - 1;
+  const isLast =
+    revealChainIdx === revealData.length - 1 && revealEntryIdx === chain.entries.length - 1;
 
   $("btn-reveal-prev").disabled = isFirst;
   $("btn-reveal-next").textContent = isLast ? "Done" : "Next";
 }
 
+// -- Host nav buttons (emit to server instead of navigating locally) --
 $("btn-reveal-next").addEventListener("click", () => {
-  const chain = revealData[revealChainIdx];
-  if (revealEntryIdx < chain.entries.length - 1) {
-    revealEntryIdx++;
-  } else if (revealChainIdx < revealData.length - 1) {
-    revealChainIdx++;
-    revealEntryIdx = -1;
+  if (revealMode === "live") {
+    socket.emit("reveal-navigate", { direction: "next" });
+  } else {
+    // Browse mode: local navigation
+    const chain = revealData[browseChainIdx];
+    if (browseEntryIdx < chain.entries.length - 1) {
+      browseEntryIdx++;
+    } else {
+      // At end of this chain, go back to summary
+      showSummary();
+      return;
+    }
+    updateBrowse();
   }
-  updateReveal();
 });
 
 $("btn-reveal-prev").addEventListener("click", () => {
-  if (revealEntryIdx > -1) {
-    revealEntryIdx--;
-  } else if (revealChainIdx > 0) {
-    revealChainIdx--;
-    revealEntryIdx = revealData[revealChainIdx].entries.length - 1;
+  if (revealMode === "live") {
+    socket.emit("reveal-navigate", { direction: "prev" });
+  } else {
+    // Browse mode: local navigation
+    if (browseEntryIdx > -1) {
+      browseEntryIdx--;
+    }
+    updateBrowse();
   }
-  updateReveal();
+});
+
+// -- Summary table --
+function showSummary() {
+  $("reveal-card").hidden = true;
+  $("reveal-summary").hidden = false;
+  $("btn-play-again").hidden = !isAdmin;
+  $("reveal-wait").hidden = isAdmin;
+
+  const list = $("chain-list");
+  list.innerHTML = "";
+  revealData.forEach((chain, i) => {
+    const firstWord = chain.entries[0]?.content || "";
+    const lastEntry = chain.entries[chain.entries.length - 1];
+    const lastWord = lastEntry?.type !== "drawing" ? lastEntry?.content || "" : "";
+
+    const item = document.createElement("div");
+    item.className = "chain-item";
+    item.innerHTML = `
+      <div class="chain-item-info">
+        <span class="chain-item-name">${esc(chain.startedBy)}'s chain</span>
+        <span class="chain-item-detail">${esc(firstWord)}${lastWord && lastWord !== firstWord ? " → " + esc(lastWord) : ""}</span>
+      </div>
+      <span class="chain-item-arrow">›</span>`;
+    item.addEventListener("click", () => openBrowse(i));
+    list.appendChild(item);
+  });
+}
+
+// -- Browse a single chain from the summary --
+function openBrowse(chainIdx) {
+  revealMode = "browse";
+  browseChainIdx = chainIdx;
+  browseEntryIdx = -1;
+  showRevealCard();
+  updateBrowse();
+}
+
+function updateBrowse() {
+  renderRevealEntry(
+    browseChainIdx,
+    browseEntryIdx,
+    $("reveal-title"),
+    $("reveal-entry"),
+    $("reveal-author"),
+    $("reveal-counter")
+  );
+
+  const chain = revealData[browseChainIdx];
+  const isFirst = browseEntryIdx <= -1;
+  const isLast = browseEntryIdx === chain.entries.length - 1;
+
+  $("btn-reveal-prev").disabled = isFirst;
+  $("btn-reveal-next").textContent = isLast ? "Done" : "Next";
+}
+
+$("btn-back-to-summary").addEventListener("click", () => {
+  showSummary();
 });
 
 $("btn-play-again").addEventListener("click", () => {
@@ -631,6 +728,16 @@ socket.on("round-progress", (data) => {
 
 socket.on("reveal", (data) => {
   showReveal(data);
+});
+
+socket.on("reveal-sync", (data) => {
+  revealChainIdx = data.chainIdx;
+  revealEntryIdx = data.entryIdx;
+  updateRevealLive();
+});
+
+socket.on("reveal-done", () => {
+  showSummary();
 });
 
 socket.on("back-to-lobby", () => {
