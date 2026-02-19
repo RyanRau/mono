@@ -84,17 +84,20 @@ jobs:
             git pull origin main
 
             # Write active test config to the droplet (gitignored runtime file)
-            # Include subdomain/port so generate-compose.py works even if the
-            # app isn't in main's deploy.yml yet (new apps on feature branches)
             echo 'app: ${{ steps.config.outputs.app }}' > test-deploy.active.yml
-            echo 'subdomain: "${{ steps.config.outputs.subdomain }}"' >> test-deploy.active.yml
-            echo 'port: ${{ steps.config.outputs.port }}' >> test-deploy.active.yml
+
+            # Ensure test app exists in deploy.yml (may not be on main yet for new apps).
+            # Uses setdefault so existing entries are not overwritten.
+            python3 -c "import yaml; c=yaml.safe_load(open('deploy.yml')); c.setdefault('apps',{}).setdefault('${{ steps.config.outputs.app }}',{'subdomain':'${{ steps.config.outputs.subdomain }}','enabled':False,'port':${{ steps.config.outputs.port }}}); open('deploy.yml','w').write(yaml.dump(c,default_flow_style=False,sort_keys=False))"
 
             # Login to GHCR
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
             # Generate docker-compose.yml (picks up both deploy.yml and test-deploy.active.yml)
             python3 infra/generate-compose.py
+
+            # Restore deploy.yml to main state
+            git checkout deploy.yml
 
             # Pull latest images and deploy
             docker compose pull
