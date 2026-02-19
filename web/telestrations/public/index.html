@@ -60,10 +60,11 @@
 
     <!-- Draw -->
     <div id="screen-draw" class="screen">
-      <div class="card draw-card">
-        <div class="round-badge" id="draw-round-badge"></div>
-        <p class="draw-prompt">Draw this:</p>
-        <p id="draw-word" class="prompt-text"></p>
+      <div class="draw-layout">
+        <div class="draw-header">
+          <span class="round-badge" id="draw-round-badge"></span>
+          <span id="draw-word" class="draw-header-word"></span>
+        </div>
         <div class="canvas-wrap">
           <canvas id="draw-canvas"></canvas>
         </div>
@@ -106,27 +107,22 @@
               />
             </svg>
           </button>
+          <button class="qb-submit" id="btn-submit-drawing">Done</button>
         </div>
-        <!-- Long-press popup for pen settings -->
         <div id="pen-popup" class="pen-popup" hidden>
           <div class="pen-popup-inner">
             <p class="pen-popup-label">Color</p>
             <div class="color-row" id="color-picker"></div>
             <p class="pen-popup-label">Size</p>
             <div class="size-row">
-              <button class="size-btn" data-size="3">
-                <span class="dot dot-sm"></span>
-              </button>
+              <button class="size-btn" data-size="3"><span class="dot dot-sm"></span></button>
               <button class="size-btn active" data-size="6">
                 <span class="dot dot-md"></span>
               </button>
-              <button class="size-btn" data-size="12">
-                <span class="dot dot-lg"></span>
-              </button>
+              <button class="size-btn" data-size="12"><span class="dot dot-lg"></span></button>
             </div>
           </div>
         </div>
-        <button id="btn-submit-drawing" class="btn btn-primary">Submit Drawing</button>
       </div>
     </div>
 
@@ -176,11 +172,16 @@
 
     <!-- Sandbox (draw only) -->
     <div id="screen-sandbox" class="screen">
-      <div class="card draw-card">
-        <div class="sandbox-header">
-          <button id="btn-sandbox-back" class="btn btn-secondary btn-sm">Back</button>
-          <span class="sandbox-title">Free Draw</span>
-          <span></span>
+      <div class="draw-layout">
+        <div class="draw-header">
+          <button
+            id="btn-sandbox-back"
+            class="qb-btn"
+            style="width: auto; padding: 0 12px; font-size: 0.8rem; font-weight: 600; height: 32px"
+          >
+            Back
+          </button>
+          <span class="draw-header-word">Free Draw</span>
         </div>
         <div class="canvas-wrap">
           <canvas id="sandbox-canvas"></canvas>
@@ -231,15 +232,11 @@
             <div class="color-row" id="sbx-color-picker"></div>
             <p class="pen-popup-label">Size</p>
             <div class="size-row">
-              <button class="size-btn" data-size="3">
-                <span class="dot dot-sm"></span>
-              </button>
+              <button class="size-btn" data-size="3"><span class="dot dot-sm"></span></button>
               <button class="size-btn active" data-size="6">
                 <span class="dot dot-md"></span>
               </button>
-              <button class="size-btn" data-size="12">
-                <span class="dot dot-lg"></span>
-              </button>
+              <button class="size-btn" data-size="12"><span class="dot dot-lg"></span></button>
             </div>
           </div>
         </div>
