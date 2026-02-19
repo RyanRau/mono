@@ -600,6 +600,7 @@ function showSummary() {
   $("reveal-summary").hidden = false;
   $("btn-play-again").hidden = !isAdmin;
   $("reveal-wait").hidden = isAdmin;
+  $("chain-list").hidden = !isAdmin;
 
   const list = $("chain-list");
   list.innerHTML = "";
