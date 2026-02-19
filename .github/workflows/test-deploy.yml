@@ -44,7 +44,14 @@ jobs:
             exit 1
           fi
 
+          # Read subdomain and port so they can be passed to the droplet
+          # (needed for new apps not yet in main's deploy.yml)
+          SUBDOMAIN=$(yq ".apps.${APP}.subdomain" deploy.yml)
+          PORT=$(yq ".apps.${APP}.port" deploy.yml)
+
           echo "app=${APP}" >> $GITHUB_OUTPUT
+          echo "subdomain=${SUBDOMAIN}" >> $GITHUB_OUTPUT
+          echo "port=${PORT}" >> $GITHUB_OUTPUT
           echo "Test deploying app: ${APP}"
 
       - name: Login to GitHub Container Registry
@@ -77,7 +84,13 @@ jobs:
             git pull origin main
 
             # Write active test config to the droplet (gitignored runtime file)
-            echo "app: ${{ steps.config.outputs.app }}" > test-deploy.active.yml
+            # Include subdomain/port so generate-compose.py works even if the
+            # app isn't in main's deploy.yml yet (new apps on feature branches)
+            cat > test-deploy.active.yml << EOL
+            app: ${{ steps.config.outputs.app }}
+            subdomain: "${{ steps.config.outputs.subdomain }}"
+            port: ${{ steps.config.outputs.port }}
+            EOL
 
             # Login to GHCR
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
