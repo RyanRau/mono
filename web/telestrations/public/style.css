@@ -294,19 +294,15 @@ input[type="text"]:focus {
 /* ---- Header Buttons ---- */
 
 .fab-submit {
-  position: absolute;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
-  left: 12px;
-  padding: 12px 28px;
+  width: 100%;
+  padding: 12px 0;
   border: none;
-  border-radius: 50px;
+  border-radius: 14px;
   background: var(--primary);
   color: #fff;
   font-weight: 700;
   font-size: 0.9rem;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.4);
-  z-index: 10;
   -webkit-user-select: none;
   user-select: none;
   transition:
@@ -316,7 +312,7 @@ input[type="text"]:focus {
 
 .fab-submit:active {
   background: var(--primary-dark);
-  transform: scale(0.95);
+  transform: scale(0.97);
 }
 
 .fab-submit:disabled {
