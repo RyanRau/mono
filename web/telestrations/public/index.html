@@ -68,78 +68,80 @@
         <div class="canvas-wrap">
           <canvas id="draw-canvas"></canvas>
         </div>
-        <button class="fab-submit" id="btn-submit-drawing">Done</button>
-        <div class="fab-menu" id="fab-menu">
-          <div class="fab-options">
-            <button class="fab-opt" id="btn-clear">
+        <div class="draw-footer">
+          <button class="fab-submit" id="btn-submit-drawing">Done</button>
+          <div class="fab-menu" id="fab-menu">
+            <div class="fab-options">
+              <button class="fab-opt" id="btn-clear">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="3 6 5 6 21 6" />
+                  <path
+                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                  />
+                </svg>
+              </button>
+              <button class="fab-opt" id="btn-undo">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="1 4 1 10 7 10" />
+                  <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                </svg>
+              </button>
+              <button class="fab-opt" id="btn-eraser">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"
+                  />
+                  <path d="M22 21H7" />
+                  <path d="m5 11 9 9" />
+                </svg>
+              </button>
+              <button class="fab-opt" id="btn-pen">
+                <span class="pen-icon" id="pen-color-dot"></span>
+              </button>
+            </div>
+            <button class="fab-toggle" id="fab-toggle">
               <svg
                 viewBox="0 0 24 24"
-                width="20"
-                height="20"
+                width="24"
+                height="24"
                 fill="none"
                 stroke="currentColor"
-                stroke-width="2.5"
+                stroke-width="2"
                 stroke-linecap="round"
                 stroke-linejoin="round"
               >
-                <polyline points="3 6 5 6 21 6" />
-                <path
-                  d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-                />
+                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                <path d="m15 5 4 4" />
               </svg>
-            </button>
-            <button class="fab-opt" id="btn-undo">
-              <svg
-                viewBox="0 0 24 24"
-                width="20"
-                height="20"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <polyline points="1 4 1 10 7 10" />
-                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-              </svg>
-            </button>
-            <button class="fab-opt" id="btn-eraser">
-              <svg
-                viewBox="0 0 24 24"
-                width="20"
-                height="20"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"
-                />
-                <path d="M22 21H7" />
-                <path d="m5 11 9 9" />
-              </svg>
-            </button>
-            <button class="fab-opt" id="btn-pen">
-              <span class="pen-icon" id="pen-color-dot"></span>
             </button>
           </div>
-          <button class="fab-toggle" id="fab-toggle">
-            <svg
-              viewBox="0 0 24 24"
-              width="24"
-              height="24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-              <path d="m15 5 4 4" />
-            </svg>
-          </button>
         </div>
         <div id="pen-popup" class="pen-popup" hidden>
           <div class="pen-popup-inner">
