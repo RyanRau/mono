@@ -64,50 +64,67 @@
         <div class="draw-header">
           <span class="round-badge" id="draw-round-badge"></span>
           <span id="draw-word" class="draw-header-word"></span>
+          <button class="header-submit" id="btn-submit-drawing">Done</button>
         </div>
         <div class="canvas-wrap">
           <canvas id="draw-canvas"></canvas>
         </div>
-        <div class="quick-bar">
-          <button class="qb-btn active" id="btn-pen">
-            <span class="pen-icon" id="pen-color-dot"></span>
-          </button>
-          <button class="qb-btn" id="btn-eraser">
-            <span class="eraser-icon"></span>
-          </button>
-          <button class="qb-btn" id="btn-undo">
+        <div class="fab-menu" id="fab-menu">
+          <div class="fab-options">
+            <button class="fab-opt" id="btn-clear">
+              <svg
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="3 6 5 6 21 6" />
+                <path
+                  d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                />
+              </svg>
+            </button>
+            <button class="fab-opt" id="btn-undo">
+              <svg
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="1 4 1 10 7 10" />
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+              </svg>
+            </button>
+            <button class="fab-opt" id="btn-eraser">
+              <span class="eraser-icon"></span>
+            </button>
+            <button class="fab-opt" id="btn-pen">
+              <span class="pen-icon" id="pen-color-dot"></span>
+            </button>
+          </div>
+          <button class="fab-toggle" id="fab-toggle">
             <svg
               viewBox="0 0 24 24"
-              width="22"
-              height="22"
+              width="24"
+              height="24"
               fill="none"
               stroke="currentColor"
-              stroke-width="2.5"
+              stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
             >
-              <polyline points="1 4 1 10 7 10" />
-              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+              <path d="m15 5 4 4" />
             </svg>
           </button>
-          <button class="qb-btn" id="btn-clear">
-            <svg
-              viewBox="0 0 24 24"
-              width="22"
-              height="22"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <polyline points="3 6 5 6 21 6" />
-              <path
-                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-              />
-            </svg>
-          </button>
-          <button class="qb-submit" id="btn-submit-drawing">Done</button>
         </div>
         <div id="pen-popup" class="pen-popup" hidden>
           <div class="pen-popup-inner">
@@ -174,55 +191,66 @@
     <div id="screen-sandbox" class="screen">
       <div class="draw-layout">
         <div class="draw-header">
-          <button
-            id="btn-sandbox-back"
-            class="qb-btn"
-            style="width: auto; padding: 0 12px; font-size: 0.8rem; font-weight: 600; height: 32px"
-          >
-            Back
-          </button>
+          <button id="btn-sandbox-back" class="header-back">Back</button>
           <span class="draw-header-word">Free Draw</span>
         </div>
         <div class="canvas-wrap">
           <canvas id="sandbox-canvas"></canvas>
         </div>
-        <div class="quick-bar">
-          <button class="qb-btn active" id="sbx-btn-pen">
-            <span class="pen-icon" id="sbx-pen-color-dot"></span>
-          </button>
-          <button class="qb-btn" id="sbx-btn-eraser">
-            <span class="eraser-icon"></span>
-          </button>
-          <button class="qb-btn" id="sbx-btn-undo">
+        <div class="fab-menu" id="sbx-fab-menu">
+          <div class="fab-options">
+            <button class="fab-opt" id="sbx-btn-clear">
+              <svg
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="3 6 5 6 21 6" />
+                <path
+                  d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                />
+              </svg>
+            </button>
+            <button class="fab-opt" id="sbx-btn-undo">
+              <svg
+                viewBox="0 0 24 24"
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="1 4 1 10 7 10" />
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+              </svg>
+            </button>
+            <button class="fab-opt" id="sbx-btn-eraser">
+              <span class="eraser-icon"></span>
+            </button>
+            <button class="fab-opt" id="sbx-btn-pen">
+              <span class="pen-icon" id="sbx-pen-color-dot"></span>
+            </button>
+          </div>
+          <button class="fab-toggle" id="sbx-fab-toggle">
             <svg
               viewBox="0 0 24 24"
-              width="22"
-              height="22"
+              width="24"
+              height="24"
               fill="none"
               stroke="currentColor"
-              stroke-width="2.5"
+              stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
             >
-              <polyline points="1 4 1 10 7 10" />
-              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-            </svg>
-          </button>
-          <button class="qb-btn" id="sbx-btn-clear">
-            <svg
-              viewBox="0 0 24 24"
-              width="22"
-              height="22"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <polyline points="3 6 5 6 21 6" />
-              <path
-                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-              />
+              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+              <path d="m15 5 4 4" />
             </svg>
           </button>
         </div>

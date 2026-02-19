@@ -285,9 +285,21 @@ function setupDrawTools(ids, getCanvas) {
   const popupEl = $(ids.popup);
   const pickerEl = $(ids.picker);
   const dotEl = $(ids.dot);
+  const fabMenuEl = $(ids.fabMenu);
+  const fabToggleEl = $(ids.fabToggle);
 
+  function openFab() {
+    fabMenuEl.classList.add("open");
+  }
+  function closeFab() {
+    fabMenuEl.classList.remove("open");
+  }
+  function toggleFab() {
+    fabMenuEl.classList.toggle("open");
+  }
   function openPopup() {
     popupEl.hidden = false;
+    closeFab();
   }
   function closePopup() {
     popupEl.hidden = true;
@@ -303,6 +315,9 @@ function setupDrawTools(ids, getCanvas) {
     if (cv) dotEl.style.background = cv.color;
   }
 
+  // -- FAB toggle --
+  fabToggleEl.addEventListener("click", toggleFab);
+
   // -- Pen: tap = select, long-press = popup --
   function down() {
     clearTimeout(holdTimer);
@@ -316,6 +331,7 @@ function setupDrawTools(ids, getCanvas) {
       clearTimeout(holdTimer);
       holdTimer = null;
       selPen();
+      closeFab();
     }
   }
   function cancel() {
@@ -379,6 +395,7 @@ function setupDrawTools(ids, getCanvas) {
     penBtn.classList.remove("active");
     const cv = getCanvas();
     if (cv) cv.erasing = true;
+    closeFab();
   });
 
   // -- Undo --
@@ -391,11 +408,12 @@ function setupDrawTools(ids, getCanvas) {
   $(ids.clear).addEventListener("click", () => {
     const cv = getCanvas();
     if (cv) cv.clearAll();
+    closeFab();
   });
 
   updDot();
 
-  return { selectPen: selPen, closePopup, updateDot: updDot };
+  return { selectPen: selPen, closePopup, closeFab, openFab, updateDot: updDot };
 }
 
 // Wire up game draw tools
@@ -408,6 +426,8 @@ const gameTools = setupDrawTools(
     popup: "pen-popup",
     picker: "color-picker",
     dot: "pen-color-dot",
+    fabMenu: "fab-menu",
+    fabToggle: "fab-toggle",
   },
   () => canvas
 );
@@ -427,6 +447,8 @@ const sbxTools = setupDrawTools(
     popup: "sbx-pen-popup",
     picker: "sbx-color-picker",
     dot: "sbx-pen-color-dot",
+    fabMenu: "sbx-fab-menu",
+    fabToggle: "sbx-fab-toggle",
   },
   () => sandboxCanvas
 );
@@ -435,6 +457,7 @@ $("btn-sandbox").addEventListener("click", () => {
   sandboxCanvas = new DrawingCanvas($("sandbox-canvas"));
   sbxTools.selectPen();
   sbxTools.closePopup();
+  sbxTools.closeFab();
   sbxTools.updateDot();
   showScreen("sandbox");
 });
@@ -585,6 +608,7 @@ socket.on("new-round", (data) => {
     $("btn-submit-drawing").disabled = false;
     selectPen();
     closePenPopup();
+    gameTools.closeFab();
     gameTools.updateDot();
     showScreen("draw");
   } else if (data.type === "guess") {

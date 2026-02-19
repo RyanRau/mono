@@ -237,6 +237,7 @@ input[type="text"]:focus {
 }
 
 .draw-layout {
+  position: relative;
   width: 100%;
   height: 100%;
   display: flex;
@@ -290,48 +291,81 @@ input[type="text"]:focus {
   aspect-ratio: 1;
 }
 
-/* ---- Quick Bar ---- */
+/* ---- Header Buttons ---- */
 
-.quick-bar {
-  display: flex;
-  gap: 6px;
-  justify-content: center;
-  align-items: center;
-}
-
-.qb-submit {
-  height: 44px;
-  padding: 0 20px;
+.header-submit {
+  margin-left: auto;
+  flex-shrink: 0;
+  padding: 6px 16px;
   border: none;
-  border-radius: 14px;
+  border-radius: 10px;
   background: var(--primary);
   color: #fff;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   cursor: pointer;
-  margin-left: auto;
   -webkit-user-select: none;
   user-select: none;
-  transition:
-    background 0.15s,
-    transform 0.1s;
 }
 
-.qb-submit:active {
+.header-submit:active {
   background: var(--primary-dark);
-  transform: scale(0.97);
 }
 
-.qb-submit:disabled {
+.header-submit:disabled {
   opacity: 0.5;
   cursor: default;
-  transform: none;
 }
 
-.qb-btn {
+.header-back {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ---- FAB Menu ---- */
+
+.fab-menu {
+  position: absolute;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 10;
+}
+
+.fab-options {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(8px) scale(0.9);
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.fab-menu.open .fab-options {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.fab-opt {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: 50%;
   border: 2px solid var(--border);
   background: var(--card);
   cursor: pointer;
@@ -339,17 +373,44 @@ input[type="text"]:focus {
   align-items: center;
   justify-content: center;
   color: var(--text);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition:
     border-color 0.15s,
     background 0.15s;
   -webkit-user-select: none;
   user-select: none;
-  position: relative;
 }
 
-.qb-btn.active {
+.fab-opt.active {
   border-color: var(--primary);
   background: #f0edff;
+}
+
+.fab-toggle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.4);
+  transition:
+    transform 0.2s ease,
+    background 0.15s;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.fab-toggle:active {
+  background: var(--primary-dark);
+}
+
+.fab-menu.open .fab-toggle {
+  transform: rotate(45deg);
 }
 
 .pen-icon {
