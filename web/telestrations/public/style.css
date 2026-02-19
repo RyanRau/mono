@@ -662,6 +662,34 @@ input[type="text"]:focus {
   color: var(--text-muted);
 }
 
+.chain-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.chain-export-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--card);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.chain-export-btn:active {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
 .chain-item-arrow {
   color: var(--text-muted);
   font-size: 1.2rem;

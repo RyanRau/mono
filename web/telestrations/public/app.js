@@ -615,9 +615,165 @@ function showSummary() {
         <span class="chain-item-name">${esc(chain.startedBy)}'s chain</span>
         <span class="chain-item-detail">${esc(firstWord)}${lastWord && lastWord !== firstWord ? " → " + esc(lastWord) : ""}</span>
       </div>
-      <span class="chain-item-arrow">›</span>`;
+      <div class="chain-item-actions">
+        <button class="chain-export-btn" title="Save as image">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>
+        <span class="chain-item-arrow">›</span>
+      </div>`;
+    item.querySelector(".chain-export-btn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      exportChain(i);
+    });
     item.addEventListener("click", () => openBrowse(i));
     list.appendChild(item);
+  });
+}
+
+// -- Export chain as vertical image --
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function loadImg(src) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+
+function wrapText(ctx, text, maxW) {
+  const words = text.split(" ");
+  const lines = [];
+  let line = "";
+  for (const word of words) {
+    const test = line ? line + " " + word : word;
+    if (ctx.measureText(test).width > maxW && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = test;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+async function exportChain(chainIdx) {
+  const chain = revealData[chainIdx];
+  const W = 540;
+  const PAD = 20;
+  const CW = W - PAD * 2; // content width
+  const ENTRY_GAP = 12;
+  const TITLE_FONT = "bold 22px system-ui, -apple-system, sans-serif";
+  const WORD_FONT = "bold 22px system-ui, -apple-system, sans-serif";
+  const AUTHOR_FONT = "13px system-ui, -apple-system, sans-serif";
+  const WORD_PAD = 20;
+  const LINE_H = 28;
+
+  // Pre-load drawing images
+  const images = await Promise.all(
+    chain.entries.map((e) =>
+      e.type === "drawing" && e.content ? loadImg(e.content) : Promise.resolve(null)
+    )
+  );
+
+  // Measure text to calculate total height
+  const measure = document.createElement("canvas").getContext("2d");
+  let totalH = PAD + 36; // top padding + title
+  for (const entry of chain.entries) {
+    if (entry.type === "drawing") {
+      totalH += CW;
+    } else {
+      measure.font = WORD_FONT;
+      const lines = wrapText(measure, entry.content, CW - WORD_PAD * 2);
+      totalH += lines.length * LINE_H + WORD_PAD * 2;
+    }
+    totalH += 22 + ENTRY_GAP; // author + gap
+  }
+  totalH += PAD;
+
+  // Render
+  const cvs = document.createElement("canvas");
+  cvs.width = W;
+  cvs.height = totalH;
+  const ctx = cvs.getContext("2d");
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, W, totalH);
+
+  let y = PAD;
+  ctx.fillStyle = "#2d3436";
+  ctx.font = TITLE_FONT;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.fillText(`${chain.startedBy}'s chain`, W / 2, y);
+  y += 36;
+
+  for (let i = 0; i < chain.entries.length; i++) {
+    const entry = chain.entries[i];
+
+    if (entry.type === "drawing") {
+      if (images[i]) {
+        ctx.save();
+        roundRect(ctx, PAD, y, CW, CW, 8);
+        ctx.clip();
+        ctx.drawImage(images[i], PAD, y, CW, CW);
+        ctx.restore();
+        ctx.strokeStyle = "#dfe6e9";
+        ctx.lineWidth = 2;
+        roundRect(ctx, PAD, y, CW, CW, 8);
+        ctx.stroke();
+      }
+      y += CW;
+    } else {
+      ctx.font = WORD_FONT;
+      const lines = wrapText(ctx, entry.content, CW - WORD_PAD * 2);
+      const boxH = lines.length * LINE_H + WORD_PAD * 2;
+
+      ctx.fillStyle = "#f0edff";
+      roundRect(ctx, PAD, y, CW, boxH, 12);
+      ctx.fill();
+
+      ctx.fillStyle = "#2d3436";
+      ctx.font = WORD_FONT;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      let ty = y + WORD_PAD;
+      for (const line of lines) {
+        ctx.fillText(line, W / 2, ty);
+        ty += LINE_H;
+      }
+      y += boxH;
+    }
+
+    ctx.fillStyle = "#b2bec3";
+    ctx.font = AUTHOR_FONT;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText(`by ${entry.authorName}`, W / 2, y + 4);
+    y += 22 + ENTRY_GAP;
+  }
+
+  cvs.toBlob((blob) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${chain.startedBy}-chain.png`;
+    a.click();
+    URL.revokeObjectURL(url);
   });
 }
 
