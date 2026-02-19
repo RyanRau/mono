@@ -192,7 +192,7 @@
 
     <!-- Reveal -->
     <div id="screen-reveal" class="screen">
-      <!-- Live chain viewer (host-controlled) -->
+      <!-- Live chain viewer (current presenter controls) -->
       <div class="card reveal-card" id="reveal-card" hidden>
         <h2 id="reveal-title"></h2>
         <div id="reveal-entry" class="reveal-entry"></div>
@@ -202,10 +202,10 @@
           <span id="reveal-counter" class="text-muted"></span>
           <button id="btn-reveal-next" class="btn btn-primary btn-sm">Next</button>
         </div>
-        <p id="reveal-host-msg" class="text-muted" hidden>Host is presenting&hellip;</p>
+        <p id="reveal-host-msg" class="text-muted" hidden></p>
       </div>
 
-      <!-- Summary table (shown after host finishes all chains) -->
+      <!-- Summary table (shown after all players present) -->
       <div class="card reveal-summary" id="reveal-summary" hidden>
         <h2>All Chains</h2>
         <div id="chain-list" class="chain-list"></div>

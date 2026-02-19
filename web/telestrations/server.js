@@ -142,10 +142,29 @@ function handleSubmission(socketId, content) {
   }
 }
 
+function advancePresenter() {
+  lobby.presenterIdx++;
+  // Skip disconnected presenters
+  while (
+    lobby.presenterIdx < lobby.revealData.length &&
+    !lobby.players.has(lobby.originalPlayerOrder[lobby.presenterIdx]?.id)
+  ) {
+    lobby.presenterIdx++;
+  }
+  if (lobby.presenterIdx >= lobby.revealData.length) {
+    io.emit("reveal-done");
+    return;
+  }
+  lobby.revealEntryIdx = -1;
+  io.emit("presenter-change", {
+    presenterIdx: lobby.presenterIdx,
+  });
+}
+
 function revealChains() {
   lobby.state = "reveal";
   const data = lobby.chains.map((chain, i) => ({
-    startedBy: lobby.players.get(lobby.playerOrder[i])?.name || "Unknown",
+    startedBy: lobby.originalPlayerOrder[i]?.name || "Unknown",
     entries: chain.entries.map((e) => ({
       type: e.type,
       content: e.content,
@@ -153,9 +172,24 @@ function revealChains() {
     })),
   }));
   lobby.revealData = data;
-  lobby.revealChainIdx = 0;
+  lobby.presenterIdx = 0;
+  // Skip disconnected initial presenters
+  while (
+    lobby.presenterIdx < data.length &&
+    !lobby.players.has(lobby.originalPlayerOrder[lobby.presenterIdx]?.id)
+  ) {
+    lobby.presenterIdx++;
+  }
+  if (lobby.presenterIdx >= data.length) {
+    io.emit("reveal-done");
+    return;
+  }
   lobby.revealEntryIdx = -1;
-  io.emit("reveal", { chains: data });
+  io.emit("reveal", {
+    chains: data,
+    presenterOrder: lobby.originalPlayerOrder,
+    presenterIdx: lobby.presenterIdx,
+  });
 }
 
 // --------------- Socket Events ---------------
@@ -208,6 +242,10 @@ io.on("connection", (socket) => {
     lobby.totalRounds = lobby.playerOrder.length;
     lobby.currentRound = 0;
     lobby.chains = lobby.playerOrder.map(() => ({ entries: [] }));
+    lobby.originalPlayerOrder = lobby.playerOrder.map((id) => ({
+      id,
+      name: lobby.players.get(id).name,
+    }));
     io.emit("game-started");
     startRound();
   });
@@ -222,39 +260,37 @@ io.on("connection", (socket) => {
 
   socket.on("reveal-navigate", ({ direction }) => {
     if (!lobby || lobby.state !== "reveal") return;
-    if (socket.id !== lobby.adminId) return;
+
+    // Only the current presenter can navigate
+    const currentPresenterId = lobby.originalPlayerOrder[lobby.presenterIdx]?.id;
+    if (socket.id !== currentPresenterId) return;
 
     const chains = lobby.revealData;
     if (!chains) return;
 
+    const chainIdx = lobby.presenterIdx;
+    const chain = chains[chainIdx];
+
     if (direction === "next") {
-      const chain = chains[lobby.revealChainIdx];
-      const atEnd =
-        lobby.revealChainIdx === chains.length - 1 &&
-        lobby.revealEntryIdx === chain.entries.length - 1;
-      if (atEnd) {
-        io.emit("reveal-done");
-        return;
-      }
       if (lobby.revealEntryIdx < chain.entries.length - 1) {
         lobby.revealEntryIdx++;
-      } else if (lobby.revealChainIdx < chains.length - 1) {
-        lobby.revealChainIdx++;
-        lobby.revealEntryIdx = -1;
+        io.emit("reveal-sync", {
+          chainIdx,
+          entryIdx: lobby.revealEntryIdx,
+        });
+      } else {
+        // End of this presenter's chain — advance to next presenter
+        advancePresenter();
       }
     } else if (direction === "prev") {
       if (lobby.revealEntryIdx > -1) {
         lobby.revealEntryIdx--;
-      } else if (lobby.revealChainIdx > 0) {
-        lobby.revealChainIdx--;
-        lobby.revealEntryIdx = chains[lobby.revealChainIdx].entries.length - 1;
+        io.emit("reveal-sync", {
+          chainIdx,
+          entryIdx: lobby.revealEntryIdx,
+        });
       }
     }
-
-    io.emit("reveal-sync", {
-      chainIdx: lobby.revealChainIdx,
-      entryIdx: lobby.revealEntryIdx,
-    });
   });
 
   socket.on("play-again", () => {
@@ -336,6 +372,31 @@ io.on("connection", (socket) => {
         } else {
           startRound();
         }
+      }
+    } else if (lobby.state === "reveal") {
+      io.emit("player-disconnected", { playerName: player.name });
+      const wasPresenter =
+        socket.id === lobby.originalPlayerOrder[lobby.presenterIdx]?.id;
+
+      lobby.players.delete(socket.id);
+      lobby.playerOrder = lobby.playerOrder.filter((id) => id !== socket.id);
+
+      if (socket.id === lobby.adminId) {
+        const newAdmin = lobby.playerOrder[0];
+        if (newAdmin) {
+          lobby.adminId = newAdmin;
+          io.to(newAdmin).emit("admin-update", { isAdmin: true });
+        }
+      }
+
+      if (lobby.players.size === 0) {
+        lobby = null;
+        return;
+      }
+
+      // If the disconnected player was the current presenter, advance
+      if (wasPresenter) {
+        advancePresenter();
       }
     }
   });

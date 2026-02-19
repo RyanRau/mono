@@ -9,6 +9,8 @@ let revealData = null;
 let revealChainIdx = 0;
 let revealEntryIdx = 0;
 let browseChainIdx = 0;
+let presenterOrder = [];
+let presenterIdx = 0;
 let canvas = null;
 
 // ==================== DOM Refs ====================
@@ -491,13 +493,22 @@ $("guess-input").addEventListener("keydown", (e) => {
 // ==================== Reveal ====================
 
 // -- Render a single entry into the given DOM elements --
+function amIPresenter() {
+  return presenterOrder[presenterIdx]?.id === socket.id;
+}
+
 function renderRevealEntry(chainIdx, entryIdx, titleEl, entryEl, authorEl, counterEl) {
   const chain = revealData[chainIdx];
   const totalEntries = chain.entries.length;
 
   if (entryIdx < 0) {
     titleEl.textContent = `Chain ${chainIdx + 1} of ${revealData.length}`;
-    entryEl.innerHTML = `<div class="reveal-word">Started by ${esc(chain.startedBy)}</div>`;
+    const isMyChain = presenterOrder[chainIdx]?.id === socket.id;
+    if (isMyChain) {
+      entryEl.innerHTML = `<div class="reveal-word">Your chain</div>`;
+    } else {
+      entryEl.innerHTML = `<div class="reveal-word">${esc(chain.startedBy)}'s chain</div>`;
+    }
     authorEl.textContent = "";
     counterEl.textContent = "";
   } else {
@@ -518,10 +529,12 @@ function renderRevealEntry(chainIdx, entryIdx, titleEl, entryEl, authorEl, count
   }
 }
 
-// -- Show reveal screen (host-controlled live mode) --
+// -- Show reveal screen (each player presents their own chain) --
 function showReveal(data) {
   revealData = data.chains;
-  revealChainIdx = 0;
+  presenterOrder = data.presenterOrder;
+  presenterIdx = data.presenterIdx;
+  revealChainIdx = presenterIdx;
   revealEntryIdx = -1;
   showScreen("reveal");
   showRevealCard();
@@ -531,8 +544,13 @@ function showReveal(data) {
 function showRevealCard() {
   $("reveal-card").hidden = false;
   $("reveal-summary").hidden = true;
-  $("reveal-nav").hidden = !isAdmin;
-  $("reveal-host-msg").hidden = isAdmin;
+  const presenting = amIPresenter();
+  $("reveal-nav").hidden = !presenting;
+  $("reveal-host-msg").hidden = presenting;
+  if (!presenting) {
+    const name = presenterOrder[presenterIdx]?.name || "Someone";
+    $("reveal-host-msg").textContent = `${name} is presenting\u2026`;
+  }
 }
 
 function updateRevealLive() {
@@ -546,9 +564,8 @@ function updateRevealLive() {
   );
 
   const chain = revealData[revealChainIdx];
-  const isFirst = revealChainIdx === 0 && revealEntryIdx <= -1;
-  const isLast =
-    revealChainIdx === revealData.length - 1 && revealEntryIdx === chain.entries.length - 1;
+  const isFirst = revealEntryIdx <= -1;
+  const isLast = revealEntryIdx === chain.entries.length - 1;
 
   $("btn-reveal-prev").disabled = isFirst;
   $("btn-reveal-next").textContent = isLast ? "Done" : "Next";
@@ -899,6 +916,18 @@ socket.on("reveal-sync", (data) => {
   revealChainIdx = data.chainIdx;
   revealEntryIdx = data.entryIdx;
   updateRevealLive();
+});
+
+socket.on("presenter-change", (data) => {
+  presenterIdx = data.presenterIdx;
+  revealChainIdx = presenterIdx;
+  revealEntryIdx = -1;
+  showRevealCard();
+  updateRevealLive();
+});
+
+socket.on("admin-update", (data) => {
+  isAdmin = data.isAdmin;
 });
 
 socket.on("reveal-done", () => {
