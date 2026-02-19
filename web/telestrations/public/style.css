@@ -293,28 +293,36 @@ input[type="text"]:focus {
 
 /* ---- Header Buttons ---- */
 
-.header-submit {
-  margin-left: auto;
-  flex-shrink: 0;
-  padding: 6px 16px;
+.fab-submit {
+  position: absolute;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  left: 12px;
+  padding: 12px 28px;
   border: none;
-  border-radius: 10px;
+  border-radius: 50px;
   background: var(--primary);
   color: #fff;
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   cursor: pointer;
+  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.4);
+  z-index: 10;
   -webkit-user-select: none;
   user-select: none;
+  transition:
+    background 0.15s,
+    transform 0.1s;
 }
 
-.header-submit:active {
+.fab-submit:active {
   background: var(--primary-dark);
+  transform: scale(0.95);
 }
 
-.header-submit:disabled {
+.fab-submit:disabled {
   opacity: 0.5;
   cursor: default;
+  transform: none;
 }
 
 .header-back {
@@ -420,7 +428,6 @@ input[type="text"]:focus {
   border: 2px solid var(--text);
   display: block;
 }
-
 
 /* ---- Pen Popup ---- */
 
