@@ -8,9 +8,7 @@ let myName = "";
 let revealData = null;
 let revealChainIdx = 0;
 let revealEntryIdx = 0;
-let revealMode = "live"; // "live" = host-controlled, "browse" = free browsing from summary
 let browseChainIdx = 0;
-let browseEntryIdx = 0;
 let canvas = null;
 
 // ==================== DOM Refs ====================
@@ -524,7 +522,6 @@ function showReveal(data) {
   revealData = data.chains;
   revealChainIdx = 0;
   revealEntryIdx = -1;
-  revealMode = "live";
   showScreen("reveal");
   showRevealCard();
   updateRevealLive();
@@ -533,16 +530,9 @@ function showReveal(data) {
 function showRevealCard() {
   $("reveal-card").hidden = false;
   $("reveal-summary").hidden = true;
-
-  if (revealMode === "live") {
-    $("reveal-nav").hidden = !isAdmin;
-    $("reveal-host-msg").hidden = isAdmin;
-    $("btn-back-to-summary").hidden = true;
-  } else {
-    $("reveal-nav").hidden = false;
-    $("reveal-host-msg").hidden = true;
-    $("btn-back-to-summary").hidden = false;
-  }
+  $("chain-scroll").hidden = true;
+  $("reveal-nav").hidden = !isAdmin;
+  $("reveal-host-msg").hidden = isAdmin;
 }
 
 function updateRevealLive() {
@@ -564,39 +554,19 @@ function updateRevealLive() {
   $("btn-reveal-next").textContent = isLast ? "Done" : "Next";
 }
 
-// -- Host nav buttons (emit to server instead of navigating locally) --
+// -- Host nav buttons (live reveal only) --
 $("btn-reveal-next").addEventListener("click", () => {
-  if (revealMode === "live") {
-    socket.emit("reveal-navigate", { direction: "next" });
-  } else {
-    // Browse mode: local navigation
-    const chain = revealData[browseChainIdx];
-    if (browseEntryIdx < chain.entries.length - 1) {
-      browseEntryIdx++;
-    } else {
-      // At end of this chain, go back to summary
-      showSummary();
-      return;
-    }
-    updateBrowse();
-  }
+  socket.emit("reveal-navigate", { direction: "next" });
 });
 
 $("btn-reveal-prev").addEventListener("click", () => {
-  if (revealMode === "live") {
-    socket.emit("reveal-navigate", { direction: "prev" });
-  } else {
-    // Browse mode: local navigation
-    if (browseEntryIdx > -1) {
-      browseEntryIdx--;
-    }
-    updateBrowse();
-  }
+  socket.emit("reveal-navigate", { direction: "prev" });
 });
 
 // -- Summary table --
 function showSummary() {
   $("reveal-card").hidden = true;
+  $("chain-scroll").hidden = true;
   $("reveal-summary").hidden = false;
   $("btn-play-again").hidden = !isAdmin;
   $("reveal-wait").hidden = isAdmin;
@@ -778,35 +748,46 @@ async function exportChain(chainIdx) {
   });
 }
 
-// -- Browse a single chain from the summary --
+// -- Browse a single chain vertically --
 function openBrowse(chainIdx) {
-  revealMode = "browse";
   browseChainIdx = chainIdx;
-  browseEntryIdx = -1;
-  showRevealCard();
-  updateBrowse();
+  $("reveal-card").hidden = true;
+  $("reveal-summary").hidden = true;
+  $("chain-scroll").hidden = false;
+
+  const chain = revealData[chainIdx];
+  $("chain-scroll-title").textContent = `${chain.startedBy}'s chain`;
+
+  const container = $("chain-scroll-entries");
+  container.innerHTML = "";
+
+  chain.entries.forEach((entry) => {
+    const el = document.createElement("div");
+    el.className = "chain-scroll-entry";
+
+    if (entry.type === "drawing") {
+      el.innerHTML = entry.content
+        ? `<div class="reveal-img-wrap"><img class="reveal-img" src="${entry.content}" alt="drawing" /></div>`
+        : `<div class="reveal-word">(no drawing)</div>`;
+    } else {
+      el.innerHTML = `<div class="reveal-word">${esc(entry.content)}</div>`;
+    }
+
+    const author = document.createElement("p");
+    author.className = "text-muted chain-scroll-author";
+    author.textContent = `by ${entry.authorName}`;
+    el.appendChild(author);
+
+    container.appendChild(el);
+  });
 }
 
-function updateBrowse() {
-  renderRevealEntry(
-    browseChainIdx,
-    browseEntryIdx,
-    $("reveal-title"),
-    $("reveal-entry"),
-    $("reveal-author"),
-    $("reveal-counter")
-  );
-
-  const chain = revealData[browseChainIdx];
-  const isFirst = browseEntryIdx <= -1;
-  const isLast = browseEntryIdx === chain.entries.length - 1;
-
-  $("btn-reveal-prev").disabled = isFirst;
-  $("btn-reveal-next").textContent = isLast ? "Done" : "Next";
-}
-
-$("btn-back-to-summary").addEventListener("click", () => {
+$("btn-scroll-back").addEventListener("click", () => {
   showSummary();
+});
+
+$("btn-scroll-export").addEventListener("click", () => {
+  exportChain(browseChainIdx);
 });
 
 $("btn-play-again").addEventListener("click", () => {
