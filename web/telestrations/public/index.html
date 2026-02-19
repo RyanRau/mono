@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <title>Telestrations</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <!-- Landing -->
+    <div id="screen-landing" class="screen active">
+      <div class="card landing-card">
+        <h1 class="logo">Telestrations</h1>
+        <p class="subtitle">Draw, guess, laugh.</p>
+        <input
+          id="name-input"
+          type="text"
+          placeholder="Your name"
+          maxlength="20"
+          autocomplete="off"
+        />
+        <div id="error-msg" class="error" hidden></div>
+        <button id="btn-create" class="btn btn-primary">Create Lobby</button>
+        <button id="btn-join" class="btn btn-secondary" hidden>Join Lobby</button>
+        <p id="status-msg" class="status-text"></p>
+      </div>
+    </div>
+
+    <!-- Lobby -->
+    <div id="screen-lobby" class="screen">
+      <div class="card">
+        <h2>Lobby</h2>
+        <ul id="player-list" class="player-list"></ul>
+        <p id="lobby-count" class="text-muted"></p>
+        <button id="btn-start" class="btn btn-primary" hidden>Start Game</button>
+        <p id="lobby-wait" class="text-muted">Waiting for host to start&hellip;</p>
+      </div>
+    </div>
+
+    <!-- Write -->
+    <div id="screen-write" class="screen">
+      <div class="card">
+        <div class="round-badge" id="write-round-badge"></div>
+        <h2 id="write-heading">Write a word or phrase</h2>
+        <input
+          id="word-input"
+          type="text"
+          placeholder="e.g. a cat riding a skateboard"
+          maxlength="100"
+          autocomplete="off"
+        />
+        <button id="btn-submit-word" class="btn btn-primary">Submit</button>
+      </div>
+    </div>
+
+    <!-- Draw -->
+    <div id="screen-draw" class="screen">
+      <div class="card draw-card">
+        <div class="round-badge" id="draw-round-badge"></div>
+        <p class="draw-prompt">Draw this:</p>
+        <p id="draw-word" class="prompt-text"></p>
+        <div class="canvas-wrap">
+          <canvas id="draw-canvas"></canvas>
+        </div>
+        <div class="toolbar">
+          <div class="color-row" id="color-picker"></div>
+          <div class="size-row">
+            <button class="size-btn" data-size="3">
+              <span class="dot dot-sm"></span>
+            </button>
+            <button class="size-btn active" data-size="6">
+              <span class="dot dot-md"></span>
+            </button>
+            <button class="size-btn" data-size="12">
+              <span class="dot dot-lg"></span>
+            </button>
+            <button class="tool-btn" id="btn-eraser">Eraser</button>
+            <button class="tool-btn" id="btn-undo">Undo</button>
+            <button class="tool-btn" id="btn-clear">Clear</button>
+          </div>
+        </div>
+        <button id="btn-submit-drawing" class="btn btn-primary">Submit Drawing</button>
+      </div>
+    </div>
+
+    <!-- Guess -->
+    <div id="screen-guess" class="screen">
+      <div class="card">
+        <div class="round-badge" id="guess-round-badge"></div>
+        <p class="draw-prompt">What is this?</p>
+        <div class="reveal-img-wrap">
+          <img id="guess-image" class="reveal-img" alt="drawing to guess" />
+        </div>
+        <input
+          id="guess-input"
+          type="text"
+          placeholder="Your guess"
+          maxlength="100"
+          autocomplete="off"
+        />
+        <button id="btn-submit-guess" class="btn btn-primary">Submit Guess</button>
+      </div>
+    </div>
+
+    <!-- Waiting -->
+    <div id="screen-waiting" class="screen">
+      <div class="card center-card">
+        <div class="spinner"></div>
+        <p class="waiting-text">Waiting for other players&hellip;</p>
+        <p id="progress-text" class="text-muted"></p>
+      </div>
+    </div>
+
+    <!-- Reveal -->
+    <div id="screen-reveal" class="screen">
+      <div class="card reveal-card">
+        <h2 id="reveal-title"></h2>
+        <div id="reveal-entry" class="reveal-entry"></div>
+        <p id="reveal-author" class="text-muted"></p>
+        <div class="reveal-nav">
+          <button id="btn-reveal-prev" class="btn btn-secondary btn-sm">Back</button>
+          <span id="reveal-counter" class="text-muted"></span>
+          <button id="btn-reveal-next" class="btn btn-primary btn-sm">Next</button>
+        </div>
+        <button id="btn-play-again" class="btn btn-primary" hidden>Play Again</button>
+        <p id="reveal-wait" class="text-muted" hidden>Waiting for host&hellip;</p>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast" hidden></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>

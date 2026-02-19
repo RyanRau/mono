@@ -22,3 +22,7 @@ apps:
     subdomain: "tic-tac-toe"
     enabled: true
     port: 80
+  telestrations:
+    subdomain: "telestrations"
+    enabled: true
+    port: 80
