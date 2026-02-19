@@ -421,14 +421,6 @@ input[type="text"]:focus {
   display: block;
 }
 
-.eraser-icon {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  background: var(--border);
-  border: 2px solid var(--text-muted);
-  display: block;
-}
 
 /* ---- Pen Popup ---- */
 
