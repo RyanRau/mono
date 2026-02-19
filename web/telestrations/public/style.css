@@ -6,6 +6,10 @@
   padding: 0;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 :root {
   --bg: #f0f0f3;
   --card: #ffffff;
@@ -61,10 +65,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.card[hidden] {
-  display: none;
 }
 
 .center-card {
