@@ -26,6 +26,8 @@
         <button id="btn-create" class="btn btn-primary">Create Lobby</button>
         <button id="btn-join" class="btn btn-secondary" hidden>Join Lobby</button>
         <p id="status-msg" class="status-text"></p>
+        <div class="divider"><span>or</span></div>
+        <button id="btn-sandbox" class="btn btn-secondary">Just Draw</button>
       </div>
     </div>
 
@@ -65,21 +67,63 @@
         <div class="canvas-wrap">
           <canvas id="draw-canvas"></canvas>
         </div>
-        <div class="toolbar">
-          <div class="color-row" id="color-picker"></div>
-          <div class="size-row">
-            <button class="size-btn" data-size="3">
-              <span class="dot dot-sm"></span>
-            </button>
-            <button class="size-btn active" data-size="6">
-              <span class="dot dot-md"></span>
-            </button>
-            <button class="size-btn" data-size="12">
-              <span class="dot dot-lg"></span>
-            </button>
-            <button class="tool-btn" id="btn-eraser">Eraser</button>
-            <button class="tool-btn" id="btn-undo">Undo</button>
-            <button class="tool-btn" id="btn-clear">Clear</button>
+        <div class="quick-bar">
+          <button class="qb-btn active" id="btn-pen">
+            <span class="pen-icon" id="pen-color-dot"></span>
+          </button>
+          <button class="qb-btn" id="btn-eraser">
+            <span class="eraser-icon"></span>
+          </button>
+          <button class="qb-btn" id="btn-undo">
+            <svg
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="1 4 1 10 7 10" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+            </svg>
+          </button>
+          <button class="qb-btn" id="btn-clear">
+            <svg
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="3 6 5 6 21 6" />
+              <path
+                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+              />
+            </svg>
+          </button>
+        </div>
+        <!-- Long-press popup for pen settings -->
+        <div id="pen-popup" class="pen-popup" hidden>
+          <div class="pen-popup-inner">
+            <p class="pen-popup-label">Color</p>
+            <div class="color-row" id="color-picker"></div>
+            <p class="pen-popup-label">Size</p>
+            <div class="size-row">
+              <button class="size-btn" data-size="3">
+                <span class="dot dot-sm"></span>
+              </button>
+              <button class="size-btn active" data-size="6">
+                <span class="dot dot-md"></span>
+              </button>
+              <button class="size-btn" data-size="12">
+                <span class="dot dot-lg"></span>
+              </button>
+            </div>
           </div>
         </div>
         <button id="btn-submit-drawing" class="btn btn-primary">Submit Drawing</button>
@@ -127,6 +171,78 @@
         </div>
         <button id="btn-play-again" class="btn btn-primary" hidden>Play Again</button>
         <p id="reveal-wait" class="text-muted" hidden>Waiting for host&hellip;</p>
+      </div>
+    </div>
+
+    <!-- Sandbox (draw only) -->
+    <div id="screen-sandbox" class="screen">
+      <div class="card draw-card">
+        <div class="sandbox-header">
+          <button id="btn-sandbox-back" class="btn btn-secondary btn-sm">Back</button>
+          <span class="sandbox-title">Free Draw</span>
+          <span></span>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="sandbox-canvas"></canvas>
+        </div>
+        <div class="quick-bar">
+          <button class="qb-btn active" id="sbx-btn-pen">
+            <span class="pen-icon" id="sbx-pen-color-dot"></span>
+          </button>
+          <button class="qb-btn" id="sbx-btn-eraser">
+            <span class="eraser-icon"></span>
+          </button>
+          <button class="qb-btn" id="sbx-btn-undo">
+            <svg
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="1 4 1 10 7 10" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+            </svg>
+          </button>
+          <button class="qb-btn" id="sbx-btn-clear">
+            <svg
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="3 6 5 6 21 6" />
+              <path
+                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+              />
+            </svg>
+          </button>
+        </div>
+        <div id="sbx-pen-popup" class="pen-popup" hidden>
+          <div class="pen-popup-inner">
+            <p class="pen-popup-label">Color</p>
+            <div class="color-row" id="sbx-color-picker"></div>
+            <p class="pen-popup-label">Size</p>
+            <div class="size-row">
+              <button class="size-btn" data-size="3">
+                <span class="dot dot-sm"></span>
+              </button>
+              <button class="size-btn active" data-size="6">
+                <span class="dot dot-md"></span>
+              </button>
+              <button class="size-btn" data-size="12">
+                <span class="dot dot-lg"></span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 

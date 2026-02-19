@@ -21,6 +21,7 @@ const screens = {
   guess: $("screen-guess"),
   waiting: $("screen-waiting"),
   reveal: $("screen-reveal"),
+  sandbox: $("screen-sandbox"),
 };
 
 // ==================== Screen Management ====================
@@ -272,53 +273,175 @@ class DrawingCanvas {
   }
 }
 
-function initDrawTools() {
-  // Colors
-  const picker = $("color-picker");
-  picker.innerHTML = "";
+// ==================== Drawing Toolbar Setup ====================
+// Reusable tool wiring for both game draw screen and sandbox.
+// `ids` maps logical names to actual DOM element IDs.
+
+function setupDrawTools(ids, getCanvas) {
+  let holdTimer = null;
+
+  const penBtn = $(ids.pen);
+  const eraserBtn = $(ids.eraser);
+  const popupEl = $(ids.popup);
+  const pickerEl = $(ids.picker);
+  const dotEl = $(ids.dot);
+
+  function openPopup() {
+    popupEl.hidden = false;
+  }
+  function closePopup() {
+    popupEl.hidden = true;
+  }
+  function selPen() {
+    penBtn.classList.add("active");
+    eraserBtn.classList.remove("active");
+    const cv = getCanvas();
+    if (cv) cv.erasing = false;
+  }
+  function updDot() {
+    const cv = getCanvas();
+    if (cv) dotEl.style.background = cv.color;
+  }
+
+  // -- Pen: tap = select, long-press = popup --
+  function down() {
+    clearTimeout(holdTimer);
+    holdTimer = setTimeout(() => {
+      holdTimer = null;
+      openPopup();
+    }, 400);
+  }
+  function up() {
+    if (holdTimer !== null) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+      selPen();
+    }
+  }
+  function cancel() {
+    clearTimeout(holdTimer);
+    holdTimer = null;
+  }
+
+  penBtn.addEventListener("mousedown", down);
+  penBtn.addEventListener("mouseup", up);
+  penBtn.addEventListener("mouseleave", cancel);
+  penBtn.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    down();
+  });
+  penBtn.addEventListener("touchend", (e) => {
+    e.preventDefault();
+    up();
+  });
+  penBtn.addEventListener("touchcancel", cancel);
+
+  // -- Popup backdrop --
+  popupEl.addEventListener("click", (e) => {
+    if (e.target === popupEl) closePopup();
+  });
+
+  // -- Colors --
+  pickerEl.innerHTML = "";
   COLORS.forEach((c) => {
     const swatch = document.createElement("div");
     swatch.className = "color-swatch" + (c === "#000000" ? " active" : "");
     swatch.style.background = c;
     if (c === "#ffffff") swatch.style.border = "3px solid var(--border)";
     swatch.addEventListener("click", () => {
-      picker.querySelectorAll(".color-swatch").forEach((s) => s.classList.remove("active"));
+      pickerEl.querySelectorAll(".color-swatch").forEach((s) => s.classList.remove("active"));
       swatch.classList.add("active");
-      if (canvas) {
-        canvas.color = c;
-        canvas.erasing = false;
-        $("btn-eraser").classList.remove("active");
+      const cv = getCanvas();
+      if (cv) {
+        cv.color = c;
+        cv.erasing = false;
       }
+      updDot();
+      selPen();
+      closePopup();
     });
-    picker.appendChild(swatch);
+    pickerEl.appendChild(swatch);
   });
 
-  // Sizes
-  document.querySelectorAll(".size-btn").forEach((btn) => {
+  // -- Sizes (scoped to the popup) --
+  popupEl.querySelectorAll(".size-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll(".size-btn").forEach((b) => b.classList.remove("active"));
+      popupEl.querySelectorAll(".size-btn").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
-      if (canvas) canvas.lineWidth = parseInt(btn.dataset.size, 10);
+      const cv = getCanvas();
+      if (cv) cv.lineWidth = parseInt(btn.dataset.size, 10);
     });
   });
 
-  // Eraser
-  $("btn-eraser").addEventListener("click", () => {
-    const btn = $("btn-eraser");
-    btn.classList.toggle("active");
-    if (canvas) canvas.erasing = btn.classList.contains("active");
+  // -- Eraser --
+  $(ids.eraser).addEventListener("click", () => {
+    eraserBtn.classList.add("active");
+    penBtn.classList.remove("active");
+    const cv = getCanvas();
+    if (cv) cv.erasing = true;
   });
 
-  // Undo
-  $("btn-undo").addEventListener("click", () => {
-    if (canvas) canvas.undo();
+  // -- Undo --
+  $(ids.undo).addEventListener("click", () => {
+    const cv = getCanvas();
+    if (cv) cv.undo();
   });
 
-  // Clear
-  $("btn-clear").addEventListener("click", () => {
-    if (canvas) canvas.clearAll();
+  // -- Clear --
+  $(ids.clear).addEventListener("click", () => {
+    const cv = getCanvas();
+    if (cv) cv.clearAll();
   });
+
+  updDot();
+
+  return { selectPen: selPen, closePopup, updateDot: updDot };
 }
+
+// Wire up game draw tools
+const gameTools = setupDrawTools(
+  {
+    pen: "btn-pen",
+    eraser: "btn-eraser",
+    undo: "btn-undo",
+    clear: "btn-clear",
+    popup: "pen-popup",
+    picker: "color-picker",
+    dot: "pen-color-dot",
+  },
+  () => canvas
+);
+
+const selectPen = gameTools.selectPen;
+const closePenPopup = gameTools.closePopup;
+
+// ==================== Sandbox (draw-only mode) ====================
+let sandboxCanvas = null;
+
+const sbxTools = setupDrawTools(
+  {
+    pen: "sbx-btn-pen",
+    eraser: "sbx-btn-eraser",
+    undo: "sbx-btn-undo",
+    clear: "sbx-btn-clear",
+    popup: "sbx-pen-popup",
+    picker: "sbx-color-picker",
+    dot: "sbx-pen-color-dot",
+  },
+  () => sandboxCanvas
+);
+
+$("btn-sandbox").addEventListener("click", () => {
+  sandboxCanvas = new DrawingCanvas($("sandbox-canvas"));
+  sbxTools.selectPen();
+  sbxTools.closePopup();
+  sbxTools.updateDot();
+  showScreen("sandbox");
+});
+
+$("btn-sandbox-back").addEventListener("click", () => {
+  showScreen("landing");
+});
 
 $("btn-submit-drawing").addEventListener("click", () => {
   if (!canvas) return;
@@ -459,9 +582,10 @@ socket.on("new-round", (data) => {
     $("draw-round-badge").textContent = `Round ${data.round + 1} of ${data.totalRounds}`;
     $("draw-word").textContent = data.prompt ? data.prompt.content : "";
     canvas = new DrawingCanvas($("draw-canvas"));
-    initDrawTools();
     $("btn-submit-drawing").disabled = false;
-    $("btn-eraser").classList.remove("active");
+    selectPen();
+    closePenPopup();
+    gameTools.updateDot();
     showScreen("draw");
   } else if (data.type === "guess") {
     $("guess-round-badge").textContent = `Round ${data.round + 1} of ${data.totalRounds}`;
@@ -528,4 +652,4 @@ function resetLanding() {
 }
 
 // ==================== Init ====================
-initDrawTools();
+// Draw tools are initialized via setupDrawTools() above.
