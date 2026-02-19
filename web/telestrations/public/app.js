@@ -738,13 +738,24 @@ async function exportChain(chainIdx) {
     y += 22 + ENTRY_GAP;
   }
 
-  cvs.toBlob((blob) => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${chain.startedBy}-chain.png`;
-    a.click();
-    URL.revokeObjectURL(url);
+  cvs.toBlob(async (blob) => {
+    const fileName = `${chain.startedBy}-chain.png`;
+    const file = new File([blob], fileName, { type: "image/png" });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file] });
+      } catch {
+        /* user cancelled share */
+      }
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
   });
 }
 
