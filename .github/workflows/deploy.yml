@@ -3,6 +3,12 @@ name: Build and Deploy
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      deploy_all:
+        description: "Deploy all apps regardless of changed files"
+        type: boolean
+        default: false
 
 env:
   REGISTRY: ghcr.io
@@ -55,8 +61,8 @@ jobs:
             fi
           done
 
-          # If this is the first commit or force deploy, build all enabled
-          if [ -z "$BUILD_LIST" ] && [ -z "$CHANGED_FILES" ]; then
+          # If this is the first commit, force deploy checkbox, or no changed files detected, build all enabled
+          if [ "${{ github.event.inputs.deploy_all }}" = "true" ] || { [ -z "$BUILD_LIST" ] && [ -z "$CHANGED_FILES" ]; }; then
             BUILD_LIST="$ENABLED"
           fi
 
