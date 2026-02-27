@@ -45,10 +45,12 @@ jobs:
           INFRA_CHANGED=$(echo "$CHANGED_FILES" | grep -c "^infra/" || true)
 
           # Build an app if: it's enabled AND (its files changed OR deploy.yml changed OR infra changed)
+          PKGS_CHANGED=$(echo "$CHANGED_FILES" | grep -c "^packages/" || true)
+
           BUILD_LIST=""
           for app in $ENABLED; do
             APP_CHANGED=$(echo "$CHANGED_FILES" | grep -c "^apps/${app}/" || true)
-            if [ "$APP_CHANGED" -gt 0 ] || [ "$CONFIG_CHANGED" -gt 0 ] || [ "$INFRA_CHANGED" -gt 0 ]; then
+            if [ "$APP_CHANGED" -gt 0 ] || [ "$PKGS_CHANGED" -gt 0 ] || [ "$CONFIG_CHANGED" -gt 0 ] || [ "$INFRA_CHANGED" -gt 0 ]; then
               BUILD_LIST="${BUILD_LIST} ${app}"
             fi
           done
