@@ -2,27 +2,46 @@
 
 A Go CLI that reads a flow JSON file, validates the DAG, executes each node in topological order, pipes outputs between nodes, and exits `0` on success or `1` on failure.
 
-## Build
+## Prerequisites
 
-### Local
+- Go 1.22+ (for local builds and testing)
+- Docker (for container builds, optional)
+
+## Getting started
+
+All commands below assume you are in the `services/flow/` directory:
 
 ```bash
 cd services/flow
+```
+
+### Build
+
+```bash
 go build -o flowrunner .
 ```
 
-### Docker
+### Run
 
 ```bash
-cd services/flow
-docker build -t flowrunner .
+# Execute a flow
+./flowrunner --flow examples/ping-flow.json
+
+# Validate only — prints execution order without running anything
+./flowrunner --flow examples/ping-flow.json --dry-run
+
+# Read flow from stdin
+cat examples/ping-flow.json | ./flowrunner --flow -
+
+# Enable debug logging
+./flowrunner --flow examples/ping-flow.json --log debug
 ```
 
-## Usage
+### Build and run without a binary
 
-```
-flowrunner --flow <path>   (default: /flow.json)
-flowrunner --flow -        (read from stdin)
+```bash
+go run . --flow examples/ping-flow.json
+go run . --flow examples/ping-flow.json --dry-run
 ```
 
 ### Flags
@@ -33,20 +52,60 @@ flowrunner --flow -        (read from stdin)
 | `--dry-run` | `false` | Validate and print execution order without running |
 | `--log` | `info` | Log level: `info` or `debug` |
 
-### Run locally
+## Testing
+
+### Run all tests
 
 ```bash
-# Execute a flow
-./flowrunner --flow examples/ping-flow.json
+go test ./...
+```
 
-# Validate only (no execution)
-./flowrunner --flow examples/ping-flow.json --dry-run
+### Verbose output (see each test name)
 
-# Read from stdin
-cat examples/ping-flow.json | ./flowrunner --flow -
+```bash
+go test ./... -v
+```
 
-# Debug logging
-./flowrunner --flow examples/ping-flow.json --log debug
+### Run tests for a single package
+
+```bash
+go test ./flow/      # schema, validation, context, executor
+go test ./nodes/     # script and HTTP runners
+go test ./template/  # template resolution
+```
+
+### Run a specific test by name
+
+```bash
+go test ./flow/ -run TestValidate_CycleDetection
+go test ./nodes/ -run TestHTTPRunner_POST_JSONBody
+```
+
+### Test coverage
+
+```bash
+# Print coverage summary per package
+go test ./... -cover
+
+# Generate an HTML coverage report
+go test ./... -coverprofile=coverage.out
+go tool cover -html=coverage.out -o coverage.html
+```
+
+### What the tests cover
+
+| Package | Tests | Covers |
+|---------|-------|--------|
+| `flow/` | 60 | JSON parsing, validation (required fields, unknown types, edge refs, cycle detection), RunContext (store/get, env, skip tracking, dot-path lookup), executor (topological sort, condition evaluation with all operators, execution loop, conditional skip/run, skip propagation, output formats), `formatDuration` |
+| `nodes/` | 23 | Script runner (echo, args, stdin piping, failure, nonexistent cmd, cancellation, timeout, template resolution), HTTP runner (GET/POST, JSON/string body, headers, error codes, JSON fallback, template in URL/headers, cancellation, auto Content-Type) |
+| `template/` | 13 | Placeholder resolution, whitespace, type formatting (string, float, binary, bool), unclosed braces, missing paths, adjacent placeholders |
+
+## Docker
+
+### Build the image
+
+```bash
+docker build -t flowrunner .
 ```
 
 ### Run with Docker
