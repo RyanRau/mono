@@ -63,9 +63,10 @@ jobs:
 
           # If this is the first commit, force deploy checkbox, or no changed files detected, build all enabled
           if [ "${{ github.event.inputs.deploy_all }}" = "true" ] || { [ -z "$BUILD_LIST" ] && [ -z "$CHANGED_FILES" ]; }; then
-            BUILD_LIST="$ENABLED"
+            BUILD_LIST=$(echo "$ENABLED" | tr '\n' ' ')
           fi
 
+          BUILD_LIST=$(echo "$BUILD_LIST" | xargs)
           echo "build_list=${BUILD_LIST}" >> $GITHUB_OUTPUT
           echo "Apps to build: ${BUILD_LIST:-none}"
 
