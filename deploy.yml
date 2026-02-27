@@ -18,3 +18,7 @@ apps:
     subdomain: "tic-tac-toe"
     enabled: false
     port: 80
+  bluestar:
+    subdomain: "ui"
+    enabled: true
+    port: 80

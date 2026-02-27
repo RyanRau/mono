@@ -43,3 +43,4 @@ coverage/
 # Local temp files
 tmp/
 temp/
+*storybook.log
