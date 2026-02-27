@@ -84,6 +84,12 @@ jobs:
             # Pull latest repo changes
             git pull origin main
 
+            # Clean up any active test deployment
+            if [ -f test-deploy.active.yml ]; then
+              echo "Removing active test deployment..."
+              rm test-deploy.active.yml
+            fi
+
             # Login to GHCR
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
