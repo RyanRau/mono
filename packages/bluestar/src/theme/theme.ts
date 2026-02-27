@@ -31,6 +31,8 @@ export type Theme = {
     subtitle: { size: string; bold: boolean; italic: boolean; muted: boolean };
     display:  { size: string; bold: boolean; italic: boolean; muted: boolean };
     label:    { size: string; bold: boolean; italic: boolean; muted: boolean };
+    /** 13px non-muted text for navigation items. */
+    navItem:  { size: string; bold: boolean; italic: boolean; muted: boolean };
   };
   headings: {
     h1: { size: string; weight: string };
@@ -73,6 +75,7 @@ export const defaultTheme: Theme = {
     subtitle: { size: "14px", bold: false, italic: false, muted: false },
     display:  { size: "18px", bold: true,  italic: false, muted: false },
     label:    { size: "14px", bold: false, italic: false, muted: false },
+    navItem:  { size: "13px", bold: false, italic: false, muted: false },
   },
   headings: {
     h1: { size: "28px", weight: "800" },

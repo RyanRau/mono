@@ -1,6 +1,8 @@
 import "./styling";
 
 export * from "./theme";
+export * from "./components/layout/AppShell";
+export * from "./components/layout/PageContainer";
 export * from "./components/layout/Flexbox";
 export * from "./components/layout/Card";
 export * from "./components/layout/Divider";
@@ -16,3 +18,6 @@ export * from "./components/form/NumberInput";
 export * from "./components/form/TextAreaInput";
 export * from "./components/form/CheckboxList";
 export * from "./components/form/Dropdown";
+export * from "./components/nav/NavBar";
+export * from "./components/nav/SideNav";
+export type { NavItem } from "./components/nav/types";

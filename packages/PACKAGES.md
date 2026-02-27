@@ -34,6 +34,7 @@ import {
   Button, AsyncButton, Spinner,
   Header, Text, Card,
   Flexbox,
+  NavBar, SideNav,
 } from "bluestar";
 ```
 
@@ -206,6 +207,113 @@ A layout wrapper that maps props directly to CSS flexbox properties.
 | `width` | `number \| string` | — |
 | `height` | `number \| string` | — |
 | `style` | `object` | — |
+
+---
+
+#### `AppShell`
+
+Full-page layout shell that fills `100vh`. Composes a sticky top nav, an optional sidebar, and a scrollable `<main>` content area.
+
+```tsx
+<AppShell
+  topNav={<NavBar brand="MyApp" items={items} />}
+  sideNav={<SideNav items={sideItems} />}
+>
+  <PageContainer>
+    {/* page content */}
+  </PageContainer>
+</AppShell>
+```
+
+| Prop | Type | Default |
+|------|------|---------|
+| `children` | `React.ReactNode` | — |
+| `topNav` | `React.ReactNode` | — |
+| `sideNav` | `React.ReactNode` | — |
+
+---
+
+#### `PageContainer`
+
+A centered, max-width constrained content wrapper. Use inside `AppShell` or any scrollable area.
+
+```tsx
+<PageContainer maxWidth={800} padding={32}>
+  {/* page content */}
+</PageContainer>
+```
+
+| Prop | Type | Default |
+|------|------|---------|
+| `children` | `React.ReactNode` | — |
+| `maxWidth` | `number \| "full"` | `1200` |
+| `padding` | `Spacing` | `24` |
+
+---
+
+#### `NavBar`
+
+A horizontal top navigation bar with optional brand, items, and trailing content. Items with `children` render as a click-triggered dropdown.
+
+```tsx
+<NavBar
+  brand={<strong>MyApp</strong>}
+  items={[
+    { label: "Home", href: "/", isActive: true },
+    { label: "Products", children: [
+      { label: "Overview", href: "/products" },
+      { label: "Pricing", href: "/pricing" },
+    ]},
+  ]}
+  trailing={<Button label="Sign in" />}
+/>
+```
+
+| Prop | Type | Default |
+|------|------|---------|
+| `items` | `NavItem[]` | — |
+| `brand` | `React.ReactNode` | — |
+| `trailing` | `React.ReactNode` | — |
+
+---
+
+#### `SideNav`
+
+A vertical sidebar navigation with optional brand at the top. Items with `children` expand/collapse inline with indentation.
+
+```tsx
+<SideNav
+  brand={<strong>MyApp</strong>}
+  width={260}
+  items={[
+    { label: "Dashboard", href: "/", isActive: true },
+    { label: "Settings", children: [
+      { label: "Profile", href: "/settings/profile" },
+      { label: "Security", href: "/settings/security" },
+    ]},
+  ]}
+/>
+```
+
+| Prop | Type | Default |
+|------|------|---------|
+| `items` | `NavItem[]` | — |
+| `brand` | `React.ReactNode` | — |
+| `width` | `number` | `240` |
+
+---
+
+#### `NavItem` type
+
+```ts
+type NavItem = {
+  label: string;
+  href?: string;
+  onClick?: () => void;
+  isActive?: boolean;
+  children?: NavItem[];
+};
+```
 
 ---
 

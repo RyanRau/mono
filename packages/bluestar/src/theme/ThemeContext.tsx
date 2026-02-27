@@ -49,6 +49,7 @@ export function ThemeProvider({ theme, children }: ThemeProviderProps) {
           subtitle: mergeTextType(defaultTheme.textTypes.subtitle,  theme.textTypes?.subtitle),
           display:  mergeTextType(defaultTheme.textTypes.display,   theme.textTypes?.display),
           label:    mergeTextType(defaultTheme.textTypes.label,     theme.textTypes?.label),
+          navItem:  mergeTextType(defaultTheme.textTypes.navItem,   theme.textTypes?.navItem),
         },
         headings: {
           h1: mergeHeading(defaultTheme.headings.h1, theme.headings?.h1),
