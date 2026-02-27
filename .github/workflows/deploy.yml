@@ -51,12 +51,16 @@ jobs:
           INFRA_CHANGED=$(echo "$CHANGED_FILES" | grep -c "^infra/" || true)
 
           # Build an app if: it's enabled AND (its files changed OR deploy.yml changed OR infra changed)
-          PKGS_CHANGED=$(echo "$CHANGED_FILES" | grep -c "^packages/" || true)
-
           BUILD_LIST=""
           for app in $ENABLED; do
-            APP_CHANGED=$(echo "$CHANGED_FILES" | grep -c "^apps/${app}/" || true)
-            if [ "$APP_CHANGED" -gt 0 ] || [ "$PKGS_CHANGED" -gt 0 ] || [ "$CONFIG_CHANGED" -gt 0 ] || [ "$INFRA_CHANGED" -gt 0 ]; then
+            APP_PATH=$(yq ".apps.${app}.path // \"apps/${app}\"" deploy.yml)
+            APP_CHANGED=$(echo "$CHANGED_FILES" | grep -c "^${APP_PATH}/" || true)
+            # For apps outside packages/, also trigger on any package change (local deps)
+            PKG_TRIGGER=0
+            if [[ "$APP_PATH" != packages/* ]]; then
+              PKG_TRIGGER=$(echo "$CHANGED_FILES" | grep -c "^packages/" || true)
+            fi
+            if [ "$APP_CHANGED" -gt 0 ] || [ "$PKG_TRIGGER" -gt 0 ] || [ "$CONFIG_CHANGED" -gt 0 ] || [ "$INFRA_CHANGED" -gt 0 ]; then
               BUILD_LIST="${BUILD_LIST} ${app}"
             fi
           done
@@ -75,7 +79,8 @@ jobs:
           for app in ${{ steps.apps.outputs.build_list }}; do
             echo "=== Building $app ==="
             IMAGE=$(echo "${{ env.REGISTRY }}/${{ env.REPO }}/${app}:latest" | tr '[:upper:]' '[:lower:]')
-            docker build -t "$IMAGE" -f ./apps/${app}/Dockerfile .
+            APP_PATH=$(yq ".apps.${app}.path // \"apps/${app}\"" deploy.yml)
+            docker build -t "$IMAGE" -f "./${APP_PATH}/Dockerfile" .
             docker push "$IMAGE"
             echo "=== Pushed $IMAGE ==="
           done

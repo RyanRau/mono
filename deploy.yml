@@ -14,3 +14,4 @@ apps:
     subdomain: "ui"
     enabled: true
     port: 80
+    path: "packages/bluestar"
