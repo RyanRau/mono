@@ -3,8 +3,17 @@ import React from "react";
 import Flexbox from "./Flexbox";
 
 const meta = {
-  title: "Components/Flexbox",
+  title: "Layout/Flexbox",
   component: Flexbox,
+  tags: ["autodocs"],
+  parameters: {
+    docs: {
+      description: {
+        component:
+          "A layout wrapper that maps props directly to CSS flexbox properties. All props are optional and map 1:1 to their CSS equivalents.",
+      },
+    },
+  },
 } satisfies Meta<typeof Flexbox>;
 
 export default meta;
@@ -35,6 +44,9 @@ export const Row: Story = {
       React.createElement(Box, { key: "2" }, "Two"),
       React.createElement(Box, { key: "3" }, "Three"),
     ]),
+  parameters: {
+    docs: { description: { story: "Horizontal layout with a 16px gap between items." } },
+  },
 };
 
 export const Column: Story = {
@@ -48,6 +60,9 @@ export const Column: Story = {
       React.createElement(Box, { key: "2" }, "Two"),
       React.createElement(Box, { key: "3" }, "Three"),
     ]),
+  parameters: {
+    docs: { description: { story: "Vertical stack with a 12px gap." } },
+  },
 };
 
 export const SpaceBetween: Story = {
@@ -61,6 +76,11 @@ export const SpaceBetween: Story = {
       React.createElement(Box, { key: "1" }, "Left"),
       React.createElement(Box, { key: "2" }, "Right"),
     ]),
+  parameters: {
+    docs: {
+      description: { story: "Items pushed to opposite ends with `justify-content: space-between`." },
+    },
+  },
 };
 
 export const CenterAligned: Story = {
@@ -92,4 +112,11 @@ export const CenterAligned: Story = {
         React.createElement(Box, { key: "3" }, "Short"),
       ]
     ),
+  parameters: {
+    docs: {
+      description: {
+        story: "Items of different heights vertically centered via `align-items: center`.",
+      },
+    },
+  },
 };

@@ -16,11 +16,71 @@ All packages live in `packages/` and are consumed by apps via `file:` references
 
 The library calls `setup(React.createElement)` internally on import, so no additional configuration is needed in the consuming app.
 
+Wrap your app in `ThemeProvider` to apply a custom theme. Without it, all components use the default theme automatically.
+
+```tsx
+import { ThemeProvider } from "bluestar";
+
+<ThemeProvider theme={{ colors: { primary: "#ff6b6b" } }}>
+  <App />
+</ThemeProvider>
+```
+
 ### Exports
 
 ```ts
-import { Button, Flexbox } from "bluestar";
+import {
+  ThemeProvider, useTheme, defaultTheme,
+  Button, AsyncButton, Spinner,
+  Header, Text, Card,
+  Flexbox,
+} from "bluestar";
 ```
+
+---
+
+#### `ThemeProvider`
+
+Provides theme values to all bluestar components. All fields are optional — unspecified fields fall back to `defaultTheme`.
+
+```tsx
+<ThemeProvider theme={{ colors: { primary: "#ff6b6b" }, radius: { md: "8px" } }}>
+  {children}
+</ThemeProvider>
+```
+
+| Prop | Type | Default |
+|------|------|---------|
+| `theme` | `DeepPartial<Theme>` | `defaultTheme` |
+| `children` | `React.ReactNode` | — |
+
+#### `useTheme`
+
+Hook to access the current theme inside custom components.
+
+```tsx
+const theme = useTheme();
+```
+
+#### `Theme` type / `defaultTheme`
+
+```ts
+type Theme = {
+  colors: {
+    primary, primaryHover, secondary,
+    background, surface,
+    text, textMuted, border,
+    error, success, warning
+  };
+  fonts: { body, heading, mono };
+  fontSizes: { xs, sm, md, lg, xl, "2xl", "3xl", "4xl" };
+  radius: { none, sm, md, lg, full };
+  spacing: { xs, sm, md, lg, xl, "2xl" };
+  shadows: { none, sm, md, lg };
+};
+```
+
+---
 
 #### `Button`
 
@@ -34,6 +94,93 @@ A styled clickable button.
 |------|------|----------|
 | `label` | `string` | yes |
 | `onClick` | `() => void` | yes |
+
+---
+
+#### `AsyncButton`
+
+Button that accepts an async `onClick`. Shows a spinner and disables itself while the promise is pending.
+
+```tsx
+<AsyncButton label="Submit" onClick={async () => { await submitForm(); }} />
+```
+
+| Prop | Type | Required |
+|------|------|----------|
+| `label` | `string` | yes |
+| `onClick` | `() => Promise<void>` | yes |
+
+---
+
+#### `Spinner`
+
+A circular loading indicator.
+
+```tsx
+<Spinner />
+<Spinner size={32} color="#e53e3e" />
+```
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `number` | `20` |
+| `color` | `string` | `theme.colors.primary` |
+
+---
+
+#### `Header`
+
+Heading text with h1–h6 variants.
+
+```tsx
+<Header variant="h2">Section Title</Header>
+```
+
+| Prop | Type | Default |
+|------|------|---------|
+| `children` | `React.ReactNode` | — |
+| `variant` | `"h1" \| "h2" \| "h3" \| "h4" \| "h5" \| "h6"` | `"h1"` |
+
+---
+
+#### `Text`
+
+Body text with style variants.
+
+```tsx
+<Text bold italic muted size="sm">Small muted bold italic</Text>
+<Text as="span">Inline text</Text>
+```
+
+| Prop | Type | Default |
+|------|------|---------|
+| `children` | `React.ReactNode` | — |
+| `bold` | `boolean` | `false` |
+| `italic` | `boolean` | `false` |
+| `muted` | `boolean` | `false` |
+| `size` | `keyof Theme["fontSizes"]` | `"md"` |
+| `as` | `"p" \| "span" \| "label"` | `"p"` |
+
+---
+
+#### `Card`
+
+A surface container with border, background, and shadow.
+
+```tsx
+<Card padding="xl" shadow="lg">
+  <Header variant="h4">Title</Header>
+  <Text muted>Description</Text>
+</Card>
+```
+
+| Prop | Type | Default |
+|------|------|---------|
+| `children` | `React.ReactNode` | — |
+| `padding` | `keyof Theme["spacing"]` | `"lg"` |
+| `shadow` | `keyof Theme["shadows"]` | `"md"` |
+
+---
 
 #### `Flexbox`
 
@@ -59,6 +206,8 @@ A layout wrapper that maps props directly to CSS flexbox properties.
 | `width` | `number \| string` | — |
 | `height` | `number \| string` | — |
 | `style` | `object` | — |
+
+---
 
 ### Development
 
