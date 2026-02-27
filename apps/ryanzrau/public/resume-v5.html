@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ryan Z. Rau — Resume</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --glass-bg: rgba(255, 255, 255, 0.12);
+      --glass-border: rgba(255, 255, 255, 0.18);
+      --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      --glass-blur: 16px;
+      --text-white: #ffffff;
+      --text-light: rgba(255, 255, 255, 0.85);
+      --text-muted: rgba(255, 255, 255, 0.55);
+      --accent: #a78bfa;
+      --accent-bright: #c4b5fd;
+      --bs-radius: 16px;
+      --radius-sm: 10px;
+      --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      font-family: var(--font-main);
+      color: var(--text-light);
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 25%, #4338ca 50%, #6366f1 75%, #818cf8 100%);
+      background-attachment: fixed;
+      line-height: 1.6;
+      padding: 32px 20px;
+    }
+
+    /* Ambient circles */
+    body::before,
+    body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(80px);
+      opacity: 0.3;
+    }
+
+    body::before {
+      width: 500px;
+      height: 500px;
+      background: #a78bfa;
+      top: -100px;
+      right: -100px;
+    }
+
+    body::after {
+      width: 400px;
+      height: 400px;
+      background: #f472b6;
+      bottom: -50px;
+      left: -80px;
+    }
+
+    @media print {
+      body {
+        background: #4338ca;
+        padding: 0;
+      }
+      body::before, body::after { display: none; }
+      .glass { backdrop-filter: none; box-shadow: none; border: 1px solid rgba(255,255,255,0.2); }
+    }
+
+    .resume {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Glass card base */
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      border: 1px solid var(--glass-border);
+      border-radius: var(--bs-radius);
+      box-shadow: var(--glass-shadow);
+      padding: 28px 32px;
+    }
+
+    /* Header Card */
+    .header-card {
+      text-align: center;
+      padding: 40px 32px 36px;
+    }
+
+    .header-card h1 {
+      font-size: 34px;
+      font-weight: 800;
+      color: var(--text-white);
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+
+    .header-card .subtitle {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--accent-bright);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .contact-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .contact-row a {
+      color: var(--text-light);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .contact-row a:hover {
+      color: var(--accent-bright);
+    }
+
+    /* Tagline */
+    .tagline-card {
+      text-align: center;
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 20px 40px;
+    }
+
+    /* Two column grid */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    /* Section Headers */
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--accent-bright);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--glass-border);
+    }
+
+    /* Job Card */
+    .job-card {
+      margin-bottom: 16px;
+    }
+
+    .job-card:last-child {
+      margin-bottom: 0;
+    }
+
+    .job-company {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-white);
+      margin-bottom: 2px;
+    }
+
+    .job-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .role-group {
+      margin-bottom: 14px;
+    }
+
+    .role-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .role-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+
+    .role-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent-bright);
+    }
+
+    .role-date {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .role-group ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .role-group li {
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--text-light);
+      padding-left: 14px;
+      position: relative;
+      margin-bottom: 3px;
+    }
+
+    .role-group li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 9px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: 0.6;
+    }
+
+    /* Skills Card */
+    .skills-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .skill-glass {
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 14px;
+      background: rgba(167, 139, 250, 0.15);
+      border: 1px solid rgba(167, 139, 250, 0.25);
+      border-radius: 20px;
+      color: var(--accent-bright);
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .skill-glass:hover {
+      background: rgba(167, 139, 250, 0.25);
+      transform: translateY(-1px);
+    }
+
+    /* Education */
+    .edu-school {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-white);
+    }
+
+    .edu-degree {
+      font-size: 12px;
+      color: var(--text-light);
+      margin-top: 2px;
+    }
+
+    .edu-year {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+      body {
+        padding: 16px 12px;
+      }
+
+      .glass {
+        padding: 20px;
+        border-radius: 12px;
+      }
+
+      .header-card {
+        padding: 28px 20px;
+      }
+
+      .header-card h1 {
+        font-size: 26px;
+      }
+
+      .tagline-card {
+        padding: 16px 20px;
+      }
+
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+
+      .role-head {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="resume">
+
+    <!-- Header -->
+    <div class="glass header-card">
+      <h1>Ryan Z. Rau</h1>
+      <div class="subtitle">Senior Software Engineer</div>
+      <div class="contact-row">
+        <span><a href="mailto:ryanzrau@gmail.com">ryanzrau@gmail.com</a></span>
+        <span>(479) 283-6754</span>
+        <span><a href="https://github.com/RyanRau" target="_blank">github.com/RyanRau</a></span>
+      </div>
+    </div>
+
+    <!-- Tagline -->
+    <div class="glass tagline-card">
+      A problem-solver at heart with a keen eye for detail, excelling at reverse
+      engineering to deepen my understanding and uncovering innovative solutions.
+    </div>
+
+    <!-- Experience -->
+    <div class="glass">
+      <div class="section-label">Experience</div>
+
+      <div class="job-card">
+        <div class="job-company">Affirma Consulting</div>
+        <div class="job-meta">Fayetteville, AR &middot; Apr. 2022 &ndash; Present</div>
+
+        <div class="role-group">
+          <div class="role-head">
+            <span class="role-title">Senior Software Engineer</span>
+            <span class="role-date">Feb. 2024 &ndash; Present</span>
+          </div>
+          <ul>
+            <li>Lead team developing internal asset management system managing tens of thousands of assets across ~100 teams at Meta</li>
+            <li>Meet with stakeholders, gather requirements, convert to technical documents</li>
+            <li>Act as subject matter expert for Affirma-led initiatives at Meta</li>
+            <li>Reduced memory usage by up to 70% and halved response times through database restructuring</li>
+            <li>Partner with users to migrate data into new internal tooling</li>
+            <li>Manage direct reports; coordinate performance reviews and career development</li>
+            <li>Assist in hiring: resume screening and technical interviews</li>
+          </ul>
+        </div>
+
+        <div class="role-group">
+          <div class="role-head">
+            <span class="role-title">Software Engineer II</span>
+            <span class="role-date">Jan. 2023 &ndash; Feb. 2024</span>
+          </div>
+          <ul>
+            <li>Onboarded 10+ new developers to Meta projects with documentation and bootcamp project</li>
+            <li>Designed and delivered MVP for internal asset management tool at Meta's Reality Labs</li>
+            <li>Ported reporting tools to mobile via React Native</li>
+            <li>Participated in sales calls providing technical insight</li>
+          </ul>
+        </div>
+
+        <div class="role-group">
+          <div class="role-head">
+            <span class="role-title">Software Engineer I</span>
+            <span class="role-date">Apr. 2022 &ndash; Jan. 2023</span>
+          </div>
+          <ul>
+            <li>Full stack development (PHP &amp; React) on health and safety reporting tools replacing PowerApps/Google Forms</li>
+            <li>Created PHP triaging framework using tree-like data structure for location-based contact derivation</li>
+            <li>Assisted in knowledge transfer and client developer documentation</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="job-card">
+        <div class="job-company">Affirma Consulting</div>
+        <div class="job-meta">Fayetteville, AR &middot; Nov. 2019 &ndash; Sept. 2021</div>
+
+        <div class="role-group">
+          <div class="role-head">
+            <span class="role-title">Intern</span>
+            <span class="role-date">Nov. 2019 &ndash; Sept. 2021</span>
+          </div>
+          <ul>
+            <li>Developed MVP for energy usage reporting with Angular and C#</li>
+            <li>Built reusable Angular components including hierarchy tree navigation and charts</li>
+            <li>Built cross-platform mobile app using C# and Xamarin for employee hour logging</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="job-card">
+        <div class="job-company">University of Arkansas</div>
+        <div class="job-meta">Fayetteville, AR &middot; Jul. 2017 &ndash; May 2021</div>
+
+        <div class="role-group">
+          <div class="role-head">
+            <span class="role-title">Technology Coordinator at STEM Education</span>
+            <span class="role-date">Jul. 2017 &ndash; May 2021</span>
+          </div>
+          <ul>
+            <li>Built inventory system for 800+ items using Django, improving workflow by 50%</li>
+            <li>Provided tech support to staff and students</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom row: Skills + Education -->
+    <div class="grid-2">
+      <div class="glass">
+        <div class="section-label">Skills</div>
+        <div class="skills-wrap">
+          <span class="skill-glass">JavaScript</span>
+          <span class="skill-glass">PHP</span>
+          <span class="skill-glass">C#</span>
+          <span class="skill-glass">Python</span>
+          <span class="skill-glass">C++</span>
+          <span class="skill-glass">React</span>
+          <span class="skill-glass">Angular</span>
+          <span class="skill-glass">React Native</span>
+          <span class="skill-glass">GraphQL</span>
+          <span class="skill-glass">SQL</span>
+          <span class="skill-glass">Regex</span>
+        </div>
+      </div>
+
+      <div class="glass">
+        <div class="section-label">Education</div>
+        <div class="edu-school">University of Arkansas</div>
+        <div class="edu-degree">B.S. Computer Science &amp; B.A. German</div>
+        <div class="edu-year">Class of 2022</div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

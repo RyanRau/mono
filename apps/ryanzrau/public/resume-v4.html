@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ryan Z. Rau — Resume</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --accent: #e63946;
+      --accent-light: #fef2f2;
+      --bg: #ffffff;
+      --surface: #fafafa;
+      --text: #111827;
+      --text-secondary: #374151;
+      --text-muted: #9ca3af;
+      --border: #e5e7eb;
+      --font-display: 'DM Serif Display', Georgia, serif;
+      --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --bs-radius: 6px;
+      --bs-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      font-family: var(--font-body);
+      color: var(--text);
+      background: var(--surface);
+      line-height: 1.6;
+    }
+
+    @media print {
+      body { background: white; }
+      .resume { box-shadow: none; margin: 0; max-width: 100%; }
+    }
+
+    .resume {
+      max-width: 840px;
+      margin: 48px auto;
+      background: var(--bg);
+      box-shadow: var(--bs-shadow);
+      border-radius: var(--bs-radius);
+      overflow: hidden;
+    }
+
+    /* Hero Header */
+    .hero {
+      padding: 64px 56px 48px;
+      position: relative;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 56px;
+      right: 56px;
+      height: 3px;
+      background: var(--accent);
+    }
+
+    .hero-overline {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .hero h1 {
+      font-family: var(--font-display);
+      font-size: 52px;
+      font-weight: 400;
+      line-height: 1.1;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+
+    .hero-tagline {
+      font-size: 16px;
+      font-weight: 300;
+      color: var(--text-muted);
+      max-width: 520px;
+      line-height: 1.7;
+    }
+
+    .hero-contact {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 24px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .hero-contact a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      border-bottom: 1px solid var(--border);
+      transition: border-color 0.2s;
+    }
+
+    .hero-contact a:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Body */
+    .body {
+      padding: 48px 56px 56px;
+    }
+
+    /* Section */
+    .section {
+      margin-bottom: 48px;
+    }
+
+    .section:last-child {
+      margin-bottom: 0;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .section-number {
+      font-family: var(--font-display);
+      font-size: 36px;
+      color: var(--accent);
+      line-height: 1;
+      opacity: 0.3;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 400;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    /* Job Entry */
+    .job-entry {
+      margin-bottom: 36px;
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 24px;
+    }
+
+    .job-entry:last-child {
+      margin-bottom: 0;
+    }
+
+    .job-sidebar {
+      text-align: right;
+      padding-top: 2px;
+    }
+
+    .job-company {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+
+    .job-location {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .job-content {
+      border-left: 2px solid var(--border);
+      padding-left: 24px;
+    }
+
+    .role-block {
+      margin-bottom: 20px;
+    }
+
+    .role-block:last-child {
+      margin-bottom: 0;
+    }
+
+    .role-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+
+    .role-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .role-date {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--accent);
+      letter-spacing: 0.03em;
+    }
+
+    .role-block ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .role-block li {
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      padding-left: 16px;
+      position: relative;
+      margin-bottom: 4px;
+    }
+
+    .role-block li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 10px;
+      width: 6px;
+      height: 2px;
+      background: var(--accent);
+      border-radius: 1px;
+    }
+
+    /* Education row */
+    .edu-entry {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 24px;
+    }
+
+    .edu-right {
+      padding-left: 26px;
+    }
+
+    .edu-school {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .edu-degree {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    /* Skills */
+    .skills-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .skill-pill {
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 16px;
+      background: var(--accent-light);
+      color: var(--accent);
+      border-radius: 20px;
+    }
+
+    /* Pull quote */
+    .pull-quote {
+      font-family: var(--font-display);
+      font-size: 22px;
+      color: var(--text);
+      line-height: 1.5;
+      padding: 32px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      margin: 36px 0;
+      position: relative;
+    }
+
+    .pull-quote::before {
+      content: '\201C';
+      font-size: 64px;
+      color: var(--accent);
+      opacity: 0.2;
+      position: absolute;
+      top: 12px;
+      left: -4px;
+      line-height: 1;
+    }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+      .hero {
+        padding: 40px 28px 36px;
+      }
+
+      .hero::after {
+        left: 28px;
+        right: 28px;
+      }
+
+      .hero h1 {
+        font-size: 36px;
+      }
+
+      .body {
+        padding: 32px 28px 40px;
+      }
+
+      .job-entry, .edu-entry {
+        grid-template-columns: 1fr;
+        gap: 4px;
+      }
+
+      .job-sidebar {
+        text-align: left;
+      }
+
+      .section-header {
+        gap: 10px;
+      }
+
+      .section-number {
+        font-size: 28px;
+      }
+
+      .section-title {
+        font-size: 22px;
+      }
+
+      .pull-quote {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="resume">
+    <header class="hero">
+      <div class="hero-overline">Senior Software Engineer</div>
+      <h1>Ryan Z.<br>Rau</h1>
+      <p class="hero-tagline">
+        A problem-solver at heart with a keen eye for detail, excelling at reverse
+        engineering to deepen my understanding and uncovering innovative solutions.
+      </p>
+      <div class="hero-contact">
+        <span><a href="mailto:ryanzrau@gmail.com">ryanzrau@gmail.com</a></span>
+        <span>(479) 283-6754</span>
+        <span><a href="https://github.com/RyanRau" target="_blank">github.com/RyanRau</a></span>
+      </div>
+    </header>
+
+    <div class="body">
+      <section class="section">
+        <div class="section-header">
+          <span class="section-number">01</span>
+          <h2 class="section-title">Experience</h2>
+        </div>
+
+        <div class="job-entry">
+          <div class="job-sidebar">
+            <div class="job-company">Affirma Consulting</div>
+            <div class="job-location">Fayetteville, AR</div>
+          </div>
+          <div class="job-content">
+            <div class="role-block">
+              <div class="role-top">
+                <span class="role-title">Senior Software Engineer</span>
+                <span class="role-date">Feb. 2024 &ndash; Present</span>
+              </div>
+              <ul>
+                <li>Lead team developing internal asset management system managing tens of thousands of assets across ~100 teams at Meta</li>
+                <li>Meet with stakeholders, gather requirements, convert to technical documents</li>
+                <li>Act as subject matter expert for Affirma-led initiatives at Meta</li>
+                <li>Reduced memory usage by up to 70% and halved response times through database restructuring</li>
+                <li>Partner with users to migrate data into new internal tooling</li>
+                <li>Manage direct reports; coordinate performance reviews and career development</li>
+                <li>Assist in hiring: resume screening and technical interviews</li>
+              </ul>
+            </div>
+
+            <div class="role-block">
+              <div class="role-top">
+                <span class="role-title">Software Engineer II</span>
+                <span class="role-date">Jan. 2023 &ndash; Feb. 2024</span>
+              </div>
+              <ul>
+                <li>Onboarded 10+ new developers to Meta projects with documentation and bootcamp project</li>
+                <li>Designed and delivered MVP for internal asset management tool at Meta's Reality Labs</li>
+                <li>Ported reporting tools to mobile via React Native</li>
+                <li>Participated in sales calls providing technical insight</li>
+              </ul>
+            </div>
+
+            <div class="role-block">
+              <div class="role-top">
+                <span class="role-title">Software Engineer I</span>
+                <span class="role-date">Apr. 2022 &ndash; Jan. 2023</span>
+              </div>
+              <ul>
+                <li>Full stack development (PHP &amp; React) on health and safety reporting tools replacing PowerApps/Google Forms</li>
+                <li>Created PHP triaging framework using tree-like data structure for location-based contact derivation</li>
+                <li>Assisted in knowledge transfer and client developer documentation</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="job-entry">
+          <div class="job-sidebar">
+            <div class="job-company">Affirma Consulting</div>
+            <div class="job-location">Fayetteville, AR</div>
+          </div>
+          <div class="job-content">
+            <div class="role-block">
+              <div class="role-top">
+                <span class="role-title">Intern</span>
+                <span class="role-date">Nov. 2019 &ndash; Sept. 2021</span>
+              </div>
+              <ul>
+                <li>Developed MVP for energy usage reporting with Angular and C#</li>
+                <li>Built reusable Angular components including hierarchy tree navigation and charts</li>
+                <li>Built cross-platform mobile app using C# and Xamarin for employee hour logging</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="job-entry">
+          <div class="job-sidebar">
+            <div class="job-company">University of Arkansas</div>
+            <div class="job-location">Fayetteville, AR</div>
+          </div>
+          <div class="job-content">
+            <div class="role-block">
+              <div class="role-top">
+                <span class="role-title">Technology Coordinator at STEM Education</span>
+                <span class="role-date">Jul. 2017 &ndash; May 2021</span>
+              </div>
+              <ul>
+                <li>Built inventory system for 800+ items using Django, improving workflow by 50%</li>
+                <li>Provided tech support to staff and students</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="pull-quote">
+        A problem-solver at heart with a keen eye for detail, excelling at
+        reverse engineering to deepen understanding and uncovering
+        innovative solutions.
+      </div>
+
+      <section class="section">
+        <div class="section-header">
+          <span class="section-number">02</span>
+          <h2 class="section-title">Education</h2>
+        </div>
+
+        <div class="edu-entry">
+          <div class="job-sidebar">
+            <div class="job-company">Class of 2022</div>
+          </div>
+          <div class="edu-right">
+            <div class="edu-school">University of Arkansas</div>
+            <div class="edu-degree">B.S. Computer Science &amp; B.A. German</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-header">
+          <span class="section-number">03</span>
+          <h2 class="section-title">Skills</h2>
+        </div>
+
+        <div class="skills-row">
+          <span class="skill-pill">JavaScript</span>
+          <span class="skill-pill">PHP</span>
+          <span class="skill-pill">C#</span>
+          <span class="skill-pill">Python</span>
+          <span class="skill-pill">C++</span>
+          <span class="skill-pill">React</span>
+          <span class="skill-pill">Angular</span>
+          <span class="skill-pill">React Native</span>
+          <span class="skill-pill">GraphQL</span>
+          <span class="skill-pill">SQL</span>
+          <span class="skill-pill">Regex</span>
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+</html>
