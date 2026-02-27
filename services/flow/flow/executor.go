@@ -108,6 +108,13 @@ func (e *Executor) Execute(ctx context.Context) error {
 		elapsed := time.Since(nodeStart)
 		e.logger.Info(fmt.Sprintf("node %s completed in %s", nodeID, formatDuration(elapsed)))
 
+		// Log the raw output in debug mode
+		if format == "binary" {
+			e.logger.Debug(fmt.Sprintf("node %s output (%s, %d bytes)", nodeID, format, len(data)))
+		} else {
+			e.logger.Debug(fmt.Sprintf("node %s output (%s):\n%s", nodeID, format, string(data)))
+		}
+
 		// Store the output
 		outputName := node.Output.As
 		switch format {

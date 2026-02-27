@@ -14,6 +14,15 @@ type nopLogger struct{}
 func (n *nopLogger) Info(msg string)  {}
 func (n *nopLogger) Debug(msg string) {}
 
+// capLogger captures log messages for assertions.
+type capLogger struct {
+	infos  []string
+	debugs []string
+}
+
+func (c *capLogger) Info(msg string)  { c.infos = append(c.infos, msg) }
+func (c *capLogger) Debug(msg string) { c.debugs = append(c.debugs, msg) }
+
 func TestTopologicalSort_Linear(t *testing.T) {
 	f := &Flow{
 		Nodes: map[string]Node{
@@ -526,6 +535,79 @@ func TestExecute_InvalidJSONFallsBackToText(t *testing.T) {
 	}
 	if s != "not-json" {
 		t.Errorf("val = %q", s)
+	}
+}
+
+func TestExecute_DebugLogsNodeOutput(t *testing.T) {
+	f := &Flow{
+		Nodes: map[string]Node{
+			"a": {Output: NodeOutput{Format: "text", As: "out"}},
+			"b": {Output: NodeOutput{Format: "json", As: "data"}},
+		},
+		Edges: []Edge{{From: "a", To: "b"}},
+	}
+
+	rc := newTestContext(nil)
+	logger := &capLogger{}
+
+	runFunc := func(ctx context.Context, nodeID string, node Node, rc *RunContext) ([]byte, string, error) {
+		if nodeID == "a" {
+			return []byte("hello world"), "text", nil
+		}
+		return []byte(`{"key":"value"}`), "json", nil
+	}
+
+	executor := NewExecutor(f, rc, logger, runFunc)
+	if err := executor.Execute(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+
+	// Should have debug messages containing node output
+	foundA := false
+	foundB := false
+	for _, msg := range logger.debugs {
+		if strings.Contains(msg, "node a output") && strings.Contains(msg, "hello world") {
+			foundA = true
+		}
+		if strings.Contains(msg, "node b output") && strings.Contains(msg, `{"key":"value"}`) {
+			foundB = true
+		}
+	}
+	if !foundA {
+		t.Errorf("expected debug log with node a text output, got: %v", logger.debugs)
+	}
+	if !foundB {
+		t.Errorf("expected debug log with node b json output, got: %v", logger.debugs)
+	}
+}
+
+func TestExecute_DebugLogsBinaryOutputLength(t *testing.T) {
+	f := &Flow{
+		Nodes: map[string]Node{
+			"bin": {Output: NodeOutput{Format: "binary", As: "data"}},
+		},
+	}
+
+	rc := newTestContext(nil)
+	logger := &capLogger{}
+
+	runFunc := func(ctx context.Context, nodeID string, node Node, rc *RunContext) ([]byte, string, error) {
+		return []byte{0x00, 0xFF, 0x42}, "binary", nil
+	}
+
+	executor := NewExecutor(f, rc, logger, runFunc)
+	if err := executor.Execute(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+
+	found := false
+	for _, msg := range logger.debugs {
+		if strings.Contains(msg, "node bin output") && strings.Contains(msg, "3 bytes") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected debug log with binary byte count, got: %v", logger.debugs)
 	}
 }
 
