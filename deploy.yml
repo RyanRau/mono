@@ -14,11 +14,3 @@ apps:
     subdomain: "ui"
     enabled: true
     port: 80
-  be_mine:
-    subdomain: "be-mine"
-    enabled: true
-    port: 80
-  tic-tac-toe:
-    subdomain: "tic-tac-toe"
-    enabled: true
-    port: 80

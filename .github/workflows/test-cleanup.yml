@@ -55,3 +55,30 @@ jobs:
           # Best-effort cleanup of the :test tag from GHCR
           # This is non-critical — old tags get cleaned up naturally
           echo "Test image cleanup skipped (manual GHCR cleanup if needed)"
+
+  remove-test-deploy-file:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Remove test-deploy.yml if present
+        run: |
+          if [ ! -f test-deploy.yml ]; then
+            echo "No test-deploy.yml on main, nothing to remove."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git rm test-deploy.yml
+          git commit -m "chore: remove test-deploy.yml after merge"
+          git push
+          echo "=== test-deploy.yml removed from main ==="

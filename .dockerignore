@@ -1,0 +1,9 @@
+.git
+.github
+**/node_modules
+**/dist
+**/build
+*.md
+.DS_Store
+infra
+local-event-digest

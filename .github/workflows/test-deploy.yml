@@ -59,7 +59,7 @@ jobs:
           APP="${{ steps.config.outputs.app }}"
           IMAGE=$(echo "${{ env.REGISTRY }}/${{ env.REPO }}/${APP}:test" | tr '[:upper:]' '[:lower:]')
           echo "=== Building ${APP} (test) ==="
-          docker build -t "$IMAGE" ./web/${APP}
+          docker build -t "$IMAGE" -f ./web/${APP}/Dockerfile .
           docker push "$IMAGE"
           echo "=== Pushed $IMAGE ==="
 
