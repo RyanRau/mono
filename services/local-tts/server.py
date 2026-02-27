@@ -126,7 +126,7 @@ async def tts_stream(request: Request):
             if not header_sent:
                 yield make_wav_header(SAMPLE_RATE, 1, 16)
                 header_sent = True
-            pcm = (audio * 32767).astype(np.int16)
+            pcm = (audio * 32767).numpy().astype(np.int16)
             yield pcm.tobytes()
 
     return StreamingResponse(generate(), media_type="audio/wav")

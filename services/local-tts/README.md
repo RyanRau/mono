@@ -2,7 +2,36 @@
 
 Local web server for text-to-speech using [Kokoro TTS](https://github.com/hexgrad/kokoro).
 
-## Prerequisites
+## Docker (recommended)
+
+The image is built and pushed to GHCR automatically when changes land on `main`.
+
+**Pull and run:**
+
+```bash
+# Authenticate (one-time — use a PAT with read:packages scope)
+echo YOUR_GITHUB_PAT | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+
+# Pull
+docker pull ghcr.io/ryanrau/mono/local-tts:latest
+
+# Run
+docker run -d --name local-tts -p 8000:8000 ghcr.io/ryanrau/mono/local-tts:latest
+```
+
+Then open http://localhost:8000.
+
+**Stop / remove:**
+
+```bash
+docker stop local-tts && docker rm local-tts
+```
+
+The Kokoro model is baked into the image, so startup is instant with no download on first run.
+
+---
+
+## Prerequisites (local dev)
 
 - Python 3.10–3.12
 - [espeak-ng](https://github.com/espeak-ng/espeak-ng) installed on your system
