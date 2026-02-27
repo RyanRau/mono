@@ -5,11 +5,12 @@ Personal monorepo for web apps deployed to `ryanzrau.dev` via Docker + Traefik o
 ## Repo Structure
 
 ```
-web/              # Web applications (each has its own Dockerfile)
+apps/              # Web app deployment artifacts (Dockerfile + nginx.conf per app)
   ryanzrau/       # Portfolio site → ryanzrau.dev
-  bluestar/       # UI component library (Storybook) → ui.ryanzrau.dev
-  be_mine/        # Valentine card app → be-mine.ryanzrau.dev
-local-event-digest/  # Python event scraper (runs on schedule, not deployed as a web app)
+  bluestar/       # Storybook static site → ui.ryanzrau.dev
+  be_mine/        # Valentine card app (not currently deployed)
+packages/         # Shared packages
+  bluestar/       # React component library source (used by apps/ryanzrau)
 infra/            # Deployment tooling (generate-compose.py, README)
 deploy.yml        # Source of truth for which apps are deployed and their subdomains
 ```
@@ -25,7 +26,7 @@ All deployment is config-driven via `deploy.yml` at the repo root. The CI pipeli
 
 ### Adding a New App
 
-1. Create `web/<app_name>/` with a `Dockerfile` that produces a static site served by nginx on port 80
+1. Create `apps/<app_name>/` with a `Dockerfile` that produces a static site served by nginx on port 80
 2. Add the app to `deploy.yml`:
    ```yaml
    apps:
@@ -34,9 +35,9 @@ All deployment is config-driven via `deploy.yml` at the repo root. The CI pipeli
        enabled: true
        port: 80
    ```
-3. Push to `main` — the CI workflow detects changed files in `web/<app_name>/` and builds + deploys automatically
+3. Push to `main` — the CI workflow detects changed files in `apps/<app_name>/` and builds + deploys automatically
 
-The Dockerfile should follow the existing two-stage pattern: build with `node:20-alpine`, serve with `nginx:alpine`. See any app in `web/` for reference.
+The Dockerfile should follow the existing two-stage pattern: build with `node:20-alpine`, serve with `nginx:alpine`. See any app in `apps/` for reference.
 
 ## Test Subdomain Deployments
 
@@ -73,13 +74,41 @@ Any app can be deployed to a test subdomain from a feature branch without impact
 ## Code Quality
 
 - ESLint + Prettier configured at repo root, enforced via PR validation workflow
-- Python: Ruff for formatting, bandit + pip-audit for security (informational)
 - PR validation auto-fixes lint/format issues and commits them
 
 ## Conventions
 
 - App directory names use snake_case (e.g., `be_mine`)
 - Subdomains use kebab-case (e.g., `be-mine`)
-- Each app is self-contained in `web/<name>/` with its own `package.json`, `Dockerfile`, and `nginx.conf`
-- No shared build tooling (no turborepo/nx) — apps are independent
+- Each app in `apps/<name>/` has its own `Dockerfile` and `nginx.conf`; build source lives alongside or in `packages/`
+- No shared build tooling (no turborepo/nx) — apps build independently
 - Docker images: `ghcr.io/ryanrau/mono/<app>:latest` for prod, `:test` for test deploys
+
+### New App Stack
+
+New web apps should follow the same stack as `apps/ryanzrau`:
+
+- **React + TypeScript** with Vite as the build tool
+- Use `file:` references to local packages in `packages/` wherever possible (e.g., `"bluestar": "file:../../packages/bluestar"`)
+- See `packages/PACKAGES.md` for what each local package exports and how to use it
+
+**Template `package.json`:**
+```json
+{
+  "name": "<app_name>",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "bluestar": "file:../../packages/bluestar",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}
+```
+
+> **Keep `packages/PACKAGES.md` up to date** whenever a package's exports or API changes.

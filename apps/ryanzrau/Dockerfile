@@ -8,14 +8,14 @@ COPY packages/bluestar/ .
 RUN npm run build
 
 # Install and build ryanzrau
-WORKDIR /app/web/ryanzrau
-COPY web/ryanzrau/package*.json ./
+WORKDIR /app/apps/ryanzrau
+COPY apps/ryanzrau/package*.json ./
 RUN npm ci
-COPY web/ryanzrau/ .
+COPY apps/ryanzrau/ .
 RUN npm run build
 
 FROM nginx:alpine
-COPY --from=builder /app/web/ryanzrau/dist /usr/share/nginx/html
-COPY web/ryanzrau/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/apps/ryanzrau/dist /usr/share/nginx/html
+COPY apps/ryanzrau/nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

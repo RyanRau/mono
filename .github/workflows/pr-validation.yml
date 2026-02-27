@@ -72,9 +72,9 @@ jobs:
           echo "Building Docker images for enabled apps: $ENABLED"
 
           for app in $ENABLED; do
-            if [ -f "web/${app}/Dockerfile" ]; then
+            if [ -f "apps/${app}/Dockerfile" ]; then
               echo "Building ${app} Docker image..."
-              docker build -t ${app}:pr-test web/${app}
+              docker build -t ${app}:pr-test apps/${app}
             else
               echo "⚠️  Skipping ${app} (no Dockerfile found)"
             fi
