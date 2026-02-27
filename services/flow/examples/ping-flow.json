@@ -1,0 +1,33 @@
+{
+  "id": "ping-flow",
+  "version": "1.0",
+  "nodes": {
+    "ping-url": {
+      "type": "http",
+      "url": "https://httpbin.org/get",
+      "method": "GET",
+      "headers": {
+        "User-Agent": "flowrunner/1.0"
+      },
+      "output": {
+        "format": "json",
+        "as": "result"
+      }
+    },
+    "format-result": {
+      "type": "script",
+      "command": "echo",
+      "args": ["Ping response origin: {{nodes.ping-url.result.origin}}"],
+      "output": {
+        "format": "text",
+        "as": "summary"
+      }
+    }
+  },
+  "edges": [
+    {
+      "from": "ping-url",
+      "to": "format-result"
+    }
+  ]
+}
