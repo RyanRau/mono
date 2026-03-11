@@ -35,7 +35,7 @@ const GET_PREFERRED_PRODUCTS = gql`
 const INSERT_PREFERRED_PRODUCT = gql`
   mutation InsertPreferredProduct(
     $label: String!
-    $search_terms: _text!
+    $search_terms: [String!]!
     $walmart_product_id: String!
     $notes: String
   ) {
@@ -56,7 +56,7 @@ const UPDATE_PREFERRED_PRODUCT = gql`
   mutation UpdatePreferredProduct(
     $id: uuid!
     $label: String!
-    $search_terms: _text!
+    $search_terms: [String!]!
     $walmart_product_id: String!
     $notes: String
   ) {
@@ -97,13 +97,9 @@ export async function insertProduct(vars: {
   notes: string | null;
 }): Promise<string> {
   const client = getClient();
-  const formatted = `{${vars.search_terms.map((t) => `"${t}"`).join(",")}}`;
   const data = await client.request<{
     insert_preferred_products_one: { id: string };
-  }>(INSERT_PREFERRED_PRODUCT, {
-    ...vars,
-    search_terms: formatted,
-  });
+  }>(INSERT_PREFERRED_PRODUCT, vars);
   return data.insert_preferred_products_one.id;
 }
 
@@ -115,11 +111,7 @@ export async function updateProduct(vars: {
   notes: string | null;
 }): Promise<void> {
   const client = getClient();
-  const formatted = `{${vars.search_terms.map((t) => `"${t}"`).join(",")}}`;
-  await client.request(UPDATE_PREFERRED_PRODUCT, {
-    ...vars,
-    search_terms: formatted,
-  });
+  await client.request(UPDATE_PREFERRED_PRODUCT, vars);
 }
 
 export async function deleteProduct(id: string): Promise<void> {
