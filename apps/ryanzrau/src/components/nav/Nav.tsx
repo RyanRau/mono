@@ -5,7 +5,7 @@ const links = [
   { label: "About", href: "#about" },
   { label: "Work", href: "#work" },
   { label: "Projects", href: "#projects" },
-  { label: "Photos", href: "#photography" },
+  { label: "Gallery", href: "#gallery" },
   { label: "Life", href: "#life" },
 ];
 
@@ -44,7 +44,7 @@ export function Nav() {
               scrolled ? "text-parchment" : "text-parchment"
             }`}
           >
-            Ryan Rau
+            Ryan Z. Rau
           </a>
 
           {/* Desktop links */}
