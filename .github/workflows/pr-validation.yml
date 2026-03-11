@@ -72,9 +72,10 @@ jobs:
           echo "Building Docker images for enabled apps: $ENABLED"
 
           for app in $ENABLED; do
-            if [ -f "apps/${app}/Dockerfile" ]; then
+            APP_PATH=$(yq ".apps.${app}.path // \"apps/${app}\"" deploy.yml)
+            if [ -f "${APP_PATH}/Dockerfile" ]; then
               echo "Building ${app} Docker image..."
-              docker build -t ${app}:pr-test apps/${app}
+              docker build -t ${app}:pr-test -f "./${APP_PATH}/Dockerfile" .
             else
               echo "⚠️  Skipping ${app} (no Dockerfile found)"
             fi
