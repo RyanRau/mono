@@ -112,3 +112,15 @@ New web apps should follow the same stack as `apps/ryanzrau`:
 ```
 
 > **Keep `packages/PACKAGES.md` up to date** whenever a package's exports or API changes.
+
+## External App Deployments
+
+External repos can deploy apps to unused `*.ryanzrau.dev` subdomains by joining the shared Traefik network (`traefik_web`). These apps run as separate Docker Compose projects on the droplet under `/opt/external/<app-name>/` and are invisible to the mono repo's deploy lifecycle.
+
+The `web` network in `generate-compose.py` has a fixed name (`traefik_web`) so external containers can reliably join it with `external: true`.
+
+### Reserved external subdomains
+
+Keep this list updated to avoid subdomain collisions:
+
+- *(none yet)*

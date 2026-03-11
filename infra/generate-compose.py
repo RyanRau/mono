@@ -129,7 +129,7 @@ compose = {
     "services": services,
     "volumes": {"letsencrypt": {}},
     "networks": {
-        "web": {"driver": "bridge"},
+        "web": {"driver": "bridge", "name": "traefik_web"},
     },
 }
 
