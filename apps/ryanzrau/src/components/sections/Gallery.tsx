@@ -74,8 +74,8 @@ export function Gallery() {
     photos.reduce((sum, p) => sum + (p.orientation === "landscape" ? CARD_W_L : CARD_W_P) + GAP, 0) +
     400; // extra for CTA card + breathing room at end
 
-  // Vertical center for the trail (accounting for header space at top)
-  const trailCenterY = 380;
+  // Vertical center for the trail — use 55% of viewport to push below header
+  const trailCenterY = typeof window !== "undefined" ? Math.round(window.innerHeight * 0.55) : 500;
   const trailD = buildHorizontalTrail(totalWidth, trailCenterY);
 
   useEffect(() => {
@@ -91,7 +91,7 @@ export function Gallery() {
     const ctx = gsap.context(() => {
       const totalScroll = strip.scrollWidth - window.innerWidth;
       // Add extra scroll distance for a slower, more gradual exit
-      const scrollDistance = totalScroll + window.innerWidth * 0.5;
+      const scrollDistance = totalScroll + window.innerWidth * 1.2;
 
       // Horizontal scroll — pin the whole section
       gsap.to(strip, {
@@ -192,7 +192,8 @@ export function Gallery() {
           const w = isLandscape ? CARD_W_L : CARD_W_P;
           const h = isLandscape ? CARD_H_L : CARD_H_P;
           // Center vertically around the trail, offset by photo.y
-          const top = trailCenterY + photo.y * 180 - h / 2;
+          // Use a smaller spread so cards stay within the visible area
+          const top = trailCenterY + photo.y * 150 - h / 2;
 
           return (
             <motion.div
