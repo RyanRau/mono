@@ -93,6 +93,7 @@ New web apps should follow the same stack as `apps/ryanzrau`:
 - See `packages/PACKAGES.md` for what each local package exports and how to use it
 
 **Template `package.json`:**
+
 ```json
 {
   "name": "<app_name>",
