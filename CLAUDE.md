@@ -123,4 +123,4 @@ The `web` network in `generate-compose.py` has a fixed name (`traefik_web`) so e
 
 Keep this list updated to avoid subdomain collisions:
 
-- *(none yet)*
+- `drinkz.ryanzrau.dev`
