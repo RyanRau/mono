@@ -8,15 +8,6 @@ const facts = [
   { icon: "\u{1F4F7}", text: "Sony a6400" },
 ];
 
-const photoPlaceholders = [
-  "Ozark Trail",
-  "Workshop",
-  "Motorcycle",
-  "Stained Glass",
-  "Trail Run",
-  "Golden Hour",
-];
-
 export function About() {
   return (
     <section id="about" className="py-24 md:py-32 bg-parchment">
@@ -68,20 +59,6 @@ export function About() {
               ))}
             </div>
           </motion.div>
-        </div>
-
-        {/* Horizontal photo strip */}
-        <div className="mt-16 -mx-6 overflow-hidden">
-          <div className="flex gap-4 px-6 no-scrollbar overflow-x-auto">
-            {photoPlaceholders.map((label) => (
-              <div
-                key={label}
-                className="flex-shrink-0 w-64 h-40 bg-gradient-to-br from-stone/20 to-forest/10 rounded-sm border border-stone/20 flex items-center justify-center"
-              >
-                <span className="font-mono text-xs text-ink/25">{label}</span>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
     </section>
