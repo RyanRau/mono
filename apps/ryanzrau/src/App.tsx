@@ -8,6 +8,9 @@ import { GalleryV1 } from "./components/sections/GalleryV1";
 import { GalleryV2 } from "./components/sections/GalleryV2";
 import { GalleryV3 } from "./components/sections/GalleryV3";
 import { GalleryV4 } from "./components/sections/GalleryV4";
+import { GalleryV1a } from "./components/sections/GalleryV1a";
+import { GalleryV1b } from "./components/sections/GalleryV1b";
+import { GalleryV1c } from "./components/sections/GalleryV1c";
 import { Life } from "./components/sections/Life";
 import { Footer } from "./components/sections/Footer";
 
@@ -28,6 +31,9 @@ function App() {
         <GalleryV2 />
         <GalleryV3 />
         <GalleryV4 />
+        <GalleryV1a />
+        <GalleryV1b />
+        <GalleryV1c />
         <div className="topo-divider" />
         <Life />
       </main>
