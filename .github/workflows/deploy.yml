@@ -80,7 +80,11 @@ jobs:
             echo "=== Building $app ==="
             IMAGE=$(echo "${{ env.REGISTRY }}/${{ env.REPO }}/${app}:latest" | tr '[:upper:]' '[:lower:]')
             APP_PATH=$(yq ".apps.${app}.path // \"apps/${app}\"" deploy.yml)
-            docker build -t "$IMAGE" -f "./${APP_PATH}/Dockerfile" .
+            BUILD_ARGS=""
+            if [ "$app" = "wally" ]; then
+              BUILD_ARGS="--build-arg VITE_NHOST_SUBDOMAIN=${{ secrets.VITE_NHOST_SUBDOMAIN }} --build-arg VITE_NHOST_REGION=${{ secrets.VITE_NHOST_REGION }}"
+            fi
+            docker build $BUILD_ARGS -t "$IMAGE" -f "./${APP_PATH}/Dockerfile" .
             docker push "$IMAGE"
             echo "=== Pushed $IMAGE ==="
           done
