@@ -119,6 +119,27 @@ External repos can deploy apps to unused `*.ryanzrau.dev` subdomains by joining 
 
 The `web` network in `generate-compose.py` has a fixed name (`traefik_web`) so external containers can reliably join it with `external: true`.
 
+### Why this is safe
+
+- `--remove-orphans` only affects containers in the same Compose project. External apps use a different project (different directory), so mono deploys never touch them.
+- Traefik routes by `Host()` rule — no port conflicts since containers don't bind host ports.
+- When the mono repo redeploys and restarts Traefik, it re-discovers all labeled containers on the `traefik_web` network, including external ones.
+
+### Setting up an external app
+
+1. Add a two-stage `Dockerfile` (build with `node:20-alpine`, serve with `nginx:alpine`) and an `nginx.conf` with SPA `try_files` support.
+2. Add a `docker-compose.yml` that joins the Traefik network as external:
+   ```yaml
+   networks:
+     web:
+       external: true
+       name: traefik_web
+   ```
+   Include Traefik labels for routing (`Host(\`<subdomain>.ryanzrau.dev\`)`), TLS (`certresolver=le`), and security headers.
+3. On the droplet, create `/opt/external/<app-name>/` owned by `deploy` and place the `docker-compose.yml` there.
+4. Set up a GitHub Actions workflow to build/push to GHCR, then SSH to the droplet to `docker compose pull && docker compose up -d --force-recreate --remove-orphans` in that directory.
+5. Required GitHub secrets in the external repo: `DROPLET_IP`, `DROPLET_SSH_KEY`, `GHCR_TOKEN`.
+
 ### Reserved external subdomains
 
 Keep this list updated to avoid subdomain collisions:
