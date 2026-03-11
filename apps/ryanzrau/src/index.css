@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-parchment text-ink font-mono;
+    margin: 0;
+  }
+
+  ::selection {
+    @apply bg-rust/30 text-ink;
+  }
+}
+
+/* Grain texture overlay */
+.grain::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+/* Topographic line pattern for decorative use */
+.topo-bg {
+  background-image: url("data:image/svg+xml,%3Csvg width='400' height='400' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 200 Q100 150 200 200 T400 200' fill='none' stroke='%23C9B99A' stroke-width='0.5' opacity='0.3'/%3E%3Cpath d='M0 180 Q100 130 200 180 T400 180' fill='none' stroke='%23C9B99A' stroke-width='0.5' opacity='0.2'/%3E%3Cpath d='M0 220 Q100 170 200 220 T400 220' fill='none' stroke='%23C9B99A' stroke-width='0.5' opacity='0.2'/%3E%3Cpath d='M0 160 Q100 110 200 160 T400 160' fill='none' stroke='%23C9B99A' stroke-width='0.5' opacity='0.15'/%3E%3Cpath d='M0 240 Q100 190 200 240 T400 240' fill='none' stroke='%23C9B99A' stroke-width='0.5' opacity='0.15'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 400px 400px;
+}
+
+/* Section divider topo line */
+.topo-divider {
+  height: 60px;
+  background-image: url("data:image/svg+xml,%3Csvg width='800' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 30 Q100 10 200 30 T400 30 T600 30 T800 30' fill='none' stroke='%23C9B99A' stroke-width='1' opacity='0.4'/%3E%3Cpath d='M0 25 Q100 5 200 25 T400 25 T600 25 T800 25' fill='none' stroke='%23C9B99A' stroke-width='0.5' opacity='0.25'/%3E%3Cpath d='M0 35 Q100 15 200 35 T400 35 T600 35 T800 35' fill='none' stroke='%23C9B99A' stroke-width='0.5' opacity='0.25'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 800px 60px;
+  background-position: center;
+}
+
+/* Horizontal scroll section */
+.horizontal-scroll {
+  overflow-x: hidden;
+}
+
+/* Hide scrollbar for horizontal strip */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Timeline connector line */
+.timeline-line {
+  @apply absolute left-1/2 top-0 bottom-0 w-px bg-stone/40 -translate-x-1/2;
+}
+
+@media (max-width: 768px) {
+  .timeline-line {
+    @apply left-6;
+  }
+}
