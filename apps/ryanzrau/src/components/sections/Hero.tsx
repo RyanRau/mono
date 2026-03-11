@@ -81,7 +81,7 @@ export function Hero() {
         >
           RYAN
           <br />
-          <span className="text-stone">Z. RAU</span>
+          <span className="text-stone">RAU</span>
         </h1>
         <p
           ref={subtitleRef}
