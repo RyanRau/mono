@@ -24,6 +24,10 @@ const topRow: Photo[] = [
   { label: "Hawksbill Crag", category: "Ozark trails", w: 260, h: 180 },
   { label: "Workshop Detail", category: "Detail/macro", w: 300, h: 240 },
   { label: "Hill Country", category: "Motorcycle journeys", w: 380, h: 200 },
+  { label: "Lake Wedington", category: "NWA", w: 310, h: 210 },
+  { label: "Stained Glass", category: "Detail/macro", w: 270, h: 230 },
+  { label: "Tanyard Creek", category: "Ozark trails", w: 350, h: 190 },
+  { label: "KLR on Gravel", category: "Motorcycle journeys", w: 290, h: 220 },
 ];
 
 const bottomRow: Photo[] = [
@@ -31,6 +35,10 @@ const bottomRow: Photo[] = [
   { label: "Gravel Road", category: "Motorcycle journeys", w: 320, h: 240 },
   { label: "Golden Hour", category: "NWA", w: 240, h: 180 },
   { label: "Macro Flower", category: "Detail/macro", w: 360, h: 220 },
+  { label: "War Eagle Mill", category: "NWA", w: 300, h: 210 },
+  { label: "Lathe Turning", category: "Detail/macro", w: 280, h: 240 },
+  { label: "Boxley Valley", category: "Ozark trails", w: 340, h: 190 },
+  { label: "River Crossing", category: "Motorcycle journeys", w: 310, h: 230 },
 ];
 
 const gradients = [
@@ -137,7 +145,7 @@ export function GalleryV1b() {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="font-mono text-xs text-ink/30 text-center"
         >
-          V1b — Two-row parallax scroll
+          Shot on Sony a6400 — always chasing the next frame
         </motion.p>
       </div>
 
