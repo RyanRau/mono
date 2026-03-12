@@ -75,9 +75,12 @@ export function GalleryV1b() {
     if (!section || !top || !bottom) return;
 
     const ctx = gsap.context(() => {
-      const topScroll = top.scrollWidth - window.innerWidth;
-      const bottomScroll = bottom.scrollWidth - window.innerWidth;
+      // Pad so last images are fully visible before unpin
+      const pad = window.innerWidth * 0.15;
+      const topScroll = top.scrollWidth - window.innerWidth + pad;
+      const bottomScroll = bottom.scrollWidth - window.innerWidth + pad;
       const maxScroll = Math.max(topScroll, bottomScroll);
+      const scrollDistance = maxScroll + window.innerWidth * 0.6;
 
       // Top row moves at full speed
       gsap.to(top, {
@@ -86,7 +89,7 @@ export function GalleryV1b() {
         scrollTrigger: {
           trigger: section,
           start: "top top",
-          end: () => `+=${maxScroll + window.innerWidth * 0.4}`,
+          end: () => `+=${scrollDistance}`,
           scrub: 1,
         },
       });
@@ -98,7 +101,7 @@ export function GalleryV1b() {
         scrollTrigger: {
           trigger: section,
           start: "top top",
-          end: () => `+=${maxScroll + window.innerWidth * 0.4}`,
+          end: () => `+=${scrollDistance}`,
           scrub: 1,
         },
       });
@@ -107,7 +110,7 @@ export function GalleryV1b() {
       ScrollTrigger.create({
         trigger: section,
         start: "top top",
-        end: () => `+=${maxScroll + window.innerWidth * 0.4}`,
+        end: () => `+=${scrollDistance}`,
         pin: true,
         anticipatePin: 1,
       });
@@ -141,7 +144,7 @@ export function GalleryV1b() {
       </div>
 
       {/* Two rows container */}
-      <div className="flex flex-col justify-center h-full gap-6" style={{ paddingTop: "6rem" }}>
+      <div className="flex flex-col justify-center h-full gap-6" style={{ paddingTop: "6rem", paddingBottom: "5rem" }}>
         {/* Top row — starts offset to the right */}
         <div ref={topRef} className="flex items-end gap-8 w-max pl-[5vw]">
           {topRow.map((photo, i) => (
@@ -159,6 +162,19 @@ export function GalleryV1b() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* See more button */}
+      <div className="absolute bottom-8 left-0 right-0 z-20 flex justify-center">
+        <a
+          href="/gallery"
+          className="inline-flex items-center gap-2 px-6 py-3 border border-ink/15 rounded-sm font-mono text-xs text-ink/50 hover:text-rust hover:border-rust/40 transition-colors bg-parchment/60 backdrop-blur-sm"
+        >
+          See More
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+          </svg>
+        </a>
       </div>
     </section>
   );
