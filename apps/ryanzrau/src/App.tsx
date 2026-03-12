@@ -3,7 +3,7 @@ import { Hero } from "./components/sections/Hero";
 import { About } from "./components/sections/About";
 import { Work } from "./components/sections/Work";
 import { Projects } from "./components/sections/Projects";
-import { GalleryV1b } from "./components/sections/GalleryV1b";
+import { Gallery } from "./components/sections/Gallery";
 import { Life } from "./components/sections/Life";
 import { Footer } from "./components/sections/Footer";
 
@@ -19,7 +19,7 @@ function App() {
         <Work />
         <div className="topo-divider" />
         <Projects />
-        <GalleryV1b />
+        <Gallery />
         <div className="topo-divider" />
         <Life />
       </main>

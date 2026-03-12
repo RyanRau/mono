@@ -6,7 +6,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
 
 /**
- * V1b — Horizontal scroll with two staggered rows.
+ * Gallery — Horizontal scroll with two staggered rows.
  * Top row and bottom row scroll at slightly different speeds (parallax).
  * Cards are different sizes and the rows don't align, creating an
  * organic, layered collage feel.
@@ -71,7 +71,7 @@ function PhotoCard({ photo, gradient }: { photo: Photo; gradient: string }) {
   );
 }
 
-export function GalleryV1b() {
+export function Gallery() {
   const sectionRef = useRef<HTMLElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -126,7 +126,7 @@ export function GalleryV1b() {
   }, []);
 
   return (
-    <section ref={sectionRef} id="gallery-v1b" className="bg-forest/10 h-screen overflow-hidden relative">
+    <section ref={sectionRef} id="gallery" className="bg-forest/10 h-screen overflow-hidden relative">
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-20 pt-16 px-6">
         <motion.h2
