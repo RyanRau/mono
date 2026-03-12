@@ -146,7 +146,7 @@ export function GalleryV1b() {
       {/* Two rows container */}
       <div className="flex flex-col justify-center h-full gap-6" style={{ paddingTop: "6rem", paddingBottom: "5rem" }}>
         {/* Top row — starts offset to the right */}
-        <div ref={topRef} className="flex items-end gap-8 w-max pl-[5vw]">
+        <div ref={topRef} className="flex items-end gap-8 w-max pl-[5vw] pr-[15vw]">
           {topRow.map((photo, i) => (
             <div key={photo.label} style={{ marginLeft: i === 0 ? 60 : 0 }}>
               <PhotoCard photo={photo} gradient={gradients[i % gradients.length]} />
@@ -155,7 +155,7 @@ export function GalleryV1b() {
         </div>
 
         {/* Bottom row — starts further left, offset from top */}
-        <div ref={bottomRef} className="flex items-start gap-10 w-max pl-[15vw]">
+        <div ref={bottomRef} className="flex items-start gap-10 w-max pl-[15vw] pr-[15vw]">
           {bottomRow.map((photo, i) => (
             <div key={photo.label} style={{ marginLeft: i === 0 ? 120 : 0 }}>
               <PhotoCard photo={photo} gradient={gradients[(i + 4) % gradients.length]} />
