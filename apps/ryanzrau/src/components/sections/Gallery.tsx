@@ -13,22 +13,22 @@ gsap.registerPlugin(ScrollTrigger);
  * organic, layered collage feel.
  */
 
-/** Base short edge in px — cards scale from this. */
-const BASE = 200;
+/** Short edge as a percentage of viewport width — scales with screen size. */
+const BASE_VW = 14;
 
-function photoDimensions(photo: Photo): { w: number; h: number } {
+function photoDimensions(photo: Photo): { w: string; h: string } {
   const ratioW = photo.aspect === "16:9" ? 16 : 3;
   const ratioH = photo.aspect === "16:9" ? 9 : 2;
 
   if (photo.orientation === "landscape") {
-    const h = BASE;
-    const w = Math.round(h * (ratioW / ratioH));
-    return { w, h };
+    const hVw = BASE_VW;
+    const wVw = +(hVw * (ratioW / ratioH)).toFixed(2);
+    return { w: `${wVw}vw`, h: `${hVw}vw` };
   }
   // portrait: flip the ratio
-  const w = BASE;
-  const h = Math.round(w * (ratioW / ratioH));
-  return { w, h };
+  const wVw = BASE_VW;
+  const hVw = +(wVw * (ratioW / ratioH)).toFixed(2);
+  return { w: `${wVw}vw`, h: `${hVw}vw` };
 }
 
 function PhotoCard({ photo, gradient }: { photo: Photo; gradient: string }) {
@@ -36,7 +36,7 @@ function PhotoCard({ photo, gradient }: { photo: Photo; gradient: string }) {
   return (
     <div
       className={`relative flex-shrink-0 bg-gradient-to-br ${gradient} rounded-sm border border-ink/10 overflow-hidden group shadow-lg shadow-black/10`}
-      style={{ width: w, height: h }}
+      style={{ width: w, height: h, minWidth: w }}
     >
       <div className="absolute inset-0 flex items-center justify-center">
         <span className="font-mono text-xs text-ink/15">{photo.label}</span>
@@ -77,6 +77,7 @@ export function Gallery() {
           start: "top top",
           end: () => `+=${scrollDistance}`,
           scrub: 1,
+          invalidateOnRefresh: true,
         },
       });
 
@@ -89,6 +90,7 @@ export function Gallery() {
           start: "top top",
           end: () => `+=${scrollDistance}`,
           scrub: 1,
+          invalidateOnRefresh: true,
         },
       });
 
@@ -99,6 +101,7 @@ export function Gallery() {
         end: () => `+=${scrollDistance}`,
         pin: true,
         anticipatePin: 1,
+        invalidateOnRefresh: true,
       });
     }, section);
 
