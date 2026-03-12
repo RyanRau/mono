@@ -75,12 +75,10 @@ export function GalleryV1b() {
     if (!section || !top || !bottom) return;
 
     const ctx = gsap.context(() => {
-      // Pad so last images are fully visible before unpin
-      const pad = window.innerWidth * 0.15;
-      const topScroll = top.scrollWidth - window.innerWidth + pad;
-      const bottomScroll = bottom.scrollWidth - window.innerWidth + pad;
+      const topScroll = top.scrollWidth - window.innerWidth;
+      const bottomScroll = bottom.scrollWidth - window.innerWidth;
       const maxScroll = Math.max(topScroll, bottomScroll);
-      const scrollDistance = maxScroll + window.innerWidth * 0.6;
+      const scrollDistance = maxScroll + window.innerWidth * 0.5;
 
       // Top row moves at full speed
       gsap.to(top, {
@@ -146,21 +144,25 @@ export function GalleryV1b() {
       {/* Two rows container */}
       <div className="flex flex-col justify-center h-full gap-6" style={{ paddingTop: "6rem", paddingBottom: "5rem" }}>
         {/* Top row — starts offset to the right */}
-        <div ref={topRef} className="flex items-end gap-8 w-max pl-[5vw] pr-[15vw]">
+        <div ref={topRef} className="flex items-end gap-8 w-max pl-[5vw]">
           {topRow.map((photo, i) => (
             <div key={photo.label} style={{ marginLeft: i === 0 ? 60 : 0 }}>
               <PhotoCard photo={photo} gradient={gradients[i % gradients.length]} />
             </div>
           ))}
+          {/* Spacer so last photo sits fully visible */}
+          <div className="flex-shrink-0 w-[40vw]" aria-hidden="true" />
         </div>
 
         {/* Bottom row — starts further left, offset from top */}
-        <div ref={bottomRef} className="flex items-start gap-10 w-max pl-[15vw] pr-[15vw]">
+        <div ref={bottomRef} className="flex items-start gap-10 w-max pl-[15vw]">
           {bottomRow.map((photo, i) => (
             <div key={photo.label} style={{ marginLeft: i === 0 ? 120 : 0 }}>
               <PhotoCard photo={photo} gradient={gradients[(i + 4) % gradients.length]} />
             </div>
           ))}
+          {/* Spacer so last photo sits fully visible */}
+          <div className="flex-shrink-0 w-[40vw]" aria-hidden="true" />
         </div>
       </div>
 
