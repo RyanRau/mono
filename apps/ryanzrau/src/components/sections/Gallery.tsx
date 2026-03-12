@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { type Photo, topRow, bottomRow, gradients } from "../../data/gallery";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -12,51 +13,30 @@ gsap.registerPlugin(ScrollTrigger);
  * organic, layered collage feel.
  */
 
-interface Photo {
-  label: string;
-  category: string;
-  w: number;
-  h: number;
+/** Base short edge in px — cards scale from this. */
+const BASE = 200;
+
+function photoDimensions(photo: Photo): { w: number; h: number } {
+  const ratioW = photo.aspect === "16:9" ? 16 : 3;
+  const ratioH = photo.aspect === "16:9" ? 9 : 2;
+
+  if (photo.orientation === "landscape") {
+    const h = BASE;
+    const w = Math.round(h * (ratioW / ratioH));
+    return { w, h };
+  }
+  // portrait: flip the ratio
+  const w = BASE;
+  const h = Math.round(w * (ratioW / ratioH));
+  return { w, h };
 }
 
-const topRow: Photo[] = [
-  { label: "Ozark Trail", category: "Ozark trails", w: 340, h: 220 },
-  { label: "Hawksbill Crag", category: "Ozark trails", w: 260, h: 180 },
-  { label: "Workshop Detail", category: "Detail/macro", w: 300, h: 240 },
-  { label: "Hill Country", category: "Motorcycle journeys", w: 380, h: 200 },
-  { label: "Lake Wedington", category: "NWA", w: 310, h: 210 },
-  { label: "Stained Glass", category: "Detail/macro", w: 270, h: 230 },
-  { label: "Tanyard Creek", category: "Ozark trails", w: 350, h: 190 },
-  { label: "KLR on Gravel", category: "Motorcycle journeys", w: 290, h: 220 },
-];
-
-const bottomRow: Photo[] = [
-  { label: "Devils Den", category: "NWA", w: 280, h: 200 },
-  { label: "Gravel Road", category: "Motorcycle journeys", w: 320, h: 240 },
-  { label: "Golden Hour", category: "NWA", w: 240, h: 180 },
-  { label: "Macro Flower", category: "Detail/macro", w: 360, h: 220 },
-  { label: "War Eagle Mill", category: "NWA", w: 300, h: 210 },
-  { label: "Lathe Turning", category: "Detail/macro", w: 280, h: 240 },
-  { label: "Boxley Valley", category: "Ozark trails", w: 340, h: 190 },
-  { label: "River Crossing", category: "Motorcycle journeys", w: 310, h: 230 },
-];
-
-const gradients = [
-  "from-forest/20 to-stone/15",
-  "from-stone/25 to-forest/15",
-  "from-rust/15 to-stone/10",
-  "from-forest/15 to-stone/20",
-  "from-stone/15 to-forest/20",
-  "from-stone/20 to-rust/10",
-  "from-forest/20 to-stone/15",
-  "from-rust/10 to-forest/15",
-];
-
 function PhotoCard({ photo, gradient }: { photo: Photo; gradient: string }) {
+  const { w, h } = photoDimensions(photo);
   return (
     <div
       className={`relative flex-shrink-0 bg-gradient-to-br ${gradient} rounded-sm border border-ink/10 overflow-hidden group shadow-lg shadow-black/10`}
-      style={{ width: photo.w, height: photo.h }}
+      style={{ width: w, height: h }}
     >
       <div className="absolute inset-0 flex items-center justify-center">
         <span className="font-mono text-xs text-ink/15">{photo.label}</span>
