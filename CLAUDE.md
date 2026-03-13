@@ -8,6 +8,9 @@ Personal monorepo for web apps deployed to `ryanzrau.dev` via Docker + Traefik o
 apps/              # Web app deployment artifacts (Dockerfile + nginx.conf per app)
   ryanzrau/       # Portfolio site → ryanzrau.dev
   bluestar/       # Storybook static site → ui.ryanzrau.dev
+  wally/          # Wally app → wally.ryanzrau.dev
+  gallery/        # Photo gallery → gallery.ryanzrau.dev
+  gallery_api/    # Gallery API (presigned URLs, image deletion) → gallery-api.ryanzrau.dev
   be_mine/        # Valentine card app (not currently deployed)
 packages/         # Shared packages
   bluestar/       # React component library source (used by apps/ryanzrau)
@@ -26,7 +29,7 @@ All deployment is config-driven via `deploy.yml` at the repo root. The CI pipeli
 
 ### Adding a New App
 
-1. Create `apps/<app_name>/` with a `Dockerfile` that produces a static site served by nginx on port 80
+1. Create `apps/<app_name>/` with a `Dockerfile` and (for static sites) an `nginx.conf`
 2. Add the app to `deploy.yml`:
    ```yaml
    apps:
@@ -34,28 +37,65 @@ All deployment is config-driven via `deploy.yml` at the repo root. The CI pipeli
        subdomain: "my-app" # → my-app.ryanzrau.dev (use "" for root domain)
        enabled: true
        port: 80
+       # Optional: build args resolved from GitHub secrets at build time
+       build_args:
+         - VITE_NHOST_SUBDOMAIN
+         - VITE_NHOST_REGION
+       # Optional: runtime env vars (for Node.js APIs, not baked into image)
+       environment:
+         SECRET_KEY: "${SECRET_KEY}"
    ```
-3. Push to `main` — the CI workflow detects changed files in `apps/<app_name>/` and builds + deploys automatically
+3. Push to `main` — the CI workflow builds **all** enabled apps and deploys automatically (no change detection)
 
-The Dockerfile should follow the existing two-stage pattern: build with `node:20-alpine`, serve with `nginx:alpine`. See any app in `apps/` for reference.
+**Static sites** use a two-stage Dockerfile: build with `node:20-alpine`, serve with `nginx:alpine`. See `apps/gallery/` for reference.
+
+**Node.js APIs** use a two-stage Dockerfile: build with `node:20-alpine`, run with `node:20-alpine`. Runtime secrets go in `environment` (not `build_args`). See `apps/gallery_api/` for reference.
+
+### deploy.yml Config Reference
+
+| Field         | Required | Description                                                                          |
+| ------------- | -------- | ------------------------------------------------------------------------------------ |
+| `subdomain`   | Yes      | Subdomain for routing (`""` for root domain)                                         |
+| `enabled`     | Yes      | `true` to deploy, `false` to take offline                                            |
+| `port`        | Yes      | Container port (usually `80`)                                                        |
+| `path`        | No       | Custom build context path (defaults to `apps/<name>`)                                |
+| `build_args`  | No       | List of Docker build arg names, resolved from GitHub secrets at build time           |
+| `environment` | No       | Map of runtime env vars passed to the container (use `${VAR}` to reference host env) |
+
+**Adding a new build arg or secret:**
+
+1. Add the arg name to the app's `build_args` list in `deploy.yml`
+2. Add a `case` entry in both `.github/workflows/deploy.yml` and `.github/workflows/test-deploy.yml` to map the arg name to the GitHub secret
+3. Add the secret to the repo's GitHub settings
+
+**Adding a runtime env var:**
+
+1. Add it to the app's `environment` map in `deploy.yml`
+2. Set the actual value as an environment variable on the droplet (in `/opt/apps/.env` or the deploy user's profile)
 
 ## Test Subdomain Deployments
 
-Any app can be deployed to a test subdomain from a feature branch without impacting production.
+Any app (or multiple apps) can be deployed to test subdomains from a feature branch without impacting production.
 
 ### How to use
 
 1. Add `test-deploy.yml` to your feature branch:
 
    ```yaml
+   # Single app
    app: bluestar
+
+   # Multiple apps
+   apps:
+     - gallery
+     - gallery_api
    ```
 
-   The `app` value must match a key in `deploy.yml`.
+   App names must match keys in `deploy.yml`.
 
 2. Push the branch, then go to **Actions > Test Deploy > Run workflow** and select the branch.
 
-3. The app is deployed to a test subdomain (e.g., `test-ui.ryanzrau.dev` for bluestar). Re-run the workflow to deploy updates.
+3. Apps are deployed to test subdomains (e.g., `test-gallery.ryanzrau.dev`). Re-run the workflow to deploy updates.
 
 4. When the PR is merged to main, the **Test Cleanup** workflow automatically removes the test deployment.
 
@@ -65,11 +105,29 @@ Any app can be deployed to a test subdomain from a feature branch without impact
 - Subdomain app (subdomain: `"ui"`) → `test-ui.ryanzrau.dev`
 - Subdomain app (subdomain: `"be-mine"`) → `test-be-mine.ryanzrau.dev`
 
+### How test deploy works
+
+1. Reads `test-deploy.yml` from the branch to get the list of apps
+2. Builds each app and pushes with `:test` tag to GHCR
+3. SCPs the branch's `deploy.yml` and `infra/generate-compose.py` to the droplet
+4. Writes `test-deploy.active.yml` on the droplet with app metadata (name, subdomain, port)
+5. Runs `generate-compose.py` which merges prod + test services into one `docker-compose.yml`
+6. Restores main's `deploy.yml` and `generate-compose.py` via `git checkout`
+7. Pulls test images and brings everything up
+
 ### Key details
 
-- Only one test deployment can be active at a time
+- Multiple apps can be test-deployed simultaneously
 - The workflow must be triggered manually (does not run on push)
 - `test-deploy.yml` is the branch config (committed); `test-deploy.active.yml` is the droplet runtime state (gitignored)
+- The branch's `deploy.yml` is temporarily used on the droplet for generation, then restored
+
+### Debugging test deploys
+
+- **"App not found in deploy.yml"**: The app must exist in the branch's `deploy.yml` with a subdomain. The workflow SCPs the branch version to the droplet.
+- **Image not found**: Test images use `:test` tag, not `:latest`. Check that the build step succeeded.
+- **Site not loading**: Verify the test container is running (`docker ps | grep test`), check Traefik labels (`docker inspect <container>`), and confirm DNS resolves (`dig test-<subdomain>.ryanzrau.dev`).
+- **Compose errors about missing services**: The workflow only pulls test images specifically, not all services. Check `test-deploy.active.yml` on the droplet.
 
 ## Code Quality
 

@@ -3,7 +3,7 @@
 Reads deploy.yml and generates a docker-compose.yml with:
 - Traefik reverse proxy with Let's Encrypt
 - One service per enabled app with proper Traefik labels
-- Optional test deployment overlay via test-deploy.yml
+- Optional test deployment overlay via test-deploy.active.yml
 """
 
 import yaml
@@ -47,6 +47,25 @@ services["traefik"] = {
     "networks": ["web"],
 }
 
+
+def make_service_labels(name, fqdn, port):
+    return [
+        "traefik.enable=true",
+        f"traefik.http.routers.{name}.rule=Host(`{fqdn}`)",
+        f"traefik.http.routers.{name}.entrypoints=websecure",
+        f"traefik.http.routers.{name}.tls.certresolver=le",
+        f"traefik.http.services.{name}.loadbalancer.server.port={port}",
+        f"traefik.http.middlewares.{name}-security.headers.stsSeconds=31536000",
+        f"traefik.http.middlewares.{name}-security.headers.stsIncludeSubdomains=true",
+        f"traefik.http.middlewares.{name}-security.headers.stsPreload=true",
+        f"traefik.http.middlewares.{name}-security.headers.customFrameOptionsValue=ALLOWALL",
+        f"traefik.http.middlewares.{name}-security.headers.contentTypeNosniff=true",
+        f"traefik.http.middlewares.{name}-security.headers.browserXssFilter=true",
+        f"traefik.http.middlewares.{name}-security.headers.referrerPolicy=strict-origin-when-cross-origin",
+        f"traefik.http.routers.{name}.middlewares={name}-security",
+    ]
+
+
 # App services
 enabled_apps = []
 for name, app in config.get("apps", {}).items():
@@ -54,78 +73,82 @@ for name, app in config.get("apps", {}).items():
         continue
 
     subdomain = app["subdomain"]
-    port = app.get("port", 3000)
+    port = app.get("port", 80)
     fqdn = f"{subdomain}.{domain}" if subdomain else domain
     enabled_apps.append(name)
 
-    services[name] = {
+    service = {
         "image": f"{registry}/{name}:latest",
         "container_name": name,
         "restart": "unless-stopped",
-        "labels": [
-            "traefik.enable=true",
-            f"traefik.http.routers.{name}.rule=Host(`{fqdn}`)",
-            f"traefik.http.routers.{name}.entrypoints=websecure",
-            f"traefik.http.routers.{name}.tls.certresolver=le",
-            f"traefik.http.services.{name}.loadbalancer.server.port={port}",
-            # HSTS middleware - enforce HTTPS for 1 year
-            f"traefik.http.middlewares.{name}-security.headers.stsSeconds=31536000",
-            f"traefik.http.middlewares.{name}-security.headers.stsIncludeSubdomains=true",
-            f"traefik.http.middlewares.{name}-security.headers.stsPreload=true",
-            # Additional security headers
-            f"traefik.http.middlewares.{name}-security.headers.customFrameOptionsValue=ALLOWALL",
-            f"traefik.http.middlewares.{name}-security.headers.contentTypeNosniff=true",
-            f"traefik.http.middlewares.{name}-security.headers.browserXssFilter=true",
-            f"traefik.http.middlewares.{name}-security.headers.referrerPolicy=strict-origin-when-cross-origin",
-            # Apply security middleware to router
-            f"traefik.http.routers.{name}.middlewares={name}-security",
-        ],
+        "labels": make_service_labels(name, fqdn, port),
         "networks": ["web"],
     }
 
+    # Runtime environment variables (not baked into image)
+    env_vars = app.get("environment", {})
+    if env_vars:
+        service["environment"] = env_vars
+
+    services[name] = service
+
 # Optional test deployment overlay
-test_app = None
+test_apps = []
 if os.path.exists(TEST_CONFIG_PATH):
     with open(TEST_CONFIG_PATH) as f:
         test_config = yaml.safe_load(f)
 
-    test_app = test_config.get("app")
-    if test_app and test_app in config.get("apps", {}):
-        app = config["apps"][test_app]
-        subdomain = app["subdomain"]
-        port = app.get("port", 3000)
+    if test_config is None:
+        test_config = []
+
+    # Support both list format and legacy single-app format
+    if isinstance(test_config, list):
+        test_entries = test_config
+    elif isinstance(test_config, dict):
+        # Legacy: {app: "name"} or {app: "name", subdomain: "x", port: 80}
+        if "app" in test_config:
+            test_entries = [test_config]
+        else:
+            test_entries = []
+    else:
+        test_entries = []
+
+    for entry in test_entries:
+        if isinstance(entry, dict):
+            app_name = entry.get("app") or entry.get("name")
+        else:
+            continue
+
+        if not app_name:
+            continue
+
+        # Get subdomain/port from entry, fall back to deploy.yml
+        subdomain = entry.get("subdomain")
+        port = entry.get("port")
+
+        if subdomain is None and app_name in config.get("apps", {}):
+            subdomain = config["apps"][app_name]["subdomain"]
+        if port is None and app_name in config.get("apps", {}):
+            port = config["apps"][app_name].get("port", 80)
+
+        if subdomain is None:
+            print(f"Warning: test app '{app_name}' has no subdomain config, skipping")
+            continue
+
+        port = port or 80
         test_fqdn = f"test-{subdomain}.{domain}" if subdomain else f"test.{domain}"
-        test_name = f"{test_app}-test"
+        test_name = f"{app_name}-test"
 
         services[test_name] = {
-            "image": f"{registry}/{test_app}:test",
+            "image": f"{registry}/{app_name}:test",
             "container_name": test_name,
             "restart": "unless-stopped",
-            "labels": [
-                "traefik.enable=true",
-                f"traefik.http.routers.{test_name}.rule=Host(`{test_fqdn}`)",
-                f"traefik.http.routers.{test_name}.entrypoints=websecure",
-                f"traefik.http.routers.{test_name}.tls.certresolver=le",
-                f"traefik.http.services.{test_name}.loadbalancer.server.port={port}",
-                f"traefik.http.middlewares.{test_name}-security.headers.stsSeconds=31536000",
-                f"traefik.http.middlewares.{test_name}-security.headers.stsIncludeSubdomains=true",
-                f"traefik.http.middlewares.{test_name}-security.headers.stsPreload=true",
-                f"traefik.http.middlewares.{test_name}-security.headers.customFrameOptionsValue=ALLOWALL",
-                f"traefik.http.middlewares.{test_name}-security.headers.contentTypeNosniff=true",
-                f"traefik.http.middlewares.{test_name}-security.headers.browserXssFilter=true",
-                f"traefik.http.middlewares.{test_name}-security.headers.referrerPolicy=strict-origin-when-cross-origin",
-                f"traefik.http.routers.{test_name}.middlewares={test_name}-security",
-            ],
+            "labels": make_service_labels(test_name, test_fqdn, port),
             "networks": ["web"],
         }
-        print(f"Test deployment: {test_app} → {test_fqdn}")
-    elif test_app:
-        print(
-            f"Warning: test app '{test_app}' not found in deploy.yml, skipping test overlay"
-        )
+        test_apps.append(f"{app_name} → {test_fqdn}")
 
 compose = {
-    "version": "3.8",
     "services": services,
     "volumes": {"letsencrypt": {}},
     "networks": {
@@ -138,5 +161,5 @@ with open(output_path, "w") as f:
     yaml.dump(compose, f, default_flow_style=False, sort_keys=False)
 
 print(f"Generated docker-compose.yml with enabled apps: {enabled_apps}")
-if test_app and test_app in config.get("apps", {}):
-    print(f"  + test service: {test_app}-test")
+for t in test_apps:
+    print(f"  + test: {t}")
