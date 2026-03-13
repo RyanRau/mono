@@ -16,3 +16,5 @@ export * from "./components/form/NumberInput";
 export * from "./components/form/TextAreaInput";
 export * from "./components/form/CheckboxList";
 export * from "./components/form/Dropdown";
+export * from "./components/form/FileUpload";
+export * from "./components/media/PhotoDisplay";
