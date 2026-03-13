@@ -1,41 +1,40 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import nhost from "./nhost";
 
-const client = new S3Client({
-  endpoint: import.meta.env.VITE_DO_SPACES_ENDPOINT,
-  region: "us-east-1",
-  credentials: {
-    accessKeyId: import.meta.env.VITE_DO_SPACES_KEY,
-    secretAccessKey: import.meta.env.VITE_DO_SPACES_SECRET,
-  },
-  forcePathStyle: false,
-});
+const apiUrl = import.meta.env.VITE_GALLERY_API_URL;
 
-const bucket = import.meta.env.VITE_DO_SPACES_BUCKET;
-const cdnUrl = import.meta.env.VITE_DO_SPACES_CDN_URL;
+function getAuthHeader(): Record<string, string> {
+  const session = nhost.auth.getSession();
+  if (!session?.accessToken) return {};
+  return { Authorization: `Bearer ${session.accessToken}` };
+}
 
 export async function uploadImage(file: File): Promise<string> {
   const ext = file.name.split(".").pop() ?? "jpg";
-  const key = `gallery/${crypto.randomUUID()}.${ext}`;
 
-  await client.send(
-    new PutObjectCommand({
-      Bucket: bucket,
-      Key: key,
-      Body: file,
-      ContentType: file.type,
-      ACL: "public-read",
-    })
-  );
+  const res = await fetch(`${apiUrl}/presign`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getAuthHeader() },
+    body: JSON.stringify({ contentType: file.type, extension: ext }),
+  });
 
-  return `${cdnUrl}/${key}`;
+  if (!res.ok) throw new Error("Failed to get upload URL");
+  const { uploadUrl, cdnUrl } = await res.json();
+
+  const upload = await fetch(uploadUrl, {
+    method: "PUT",
+    headers: { "Content-Type": file.type },
+    body: file,
+  });
+
+  if (!upload.ok) throw new Error("Failed to upload image");
+
+  return cdnUrl;
 }
 
-export async function deleteImage(url: string): Promise<void> {
-  const key = url.replace(`${cdnUrl}/`, "");
-  await client.send(
-    new DeleteObjectCommand({
-      Bucket: bucket,
-      Key: key,
-    })
-  );
+export async function deleteImage(cdnUrl: string): Promise<void> {
+  await fetch(`${apiUrl}/delete`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getAuthHeader() },
+    body: JSON.stringify({ cdnUrl }),
+  });
 }
