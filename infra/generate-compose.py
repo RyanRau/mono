@@ -139,13 +139,21 @@ if os.path.exists(TEST_CONFIG_PATH):
         test_fqdn = f"test-{subdomain}.{domain}" if subdomain else f"test.{domain}"
         test_name = f"{app_name}-test"
 
-        services[test_name] = {
+        test_service = {
             "image": f"{registry}/{app_name}:test",
             "container_name": test_name,
             "restart": "unless-stopped",
             "labels": make_service_labels(test_name, test_fqdn, port),
             "networks": ["web"],
         }
+
+        # Inherit runtime environment variables from app config
+        if app_name in config.get("apps", {}):
+            env_vars = config["apps"][app_name].get("environment", {})
+            if env_vars:
+                test_service["environment"] = env_vars
+
+        services[test_name] = test_service
         test_apps.append(f"{app_name} → {test_fqdn}")
 
 compose = {
