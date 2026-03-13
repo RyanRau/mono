@@ -99,8 +99,8 @@ jobs:
             # Generate docker-compose.yml (picks up both deploy.yml and test-deploy.active.yml)
             python3 infra/generate-compose.py
 
-            # Pull latest images and deploy
-            docker compose pull
+            # Pull only the test image (prod images may not exist for new apps)
+            docker compose pull ${{ steps.config.outputs.app }}-test
             docker compose up -d --remove-orphans
 
             # Clean up old images
