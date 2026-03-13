@@ -86,7 +86,8 @@ jobs:
             set -e
             cd /opt/apps
 
-            # Pull latest main for prod config
+            # Restore prod deploy.yml from main (may have been overwritten by prior test deploy)
+            git checkout -- deploy.yml
             git pull origin main
 
             # Write active test config with subdomain/port from the branch
