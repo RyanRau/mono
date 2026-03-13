@@ -4,11 +4,6 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      deploy_all:
-        description: "Deploy all apps regardless of changed files"
-        type: boolean
-        default: false
 
 env:
   REGISTRY: ghcr.io
@@ -24,8 +19,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -39,54 +32,26 @@ jobs:
           sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
           sudo chmod +x /usr/local/bin/yq
 
-      - name: Determine which apps to build
-        id: apps
+      - name: Build and push all enabled apps
         run: |
-          # Get list of enabled apps
           ENABLED=$(yq '.apps | to_entries[] | select(.value.enabled == true) | .key' deploy.yml)
-
-          # Get list of changed files
-          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
-          CONFIG_CHANGED=$(echo "$CHANGED_FILES" | grep -c "deploy.yml" || true)
-          INFRA_CHANGED=$(echo "$CHANGED_FILES" | grep -c "^infra/" || true)
-
-          # Build an app if: it's enabled AND (its files changed OR deploy.yml changed OR infra changed)
-          BUILD_LIST=""
           for app in $ENABLED; do
-            APP_PATH=$(yq ".apps.${app}.path // \"apps/${app}\"" deploy.yml)
-            APP_CHANGED=$(echo "$CHANGED_FILES" | grep -c "^${APP_PATH}/" || true)
-            # For apps outside packages/, also trigger on any package change (local deps)
-            PKG_TRIGGER=0
-            if [[ "$APP_PATH" != packages/* ]]; then
-              PKG_TRIGGER=$(echo "$CHANGED_FILES" | grep -c "^packages/" || true)
-            fi
-            if [ "$APP_CHANGED" -gt 0 ] || [ "$PKG_TRIGGER" -gt 0 ] || [ "$CONFIG_CHANGED" -gt 0 ] || [ "$INFRA_CHANGED" -gt 0 ]; then
-              BUILD_LIST="${BUILD_LIST} ${app}"
-            fi
-          done
-
-          # If this is the first commit, force deploy checkbox, or no changed files detected, build all enabled
-          if [ "${{ github.event.inputs.deploy_all }}" = "true" ] || { [ -z "$BUILD_LIST" ] && [ -z "$CHANGED_FILES" ]; }; then
-            BUILD_LIST=$(echo "$ENABLED" | tr '\n' ' ')
-          fi
-
-          BUILD_LIST=$(echo "$BUILD_LIST" | xargs)
-          echo "build_list=${BUILD_LIST}" >> $GITHUB_OUTPUT
-          echo "Apps to build: ${BUILD_LIST:-none}"
-
-      - name: Build and push images
-        run: |
-          for app in ${{ steps.apps.outputs.build_list }}; do
             echo "=== Building $app ==="
             IMAGE=$(echo "${{ env.REGISTRY }}/${{ env.REPO }}/${app}:latest" | tr '[:upper:]' '[:lower:]')
             APP_PATH=$(yq ".apps.${app}.path // \"apps/${app}\"" deploy.yml)
+
+            # Resolve build args from deploy.yml build_args + secrets
             BUILD_ARGS=()
-            if [ "$app" = "wally" ]; then
-              BUILD_ARGS+=(--build-arg "VITE_NHOST_SUBDOMAIN=${{ secrets.VITE_NHOST_SUBDOMAIN }}" --build-arg "VITE_NHOST_REGION=${{ secrets.VITE_NHOST_REGION }}")
-            fi
-            if [ "$app" = "gallery" ]; then
-              BUILD_ARGS+=(--build-arg "VITE_NHOST_SUBDOMAIN=${{ secrets.VITE_NHOST_SUBDOMAIN }}" --build-arg "VITE_NHOST_REGION=${{ secrets.VITE_NHOST_REGION }}" --build-arg "VITE_GALLERY_API_URL=${{ secrets.VITE_GALLERY_API_URL }}")
-            fi
+            ARGS=$(yq ".apps.${app}.build_args // [] | .[]" deploy.yml 2>/dev/null || true)
+            for arg in $ARGS; do
+              # Map arg name to secret value
+              case "$arg" in
+                VITE_NHOST_SUBDOMAIN) BUILD_ARGS+=(--build-arg "VITE_NHOST_SUBDOMAIN=${{ secrets.VITE_NHOST_SUBDOMAIN }}") ;;
+                VITE_NHOST_REGION) BUILD_ARGS+=(--build-arg "VITE_NHOST_REGION=${{ secrets.VITE_NHOST_REGION }}") ;;
+                VITE_GALLERY_API_URL) BUILD_ARGS+=(--build-arg "VITE_GALLERY_API_URL=${{ secrets.VITE_GALLERY_API_URL }}") ;;
+              esac
+            done
+
             docker build "${BUILD_ARGS[@]}" -t "$IMAGE" -f "./${APP_PATH}/Dockerfile" .
             docker push "$IMAGE"
             echo "=== Pushed $IMAGE ==="

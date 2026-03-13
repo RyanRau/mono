@@ -1,1 +1,3 @@
-app: gallery
+apps:
+  - gallery
+  - gallery_api
