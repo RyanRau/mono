@@ -19,3 +19,7 @@ apps:
     subdomain: "wally"
     enabled: true
     port: 80
+  gallery:
+    subdomain: "gallery"
+    enabled: true
+    port: 80
