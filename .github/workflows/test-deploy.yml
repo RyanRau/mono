@@ -126,11 +126,13 @@ jobs:
             # Restore main's files after generation
             git checkout -- deploy.yml infra/generate-compose.py
 
-            # Pull test images and bring everything up
+            # Pull and start only the test services (prod services already running)
+            TEST_SERVICES=""
             for app in ${{ steps.config.outputs.app_list }}; do
               docker compose pull "${app}-test" || true
+              TEST_SERVICES="${TEST_SERVICES} ${app}-test"
             done
-            docker compose up -d --remove-orphans
+            docker compose up -d --no-deps $TEST_SERVICES
 
             # Clean up old images
             docker image prune -f
