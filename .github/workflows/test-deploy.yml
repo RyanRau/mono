@@ -56,7 +56,11 @@ jobs:
           # Output space-separated app names for build step
           APP_LIST=$(echo "$APPS" | tr '\n' ' ' | xargs)
           echo "app_list=${APP_LIST}" >> $GITHUB_OUTPUT
-          echo "test_apps=${TEST_APPS}" >> $GITHUB_OUTPUT
+          # Use multiline output format for JSON
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "test_apps<<$EOF" >> $GITHUB_OUTPUT
+          echo "$TEST_APPS" >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
