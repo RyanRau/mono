@@ -132,15 +132,11 @@ if os.path.exists(TEST_CONFIG_PATH):
             port = config["apps"][app_name].get("port", 80)
 
         if subdomain is None:
-            print(
-                f"Warning: test app '{app_name}' has no subdomain config, skipping"
-            )
+            print(f"Warning: test app '{app_name}' has no subdomain config, skipping")
             continue
 
         port = port or 80
-        test_fqdn = (
-            f"test-{subdomain}.{domain}" if subdomain else f"test.{domain}"
-        )
+        test_fqdn = f"test-{subdomain}.{domain}" if subdomain else f"test.{domain}"
         test_name = f"{app_name}-test"
 
         services[test_name] = {
