@@ -112,11 +112,12 @@ jobs:
           DO_SPACES_SECRET: ${{ secrets.DO_SPACES_SECRET }}
           DO_SPACES_BUCKET: ${{ secrets.DO_SPACES_BUCKET }}
           DO_SPACES_CDN_URL: ${{ secrets.DO_SPACES_CDN_URL }}
+          NHOST_ADMIN_SECRET: ${{ secrets.NHOST_ADMIN_SECRET }}
         with:
           host: ${{ secrets.DROPLET_IP }}
           username: deploy
           key: ${{ secrets.DROPLET_SSH_KEY }}
-          envs: NHOST_SUBDOMAIN,NHOST_REGION,DO_SPACES_ENDPOINT,DO_SPACES_KEY,DO_SPACES_SECRET,DO_SPACES_BUCKET,DO_SPACES_CDN_URL
+          envs: NHOST_SUBDOMAIN,NHOST_REGION,DO_SPACES_ENDPOINT,DO_SPACES_KEY,DO_SPACES_SECRET,DO_SPACES_BUCKET,DO_SPACES_CDN_URL,NHOST_ADMIN_SECRET
           script: |
             set -e
             cd /opt/apps

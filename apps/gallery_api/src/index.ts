@@ -1,9 +1,7 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { presignRoute } from "./presign.js";
-import { deleteRoute } from "./delete.js";
-import { authMiddleware } from "./auth.js";
+import photos from "./photos.js";
 
 const app = new Hono();
 
@@ -11,16 +9,12 @@ app.use(
   "*",
   cors({
     origin: "*",
-    allowMethods: ["GET", "POST", "DELETE", "OPTIONS"],
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: ["Authorization", "Content-Type"],
   })
 );
 
-app.use("/presign", authMiddleware);
-app.use("/delete", authMiddleware);
-
-app.post("/presign", presignRoute);
-app.post("/delete", deleteRoute);
+app.route("/photos", photos);
 
 app.get("/health", (c) => c.json({ ok: true }));
 

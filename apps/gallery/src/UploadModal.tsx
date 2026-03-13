@@ -1,8 +1,7 @@
 import { useState, useRef } from "react";
 import { css } from "goober";
 import { Flexbox, Header, Text, TextInput, Button, Spinner, useTheme } from "bluestar";
-import { insertPhoto } from "./graphql";
-import { uploadImage } from "./spaces";
+import { createPhoto } from "./api";
 
 type Props = {
   onClose: () => void;
@@ -40,12 +39,7 @@ export default function UploadModal({ onClose, onSave }: Props) {
     setSaving(true);
     setError(null);
     try {
-      const cdnUrl = await uploadImage(file);
-      await insertPhoto({
-        cdn_url: cdnUrl,
-        alt_text: altText.trim(),
-        is_public: isPublic,
-      });
+      await createPhoto(file, altText.trim(), isPublic);
       await onSave();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed.");

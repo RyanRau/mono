@@ -1,6 +1,6 @@
 import { css } from "goober";
 import { Flexbox, Text, Button, useTheme } from "bluestar";
-import type { Photo } from "./graphql";
+import type { Photo } from "./api";
 
 type Props = {
   photo: Photo;

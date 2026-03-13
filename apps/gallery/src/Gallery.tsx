@@ -2,9 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useSignOut, useUserEmail } from "@nhost/react";
 import { css } from "goober";
 import { Flexbox, Header, Text, Button, Spinner, useTheme } from "bluestar";
-import { fetchPublicPhotos, fetchAllPhotos, deletePhoto } from "./graphql";
-import { deleteImage } from "./spaces";
-import type { Photo } from "./graphql";
+import { fetchPhotos, deletePhoto } from "./api";
+import type { Photo } from "./api";
 import PhotoCard from "./PhotoCard";
 import UploadModal from "./UploadModal";
 import EditModal from "./EditModal";
@@ -23,7 +22,7 @@ export default function Gallery({ isAuthenticated }: { isAuthenticated: boolean 
   const loadPhotos = useCallback(async () => {
     setLoading(true);
     try {
-      const data = isAuthenticated ? await fetchAllPhotos() : await fetchPublicPhotos();
+      const data = await fetchPhotos();
       setPhotos(data);
     } finally {
       setLoading(false);
@@ -36,11 +35,6 @@ export default function Gallery({ isAuthenticated }: { isAuthenticated: boolean 
 
   const handleDelete = async (photo: Photo) => {
     await deletePhoto(photo.id);
-    try {
-      await deleteImage(photo.cdn_url);
-    } catch {
-      // CDN cleanup is best-effort
-    }
     await loadPhotos();
   };
 

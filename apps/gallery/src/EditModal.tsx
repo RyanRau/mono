@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { css } from "goober";
 import { Flexbox, Header, Text, TextInput, Button, useTheme } from "bluestar";
-import { updatePhoto } from "./graphql";
-import type { Photo } from "./graphql";
+import { updatePhoto } from "./api";
+import type { Photo } from "./api";
 
 type Props = {
   photo: Photo;
@@ -25,7 +25,7 @@ export default function EditModal({ photo, onClose, onSave }: Props) {
     setSaving(true);
     setError(null);
     try {
-      await updatePhoto({ id: photo.id, alt_text: altText.trim(), is_public: isPublic });
+      await updatePhoto(photo.id, { alt_text: altText.trim(), is_public: isPublic });
       await onSave();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update photo.");
