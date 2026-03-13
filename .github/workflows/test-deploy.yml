@@ -76,6 +76,16 @@ jobs:
           docker push "$IMAGE"
           echo "=== Pushed $IMAGE ==="
 
+      - name: Copy branch infra scripts to droplet
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DROPLET_IP }}
+          username: deploy
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          source: "infra/generate-compose.py"
+          target: "/opt/apps"
+          overwrite: true
+
       - name: Deploy to droplet
         uses: appleboy/ssh-action@v1
         with:
@@ -96,8 +106,11 @@ jobs:
             # Login to GHCR
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            # Generate docker-compose.yml (picks up both deploy.yml and test-deploy.active.yml)
+            # Generate docker-compose.yml using the branch's generate-compose.py
             python3 infra/generate-compose.py
+
+            # Restore generate-compose.py to main's version
+            git checkout -- infra/generate-compose.py
 
             # Pull only the test image (prod images may not exist for new apps)
             docker compose pull ${{ steps.config.outputs.app }}-test
