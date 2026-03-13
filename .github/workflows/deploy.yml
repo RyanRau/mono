@@ -60,8 +60,7 @@ jobs:
       - name: Deploy to droplet
         uses: appleboy/ssh-action@v1
         env:
-          NHOST_SUBDOMAIN: ${{ secrets.NHOST_SUBDOMAIN }}
-          NHOST_REGION: ${{ secrets.NHOST_REGION }}
+          NHOST_JWT_SECRET: ${{ secrets.NHOST_JWT_SECRET }}
           DO_SPACES_ENDPOINT: ${{ secrets.DO_SPACES_ENDPOINT }}
           DO_SPACES_KEY: ${{ secrets.DO_SPACES_KEY }}
           DO_SPACES_SECRET: ${{ secrets.DO_SPACES_SECRET }}
@@ -71,7 +70,7 @@ jobs:
           host: ${{ secrets.DROPLET_IP }}
           username: deploy
           key: ${{ secrets.DROPLET_SSH_KEY }}
-          envs: NHOST_SUBDOMAIN,NHOST_REGION,DO_SPACES_ENDPOINT,DO_SPACES_KEY,DO_SPACES_SECRET,DO_SPACES_BUCKET,DO_SPACES_CDN_URL
+          envs: NHOST_JWT_SECRET,DO_SPACES_ENDPOINT,DO_SPACES_KEY,DO_SPACES_SECRET,DO_SPACES_BUCKET,DO_SPACES_CDN_URL
           script: |
             set -e
             cd /opt/apps
