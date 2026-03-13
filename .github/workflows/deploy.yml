@@ -84,6 +84,9 @@ jobs:
             if [ "$app" = "wally" ]; then
               BUILD_ARGS="--build-arg VITE_NHOST_SUBDOMAIN=${{ secrets.VITE_NHOST_SUBDOMAIN }} --build-arg VITE_NHOST_REGION=${{ secrets.VITE_NHOST_REGION }}"
             fi
+            if [ "$app" = "gallery" ]; then
+              BUILD_ARGS="--build-arg VITE_NHOST_SUBDOMAIN=${{ secrets.VITE_NHOST_SUBDOMAIN }} --build-arg VITE_NHOST_REGION=${{ secrets.VITE_NHOST_REGION }} --build-arg VITE_GALLERY_API_URL=${{ secrets.VITE_GALLERY_API_URL }}"
+            fi
             docker build $BUILD_ARGS -t "$IMAGE" -f "./${APP_PATH}/Dockerfile" .
             docker push "$IMAGE"
             echo "=== Pushed $IMAGE ==="
