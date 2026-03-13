@@ -90,39 +90,47 @@ if os.path.exists(TEST_CONFIG_PATH):
         test_config = yaml.safe_load(f)
 
     test_app = test_config.get("app")
-    if test_app and test_app in config.get("apps", {}):
-        app = config["apps"][test_app]
-        subdomain = app["subdomain"]
-        port = app.get("port", 3000)
-        test_fqdn = f"test-{subdomain}.{domain}" if subdomain else f"test.{domain}"
-        test_name = f"{test_app}-test"
+    if test_app:
+        # Get app config from test-deploy.active.yml (preferred) or fall back to deploy.yml
+        subdomain = test_config.get("subdomain")
+        port = test_config.get("port")
 
-        services[test_name] = {
-            "image": f"{registry}/{test_app}:test",
-            "container_name": test_name,
-            "restart": "unless-stopped",
-            "labels": [
-                "traefik.enable=true",
-                f"traefik.http.routers.{test_name}.rule=Host(`{test_fqdn}`)",
-                f"traefik.http.routers.{test_name}.entrypoints=websecure",
-                f"traefik.http.routers.{test_name}.tls.certresolver=le",
-                f"traefik.http.services.{test_name}.loadbalancer.server.port={port}",
-                f"traefik.http.middlewares.{test_name}-security.headers.stsSeconds=31536000",
-                f"traefik.http.middlewares.{test_name}-security.headers.stsIncludeSubdomains=true",
-                f"traefik.http.middlewares.{test_name}-security.headers.stsPreload=true",
-                f"traefik.http.middlewares.{test_name}-security.headers.customFrameOptionsValue=ALLOWALL",
-                f"traefik.http.middlewares.{test_name}-security.headers.contentTypeNosniff=true",
-                f"traefik.http.middlewares.{test_name}-security.headers.browserXssFilter=true",
-                f"traefik.http.middlewares.{test_name}-security.headers.referrerPolicy=strict-origin-when-cross-origin",
-                f"traefik.http.routers.{test_name}.middlewares={test_name}-security",
-            ],
-            "networks": ["web"],
-        }
-        print(f"Test deployment: {test_app} → {test_fqdn}")
-    elif test_app:
-        print(
-            f"Warning: test app '{test_app}' not found in deploy.yml, skipping test overlay"
-        )
+        if subdomain is None and test_app in config.get("apps", {}):
+            subdomain = config["apps"][test_app]["subdomain"]
+        if port is None and test_app in config.get("apps", {}):
+            port = config["apps"][test_app].get("port", 3000)
+
+        if subdomain is not None:
+            port = port or 80
+            test_fqdn = f"test-{subdomain}.{domain}" if subdomain else f"test.{domain}"
+            test_name = f"{test_app}-test"
+
+            services[test_name] = {
+                "image": f"{registry}/{test_app}:test",
+                "container_name": test_name,
+                "restart": "unless-stopped",
+                "labels": [
+                    "traefik.enable=true",
+                    f"traefik.http.routers.{test_name}.rule=Host(`{test_fqdn}`)",
+                    f"traefik.http.routers.{test_name}.entrypoints=websecure",
+                    f"traefik.http.routers.{test_name}.tls.certresolver=le",
+                    f"traefik.http.services.{test_name}.loadbalancer.server.port={port}",
+                    f"traefik.http.middlewares.{test_name}-security.headers.stsSeconds=31536000",
+                    f"traefik.http.middlewares.{test_name}-security.headers.stsIncludeSubdomains=true",
+                    f"traefik.http.middlewares.{test_name}-security.headers.stsPreload=true",
+                    f"traefik.http.middlewares.{test_name}-security.headers.customFrameOptionsValue=ALLOWALL",
+                    f"traefik.http.middlewares.{test_name}-security.headers.contentTypeNosniff=true",
+                    f"traefik.http.middlewares.{test_name}-security.headers.browserXssFilter=true",
+                    f"traefik.http.middlewares.{test_name}-security.headers.referrerPolicy=strict-origin-when-cross-origin",
+                    f"traefik.http.routers.{test_name}.middlewares={test_name}-security",
+                ],
+                "networks": ["web"],
+            }
+            print(f"Test deployment: {test_app} → {test_fqdn}")
+        else:
+            print(
+                f"Warning: test app '{test_app}' not found in deploy.yml and no subdomain in test config, skipping test overlay"
+            )
 
 compose = {
     "version": "3.8",
@@ -138,5 +146,5 @@ with open(output_path, "w") as f:
     yaml.dump(compose, f, default_flow_style=False, sort_keys=False)
 
 print(f"Generated docker-compose.yml with enabled apps: {enabled_apps}")
-if test_app and test_app in config.get("apps", {}):
+if test_app and f"{test_app}-test" in services:
     print(f"  + test service: {test_app}-test")

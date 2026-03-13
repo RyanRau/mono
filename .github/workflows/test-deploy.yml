@@ -44,8 +44,14 @@ jobs:
             exit 1
           fi
 
+          # Read subdomain and port from deploy.yml for the test config
+          SUBDOMAIN=$(yq ".apps.${APP}.subdomain" deploy.yml)
+          PORT=$(yq ".apps.${APP}.port // 80" deploy.yml)
+
           echo "app=${APP}" >> $GITHUB_OUTPUT
-          echo "Test deploying app: ${APP}"
+          echo "subdomain=${SUBDOMAIN}" >> $GITHUB_OUTPUT
+          echo "port=${PORT}" >> $GITHUB_OUTPUT
+          echo "Test deploying app: ${APP} (subdomain: ${SUBDOMAIN}, port: ${PORT})"
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -70,16 +76,6 @@ jobs:
           docker push "$IMAGE"
           echo "=== Pushed $IMAGE ==="
 
-      - name: Copy branch deploy.yml to droplet
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.DROPLET_IP }}
-          username: deploy
-          key: ${{ secrets.DROPLET_SSH_KEY }}
-          source: "deploy.yml"
-          target: "/opt/apps"
-          overwrite: true
-
       - name: Deploy to droplet
         uses: appleboy/ssh-action@v1
         with:
@@ -90,8 +86,11 @@ jobs:
             set -e
             cd /opt/apps
 
-            # Write active test config to the droplet (gitignored runtime file)
-            echo "app: ${{ steps.config.outputs.app }}" > test-deploy.active.yml
+            # Pull latest main for prod config
+            git pull origin main
+
+            # Write active test config with subdomain/port from the branch
+            printf 'app: ${{ steps.config.outputs.app }}\nsubdomain: "${{ steps.config.outputs.subdomain }}"\nport: ${{ steps.config.outputs.port }}\n' > test-deploy.active.yml
 
             # Login to GHCR
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
