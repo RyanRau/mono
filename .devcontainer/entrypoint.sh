@@ -9,13 +9,11 @@ REPO_URL="${REPO_URL:-git@github.com:RyanRau/mono.git}"
 REPO_REF="${REPO_REF:-main}"
 REPO_DIR="/workspace/mono"
 
-# Runtime, not build time: if ~/.ssh is bind-mounted in (the documented way to
-# give this container your GitHub identity), it replaces /root/.ssh wholesale
-# and would otherwise shadow anything baked into the image at build time.
-mkdir -p /root/.ssh
-chmod 700 /root/.ssh
-ssh-keyscan -t rsa,ecdsa,ed25519 github.com >>/root/.ssh/known_hosts 2>/dev/null
-sort -u -o /root/.ssh/known_hosts /root/.ssh/known_hosts 2>/dev/null || true
+# ~/.ssh is bind-mounted in read-only (the documented way to give this
+# container your GitHub identity) so we never write into it directly — a
+# known_hosts file lives in /tmp instead, and accept-new trusts github.com's
+# key on first contact without needing to pre-populate anything.
+export GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/tmp/known_hosts -o StrictHostKeyChecking=accept-new"
 
 if [ ! -d "$REPO_DIR/.git" ]; then
   echo "Cloning $REPO_URL@$REPO_REF into $REPO_DIR..."
