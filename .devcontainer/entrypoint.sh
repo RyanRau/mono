@@ -5,14 +5,24 @@
 # for VS Code to attach to.
 set -euo pipefail
 
-REPO_URL="${REPO_URL:-git@github.com:RyanRau/mono.git}"
+# mono is public, so a plain HTTPS clone needs no credentials at all -- no
+# SSH key, no agent forwarding, no mounts. Override REPO_URL to an
+# ssh://... or git@... form (with ~/.ssh mounted, see infra/devbox/README.md)
+# if you ever point this at a private fork, or set GITHUB_TOKEN below to let
+# this container push back to an HTTPS remote.
+REPO_URL="${REPO_URL:-https://github.com/RyanRau/mono.git}"
 REPO_REF="${REPO_REF:-main}"
 REPO_DIR="/workspace/mono"
 
-# ~/.ssh is bind-mounted in read-only (the documented way to give this
-# container your GitHub identity) so we never write into it directly — a
-# known_hosts file lives in /tmp instead, and accept-new trusts github.com's
-# key on first contact without needing to pre-populate anything.
+CLONE_URL="$REPO_URL"
+if [ -n "${GITHUB_TOKEN:-}" ] && [[ "$REPO_URL" == https://* ]]; then
+  CLONE_URL="https://${GITHUB_TOKEN}@${REPO_URL#https://}"
+fi
+
+# Only matters for an ssh://... or git@... REPO_URL (harmless no-op for the
+# default HTTPS one). ~/.ssh is bind-mounted read-only, so we never write
+# into it directly -- known_hosts lives in /tmp instead, and accept-new
+# trusts github.com's key on first contact without pre-populating anything.
 SSH_CONFIG_ARGS=""
 if [ -f /root/.ssh/config ]; then
   # macOS's ssh config commonly has `UseKeychain` (added by ssh-add
@@ -28,7 +38,7 @@ export GIT_SSH_COMMAND="ssh $SSH_CONFIG_ARGS -o UserKnownHostsFile=/tmp/known_ho
 
 if [ ! -d "$REPO_DIR/.git" ]; then
   echo "Cloning $REPO_URL@$REPO_REF into $REPO_DIR..."
-  git clone --branch "$REPO_REF" "$REPO_URL" "$REPO_DIR"
+  git clone --branch "$REPO_REF" "$CLONE_URL" "$REPO_DIR"
 else
   echo "$REPO_DIR already has a checkout — leaving it as-is (this volume persists across restarts)."
 fi

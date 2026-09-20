@@ -126,10 +126,8 @@ restart:
 docker volume create mono-workspace
 
 docker run -d --name mono-dev \
-  -e REPO_REF=main \
   -v mono-workspace:/workspace \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  -v ~/.ssh:/root/.ssh:ro \
   ghcr.io/ryanrau/mono/devcontainer:latest
 ```
 
@@ -140,16 +138,20 @@ written to your filesystem directly — the clone lives inside the
 
 Notes:
 
-- `-v ~/.ssh:/root/.ssh:ro` gives the container your GitHub identity to clone
-  a private repo (and to `git push` from inside it later) — the entrypoint
-  adds `github.com`'s host key at every startup so it doesn't hang on an
-  unanswerable host-key prompt, since mounting `~/.ssh` replaces the whole
-  directory, including anything baked into the image at build time.
+- `mono` is public, so the default clone is plain HTTPS — no SSH key, no
+  agent forwarding, no `~/.ssh` mount needed for read-only use.
 - `-v /var/run/docker.sock:/var/run/docker.sock` is what makes `devbox up`
   work from inside this container at all (docker-outside-of-docker, done by
   hand here rather than via a devcontainer feature).
 - `-e REPO_REF=<branch>` clones a different branch — e.g. one that hasn't
   merged to `main` yet, like this feature.
+- To `git push` from inside the container later, either set
+  `-e GITHUB_TOKEN=<a PAT with repo access>` (the entrypoint embeds it in the
+  HTTPS remote), or point `REPO_URL` at the SSH form
+  (`git@github.com:RyanRau/mono.git`) and forward your host's ssh-agent —
+  on Docker Desktop for Mac: `-e SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock
+-v /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock`
+  (needs `ssh-add -l` to show a loaded key on the host first).
 - The image is published by `.github/workflows/devcontainer-image.yml`
   whenever `.devcontainer/**` changes on `main`, or on demand via **Actions →
   Build Devcontainer Image → Run workflow**. It's dev tooling, not a deployed
