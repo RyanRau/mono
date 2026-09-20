@@ -13,7 +13,18 @@ REPO_DIR="/workspace/mono"
 # container your GitHub identity) so we never write into it directly — a
 # known_hosts file lives in /tmp instead, and accept-new trusts github.com's
 # key on first contact without needing to pre-populate anything.
-export GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/tmp/known_hosts -o StrictHostKeyChecking=accept-new"
+SSH_CONFIG_ARGS=""
+if [ -f /root/.ssh/config ]; then
+  # macOS's ssh config commonly has `UseKeychain` (added by ssh-add
+  # --apple-use-keychain) -- an Apple-only directive that mainline OpenSSH,
+  # what this Linux image ships, refuses to parse at all: it aborts before
+  # even attempting a connection. Strip it from a copy rather than editing
+  # the mounted (read-only) file in place; everything else -- IdentityFile,
+  # Host aliases -- still applies from it.
+  grep -iv '^[[:space:]]*UseKeychain\b' /root/.ssh/config >/tmp/ssh_config || true
+  SSH_CONFIG_ARGS="-F /tmp/ssh_config"
+fi
+export GIT_SSH_COMMAND="ssh $SSH_CONFIG_ARGS -o UserKnownHostsFile=/tmp/known_hosts -o StrictHostKeyChecking=accept-new"
 
 if [ ! -d "$REPO_DIR/.git" ]; then
   echo "Cloning $REPO_URL@$REPO_REF into $REPO_DIR..."
