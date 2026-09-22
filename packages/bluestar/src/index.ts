@@ -32,6 +32,7 @@ export * from "./components/display/ChatBubble";
 export * from "./components/display/StatusDot";
 export * from "./components/display/Markdown";
 export * from "./components/display/Disclosure";
+export * from "./components/display/MediaTile";
 
 // Overlay
 export * from "./components/overlay/Modal";

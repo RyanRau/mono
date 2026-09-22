@@ -4,7 +4,8 @@
 server:
   host: "0.0.0.0" # needs to be reachable on the LAN (the droplet's WireGuard route), not just localhost
   port: 8001 # llm-gateway already has 8000 on the same Mac
-  browser_cache_seconds: 86400 # Cache-Control max-age on every file response
+  browser_cache_seconds: 86400 # Cache-Control max-age for admin-only files (private)
+  public_cache_seconds: 3600 # ...and for shared files (public -- shorter, so revoking bites sooner)
 
 library:
   # The NAS directory, mounted on this machine (SMB/NFS). Read-only is
@@ -19,6 +20,9 @@ cache:
   max_file_mb: 200 # bigger originals stream straight from the NAS, uncached
   revalidate_seconds: 300 # how long a cache hit skips even stat()ing the NAS
 
+uploads:
+  max_mb: 4096 # per file, through the admin page
+
 thumbnails:
   # ?w=<width> renders a WebP at that width (never upscaled), cached like any
   # other file. Only these widths are accepted.
@@ -28,9 +32,11 @@ thumbnails:
 
 auth:
   pocketbase_url: "https://api.ryanzrau.dev"
-  session_cache_seconds: 60 # how long a viewer's "allowed" answer is cached
-  # Used by indexer.py only -- gateway.py holds no credentials, it forwards
-  # each viewer's own session token. Create in the PocketBase admin UI with
-  # is_service: true (e.g. cdn-indexer@service.internal).
+  session_cache_seconds: 60 # how long an admin session's "allowed" answer is cached
+  public_refresh_seconds: 30 # how often shared paths (media_public) are re-pulled
+  # Service account for indexer.py and for gateway.py's own index updates
+  # (after an upload/move/delete) and public-rules pulls. Viewer access is
+  # never checked with this -- that uses each viewer's own session. Create
+  # in the PocketBase admin UI with is_service: true.
   service_email: "cdn-indexer@service.internal"
   service_password: "REPLACE-ME"

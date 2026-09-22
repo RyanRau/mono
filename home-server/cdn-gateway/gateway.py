@@ -1,5 +1,6 @@
-"""CDN Gateway: authenticated, cached, read-only file server in front of a NAS
-directory, with on-the-fly image thumbnails.
+"""CDN Gateway: cached file server in front of a NAS directory, with
+on-the-fly image thumbnails. Admins (a PocketBase session) can read and
+manage everything; anyone can read the files media_public shares.
 
 Run: python3 gateway.py --config config.yaml
 """
@@ -21,40 +22,32 @@ from urllib.parse import unquote
 import httpx
 import uvicorn
 import yaml
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Body, Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from PIL import Image, ImageOps
 
-from library import guess_mime, is_ignored
-
-try:
-    # HEIC/HEIF (iPhone photos) -- optional, but without it every HEIC
-    # thumbnail request 415s.
-    from pillow_heif import register_heif_opener
-
-    register_heif_opener()
-except ImportError:
-    pass
+from library import ServiceClient, describe, guess_mime, is_ignored, kind_for
 
 CONFIG: dict = {}
 
 # pb_auth is the cookie every *.ryanzrau.dev app's CookieAuthStore writes
 # (see apps/tony/src/CookieAuthStore.ts) -- scoped to .ryanzrau.dev, so a
 # plain <img src="https://cdn.ryanzrau.dev/..."> on any of those apps sends
-# the signed-in user's session with no JavaScript involved.
+# the signed-in user's session with no JavaScript involved. Reads only:
+# the write routes under /api/ require an Authorization header, which a
+# cross-site form or <img> can't send, so they need no CSRF protection.
 AUTH_COOKIE = "pb_auth"
 
-# Every response gets this. Files come off the NAS as-is, so an .html or
-# .svg in the library would otherwise run script on cdn.ryanzrau.dev -- an
-# origin that can read the (deliberately non-HttpOnly) pb_auth cookie.
+# Every file response gets this. Files come off the NAS as-is, so an .html
+# or .svg in the library would otherwise run script on cdn.ryanzrau.dev --
+# an origin that can read the (deliberately non-HttpOnly) pb_auth cookie.
 # `sandbox` gives such a document an opaque origin with scripts disabled;
 # images and video still render normally.
 CSP = "default-src 'none'; img-src 'self' data:; media-src 'self'; style-src 'unsafe-inline'; sandbox"
 
-# Same one-real-caller reasoning as llm-gateway's CORS constant: only our
-# own apps (and local dev) ever fetch() from here. <img>/<video> tags don't
-# need CORS at all.
+# Only our own apps (and local dev) ever fetch() from here -- the admin
+# page on ryanzrau.dev for the /api/ routes. <img>/<video> need no CORS.
 CORS_ORIGIN_REGEX = (
     r"https://([a-z0-9-]+\.)*ryanzrau\.dev|http://(localhost|127\.0\.0\.1)(:\d+)?"
 )
@@ -63,6 +56,10 @@ THUMB_MIME = "image/webp"
 
 # A cache entry (sha256 hex) or an in-progress write of one.
 CACHE_FILE_RE = re.compile(r"[0-9a-f]{64}(\.\d+\.\d+\.tmp)?")
+
+# Where DELETE moves things, under the library root. A dot-directory, so
+# the gateway never serves it and the indexer never indexes it.
+TRASH_DIR = ".trash"
 
 
 def load_config(path: str) -> dict:
@@ -78,27 +75,63 @@ def load_config(path: str) -> dict:
     return cfg
 
 
-def resolve_library_path(rel: str) -> tuple[str, str]:
-    """Maps a URL path to (normalized relative path, absolute path), or 404s.
-    Anything that would land outside the library root -- `..`, an absolute
-    path, a symlink pointing elsewhere -- and any hidden/ignored segment is
-    treated as not found rather than forbidden, so probing reveals nothing."""
-    root = CONFIG["library"]["root"]
+def clean_rel(rel: str, status: int = 404, allow_root: bool = False) -> str:
+    """Normalizes a library-relative path from a URL or request body.
+    Rejects `..`, hidden/ignored segments and anything else that isn't a
+    plain name. Pure string work, so it runs before the auth check without
+    revealing whether anything exists. Reads fail with 404 (probing reveals
+    nothing); writes pass 400 so the admin page can show why."""
     parts = [p for p in rel.split("/") if p]
-    if not parts or any(p in (".", "..") or is_ignored(p) for p in parts):
-        raise HTTPException(404, "Not found")
-    abs_path = os.path.realpath(os.path.join(root, *parts))
+    for p in parts:
+        if (
+            p in (".", "..")
+            or is_ignored(p)
+            or "\\" in p
+            or "\0" in p
+            or len(p.encode()) > 255
+        ):
+            raise HTTPException(status, "Not found" if status == 404 else "Bad path")
+    if not parts and not allow_root:
+        raise HTTPException(status, "Not found" if status == 404 else "Bad path")
+    return "/".join(parts)
+
+
+def abs_for(rel: str, status: int = 404) -> str:
+    """The absolute path for a clean relative path. Also catches a symlink
+    inside the library that points outside it. Works for paths that don't
+    exist yet (upload, mkdir and move destinations)."""
+    root = CONFIG["library"]["root"]
+    abs_path = os.path.realpath(os.path.join(root, rel))
     if os.path.commonpath([root, abs_path]) != root:
-        raise HTTPException(404, "Not found")
-    return "/".join(parts), abs_path
+        raise HTTPException(status, "Not found" if status == 404 else "Bad path")
+    return abs_path
+
+
+def real_rel(rel: str) -> str:
+    """The library-relative path a clean relative path actually resolves
+    to. Differs from `rel` only through a symlink. A public path must be
+    public by both names, so a link inside a public folder can't publish
+    a private file; anything resolving outside the library comes back as
+    a path no rule covers."""
+    root = CONFIG["library"]["root"]
+    return os.path.relpath(os.path.realpath(os.path.join(root, rel)), root).replace(
+        os.sep, "/"
+    )
+
+
+def literal_for(rel: str, status: int = 400) -> str:
+    """Like abs_for, but the path itself rather than its symlink-resolved
+    target -- what move and delete act on, so they move a link, not the
+    file it points to. Still checked with abs_for first."""
+    abs_for(rel, status)
+    return os.path.join(CONFIG["library"]["root"], rel)
 
 
 class SessionAuth:
-    """Resolves a viewer's PocketBase session token to "may read the
-    library", by forwarding it to PocketBase's GET /api/custom/media/access
+    """Resolves a viewer's PocketBase session token to "is a library
+    admin", by forwarding it to PocketBase's GET /api/custom/media/access
     (apps/pocketbase/pb_hooks/media.pb.js) -- which authenticates it as that
     user's own session, the same trick as llm-gateway's resolve_session.
-    The gateway holds no credentials of its own.
 
     Results are cached per token (allows for session_cache_seconds, denials
     for a few seconds), and concurrent lookups of the same token share one
@@ -123,10 +156,17 @@ class SessionAuth:
         await self._client.aclose()
 
     @staticmethod
-    def token_from(request: Request) -> Optional[str]:
+    def bearer_from(request: Request) -> Optional[str]:
         header = request.headers.get("authorization", "")
         if header.lower().startswith("bearer "):
             return header[7:].strip() or None
+        return None
+
+    @staticmethod
+    def token_from(request: Request) -> Optional[str]:
+        token = SessionAuth.bearer_from(request)
+        if token:
+            return token
         cookie = request.cookies.get(AUTH_COOKIE)
         if not cookie:
             return None
@@ -173,6 +213,47 @@ class SessionAuth:
         return r.status_code == 200
 
 
+class PublicRules:
+    """The media_public rules (which files/folders anyone may read), pulled
+    from PocketBase every public_refresh_seconds -- the same deny-by-default
+    shape as llm-gateway's key cache: a path is public only if the last
+    successful pull said so. Starts empty, so nothing is public until the
+    first pull lands; a PocketBase outage keeps the last known-good rules,
+    and a revoked share stops working within one refresh."""
+
+    def __init__(self, service: ServiceClient, interval: int):
+        self.service = service
+        self.interval = interval
+        self.files: set[str] = set()
+        self.folders: list[str] = []
+        self._task: Optional[asyncio.Task] = None
+
+    def start(self):
+        self._task = asyncio.create_task(self._loop())
+
+    async def stop(self):
+        if self._task:
+            self._task.cancel()
+
+    def covers(self, rel: str) -> bool:
+        return rel in self.files or any(rel.startswith(f + "/") for f in self.folders)
+
+    async def refresh(self):
+        data = await asyncio.to_thread(
+            self.service.request, "GET", "/api/custom/media/public-rules"
+        )
+        self.files = {r["path"] for r in data["rules"] if not r["folder"]}
+        self.folders = [r["path"] for r in data["rules"] if r["folder"]]
+
+    async def _loop(self):
+        while True:
+            try:
+                await self.refresh()
+            except httpx.HTTPError as e:
+                print(f"[cdn] public rules refresh failed, keeping cached: {e}")
+            await asyncio.sleep(self.interval)
+
+
 class Cache:
     """Size-bounded LRU of files copied off the NAS (originals) or rendered
     from them (thumbnails), on local disk. The index is a SQLite file in the
@@ -182,7 +263,9 @@ class Cache:
     younger than revalidate_seconds is served without touching the NAS at
     all; an older one re-stats the source (a metadata call, not a read) and
     only re-fills if the file actually changed. If the NAS is unreachable,
-    a stale entry is still served rather than failing.
+    a stale entry is still served rather than failing. Changes made through
+    this gateway (move, delete, overwrite) drop the affected entries at
+    once, via drop_path.
     """
 
     def __init__(self, cfg: dict):
@@ -196,9 +279,15 @@ class Cache:
         )
         self.db.execute("PRAGMA journal_mode=WAL")
         self.db.execute("PRAGMA synchronous=NORMAL")
+        columns = [r[1] for r in self.db.execute("PRAGMA table_info(entries)")]
+        if columns and "rel" not in columns:
+            # Index from before entries recorded their path; _reconcile
+            # below clears out the now-unindexed files.
+            self.db.execute("DROP TABLE entries")
         self.db.execute(
             """CREATE TABLE IF NOT EXISTS entries (
                 key TEXT PRIMARY KEY,
+                rel TEXT NOT NULL,
                 src_size INTEGER NOT NULL,
                 src_mtime REAL NOT NULL,
                 bytes INTEGER NOT NULL,
@@ -210,6 +299,7 @@ class Cache:
         self.db.execute(
             "CREATE INDEX IF NOT EXISTS idx_entries_access ON entries (last_access)"
         )
+        self.db.execute("CREATE INDEX IF NOT EXISTS idx_entries_rel ON entries (rel)")
         self._reconcile()
         self.total_bytes = self.db.execute(
             "SELECT COALESCE(SUM(bytes), 0) FROM entries"
@@ -283,7 +373,14 @@ class Cache:
                 "UPDATE entries SET last_access = ? WHERE key = ?", (now, key)
             )
 
-    def put(self, key: str, tmp_path: str, src: os.stat_result, content_type: str):
+    def put(
+        self,
+        key: str,
+        rel: str,
+        tmp_path: str,
+        src: os.stat_result,
+        content_type: str,
+    ):
         """Moves an already-written temp file into place and indexes it."""
         size = os.path.getsize(tmp_path)
         dest = self.path_for(key)
@@ -293,8 +390,8 @@ class Cache:
         ).fetchone()
         now = time.time()
         self.db.execute(
-            "INSERT OR REPLACE INTO entries VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (key, src.st_size, src.st_mtime, size, content_type, now, now),
+            "INSERT OR REPLACE INTO entries VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (key, rel, src.st_size, src.st_mtime, size, content_type, now, now),
         )
         self.total_bytes += size - (old[0] if old else 0)
         self._evict()
@@ -311,6 +408,16 @@ class Cache:
             os.remove(self.path_for(key))
         except FileNotFoundError:
             pass
+
+    def drop_path(self, rel: str):
+        """Every variant of a file, or of everything under a folder."""
+        escaped = rel.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        rows = self.db.execute(
+            "SELECT key FROM entries WHERE rel = ? OR rel LIKE ? ESCAPE '\\'",
+            (rel, escaped + "/%"),
+        ).fetchall()
+        for (key,) in rows:
+            self.drop(key)
 
     def tmp_path_for(self, key: str) -> str:
         dest = self.path_for(key)
@@ -364,6 +471,8 @@ def render_thumbnail(src_path: str, dest_path: str, width: int, quality: int):
 
 cache: Optional[Cache] = None
 auth: Optional[SessionAuth] = None
+service: Optional[ServiceClient] = None
+public_rules: Optional[PublicRules] = None
 thumb_slots: Optional[asyncio.Semaphore] = None
 
 
@@ -377,7 +486,8 @@ async def stat_source(abs_path: str) -> os.stat_result:
 async def library_mounted() -> bool:
     """An unmounted share is usually just an empty (or absent) mount point,
     which makes every file in it look deleted. Anything that 404s is
-    double-checked against this before the cache forgets it."""
+    double-checked against this before the cache forgets it, and every
+    write refuses to run without it."""
     root = CONFIG["library"]["root"]
     timeout = CONFIG["library"].get("stat_timeout_seconds", 5)
     try:
@@ -388,7 +498,7 @@ async def library_mounted() -> bool:
 
 
 async def fill(
-    key: str, abs_path: str, src: os.stat_result, width: Optional[int]
+    key: str, rel: str, abs_path: str, src: os.stat_result, width: Optional[int]
 ) -> str:
     tmp = cache.tmp_path_for(key)
     try:
@@ -400,32 +510,72 @@ async def fill(
             quality = CONFIG["thumbnails"].get("quality", 80)
             async with thumb_slots:
                 await asyncio.to_thread(render_thumbnail, abs_path, tmp, width, quality)
-        cache.put(key, tmp, src, content_type)
+        cache.put(key, rel, tmp, src, content_type)
         return content_type
     finally:
         if os.path.exists(tmp):
             os.remove(tmp)
 
 
-def file_response(path: str, content_type: str, cache_status: str) -> FileResponse:
+def file_response(
+    path: str, content_type: str, cache_status: str, public: bool
+) -> FileResponse:
+    if public:
+        # Shared caches may keep it too; kept short so revoking a share
+        # takes effect in reasonable time even for someone who's seen it.
+        seconds = CONFIG["server"].get("public_cache_seconds", 3600)
+        cache_control = f"public, max-age={seconds}"
+    else:
+        seconds = CONFIG["server"].get("browser_cache_seconds", 86400)
+        cache_control = f"private, max-age={seconds}"
     return FileResponse(
         path,
         media_type=content_type,
         headers={
-            "Cache-Control": f"private, max-age={CONFIG['server'].get('browser_cache_seconds', 86400)}",
+            "Cache-Control": cache_control,
             "Content-Security-Policy": CSP,
             "X-Cache": cache_status,
         },
     )
 
 
+async def update_index(route: str, payload: dict) -> bool:
+    """Tells PocketBase about a change this gateway just made, so tags,
+    descriptions and sharing follow a moved file and the admin page sees an
+    upload without waiting for the next indexer run. A failure here never
+    fails the file operation itself (that already happened); the indexer
+    reconciles on its next run, though a move it has to discover on its own
+    looks like a delete plus a new file, losing that file's tags."""
+    try:
+        await asyncio.to_thread(
+            service.request, "POST", f"/api/custom/media/index/{route}", json=payload
+        )
+        return True
+    except httpx.HTTPError as e:
+        print(f"[cdn] index {route} failed for {payload}: {e}")
+        return False
+
+
+async def index_file(rel: str) -> bool:
+    abs_path = abs_for(rel)
+    st = await asyncio.to_thread(os.stat, abs_path)
+    row = await asyncio.to_thread(describe, CONFIG["library"]["root"], rel, st)
+    return await update_index("upsert", {"files": [row]})
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global cache, auth, thumb_slots
+    global cache, auth, service, public_rules, thumb_slots
     cache = Cache(CONFIG)
     auth = SessionAuth(CONFIG)
+    service = ServiceClient(CONFIG["auth"])
+    public_rules = PublicRules(
+        service, CONFIG["auth"].get("public_refresh_seconds", 30)
+    )
+    public_rules.start()
     thumb_slots = asyncio.Semaphore(CONFIG["thumbnails"].get("max_parallel", 2))
     yield
+    await public_rules.stop()
     await auth.stop()
     cache.db.close()
 
@@ -435,8 +585,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=CORS_ORIGIN_REGEX,
     allow_credentials=True,
-    allow_methods=["GET", "HEAD"],
-    allow_headers=["Authorization"],
+    allow_methods=["GET", "HEAD", "PUT", "POST", "DELETE"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 
@@ -451,9 +601,12 @@ async def health():
 
 @app.api_route("/files/{rel_path:path}", methods=["GET", "HEAD"])
 async def get_file(rel_path: str, request: Request, w: Optional[int] = None):
-    token = SessionAuth.token_from(request)
-    if not token or not await auth.allowed(token):
-        raise HTTPException(401, "Sign in to view this file")
+    rel = clean_rel(rel_path)
+    public = public_rules.covers(rel) and public_rules.covers(real_rel(rel))
+    if not public:
+        token = SessionAuth.token_from(request)
+        if not token or not await auth.allowed(token):
+            raise HTTPException(401, "Sign in to view this file")
 
     widths = CONFIG["thumbnails"]["widths"]
     if w is not None and w not in widths:
@@ -461,14 +614,17 @@ async def get_file(rel_path: str, request: Request, w: Optional[int] = None):
         # cache with near-duplicates.
         raise HTTPException(400, f"w must be one of {widths}")
 
-    rel, abs_path = resolve_library_path(rel_path)
+    abs_path = abs_for(rel)
     key = Cache.key_for(rel, "orig" if w is None else f"w{w}")
+
+    def respond(path: str, content_type: str, status: str) -> FileResponse:
+        return file_response(path, content_type, status, public)
 
     async with cache.locked(key):
         entry = cache.get(key)
         if entry and time.time() - entry["validated_at"] < cache.revalidate:
             cache.touch(key)
-            return file_response(cache.path_for(key), entry["content_type"], "HIT")
+            return respond(cache.path_for(key), entry["content_type"], "HIT")
 
         try:
             src = await stat_source(abs_path)
@@ -483,9 +639,7 @@ async def get_file(rel_path: str, request: Request, w: Optional[int] = None):
         if unreachable is not None:
             if entry:
                 cache.touch(key)
-                return file_response(
-                    cache.path_for(key), entry["content_type"], "STALE"
-                )
+                return respond(cache.path_for(key), entry["content_type"], "STALE")
             print(f"[cdn] library unreachable for {rel}: {unreachable!r}")
             raise HTTPException(503, "Library unreachable")
 
@@ -498,30 +652,177 @@ async def get_file(rel_path: str, request: Request, w: Optional[int] = None):
             and entry["src_mtime"] == src.st_mtime
         ):
             cache.touch(key, validated=True)
-            return file_response(cache.path_for(key), entry["content_type"], "HIT")
+            return respond(cache.path_for(key), entry["content_type"], "HIT")
 
         max_file_bytes = CONFIG["cache"].get("max_file_mb", 200) * 1024**2
         if w is None and src.st_size > max_file_bytes:
             # Too big to be worth caching (long videos, disk images):
             # stream straight off the NAS. Range requests still work, so
             # video seeking does too.
-            content_type = guess_mime(abs_path)
-            return file_response(abs_path, content_type, "BYPASS")
+            return respond(abs_path, guess_mime(abs_path), "BYPASS")
 
         try:
-            content_type = await fill(key, abs_path, src, w)
+            content_type = await fill(key, rel, abs_path, src, w)
         except ThumbnailError as e:
             print(f"[cdn] no thumbnail for {rel}: {e}")
             raise HTTPException(415, "No thumbnail available for this file")
         except OSError as e:
             if entry:
-                return file_response(
-                    cache.path_for(key), entry["content_type"], "STALE"
-                )
+                return respond(cache.path_for(key), entry["content_type"], "STALE")
             print(f"[cdn] fill failed for {rel}: {e!r}")
             raise HTTPException(503, "Library unreachable")
 
-    return file_response(cache.path_for(key), content_type, "MISS")
+    return respond(cache.path_for(key), content_type, "MISS")
+
+
+# --- Admin file management (the CDN tab of ryanzrau.dev/admin) -----------
+
+
+async def require_admin(request: Request):
+    """Admin session via the Authorization header only -- never the cookie,
+    so no other site can drive these routes through a logged-in browser --
+    and a mounted library, since writing into an unmounted mount point
+    would put files on this Mac's own disk instead of the NAS."""
+    token = SessionAuth.bearer_from(request)
+    if not token or not await auth.allowed(token):
+        raise HTTPException(401, "Admin session required")
+    if not await library_mounted():
+        raise HTTPException(503, "Library unreachable")
+
+
+def _list_dir(abs_path: str, rel: str) -> dict:
+    folders, files = [], []
+    with os.scandir(abs_path) as it:
+        for entry in it:
+            if is_ignored(entry.name):
+                continue
+            child = f"{rel}/{entry.name}" if rel else entry.name
+            try:
+                if entry.is_dir():
+                    folders.append({"name": entry.name, "path": child})
+                elif entry.is_file():
+                    st = entry.stat()
+                    mime = guess_mime(entry.name)
+                    files.append(
+                        {
+                            "name": entry.name,
+                            "path": child,
+                            "size": st.st_size,
+                            "mtime": st.st_mtime,
+                            "mime": mime,
+                            "kind": kind_for(mime),
+                        }
+                    )
+            except OSError:
+                continue
+    folders.sort(key=lambda f: f["name"].lower())
+    files.sort(key=lambda f: f["name"].lower())
+    return {"path": rel, "folders": folders, "files": files}
+
+
+@app.get("/api/list", dependencies=[Depends(require_admin)])
+async def list_folder(path: str = ""):
+    rel = clean_rel(path, allow_root=True)
+    abs_path = abs_for(rel)
+    if not os.path.isdir(abs_path):
+        raise HTTPException(404, "Not a folder")
+    return await asyncio.to_thread(_list_dir, abs_path, rel)
+
+
+@app.put("/api/files/{rel_path:path}", dependencies=[Depends(require_admin)])
+async def upload(rel_path: str, request: Request, overwrite: bool = False):
+    """Raw request body is the file content (no multipart), streamed to a
+    hidden temp file beside the destination and renamed into place, so a
+    half-finished upload is never visible or indexed."""
+    rel = clean_rel(rel_path, status=400)
+    dest = abs_for(rel, status=400)
+    if not os.path.isdir(os.path.dirname(dest)):
+        raise HTTPException(404, "Folder doesn't exist")
+    if os.path.isdir(dest):
+        raise HTTPException(409, "A folder with that name exists")
+    if os.path.lexists(dest) and not overwrite:
+        raise HTTPException(409, "A file with that name exists")
+
+    max_bytes = CONFIG.get("uploads", {}).get("max_mb", 4096) * 1024**2
+    declared = int(request.headers.get("content-length") or 0)
+    if declared > max_bytes:
+        raise HTTPException(413, "File too large")
+
+    tmp = os.path.join(os.path.dirname(dest), f".upload-{time.monotonic_ns()}.tmp")
+    written = 0
+    try:
+        f = await asyncio.to_thread(open, tmp, "wb")
+        try:
+            async for chunk in request.stream():
+                written += len(chunk)
+                if written > max_bytes:
+                    raise HTTPException(413, "File too large")
+                await asyncio.to_thread(f.write, chunk)
+        finally:
+            await asyncio.to_thread(f.close)
+        await asyncio.to_thread(os.replace, tmp, dest)
+    finally:
+        if os.path.exists(tmp):
+            os.remove(tmp)
+
+    cache.drop_path(rel)
+    return {"path": rel, "size": written, "indexed": await index_file(rel)}
+
+
+@app.post("/api/mkdir", dependencies=[Depends(require_admin)])
+async def mkdir(path: str = Body(embed=True)):
+    rel = clean_rel(path, status=400)
+    try:
+        await asyncio.to_thread(os.mkdir, abs_for(rel, status=400))
+    except FileExistsError:
+        raise HTTPException(409, "Something with that name already exists")
+    except FileNotFoundError:
+        raise HTTPException(404, "Parent folder doesn't exist")
+    return {"path": rel}
+
+
+@app.post("/api/move", dependencies=[Depends(require_admin)])
+async def move(
+    source: str = Body(alias="from", embed=True), to: str = Body(embed=True)
+):
+    """Rename or move a file or folder. Never overwrites."""
+    src_rel = clean_rel(source, status=400)
+    dest_rel = clean_rel(to, status=400)
+    if dest_rel == src_rel or dest_rel.startswith(src_rel + "/"):
+        raise HTTPException(400, "Can't move something into itself")
+    src_abs, dest_abs = literal_for(src_rel), literal_for(dest_rel)
+    if not os.path.lexists(src_abs):
+        raise HTTPException(404, "Not found")
+    if os.path.lexists(dest_abs):
+        raise HTTPException(409, "Something with that name already exists")
+    if not os.path.isdir(os.path.dirname(dest_abs)):
+        raise HTTPException(404, "Destination folder doesn't exist")
+
+    await asyncio.to_thread(os.rename, src_abs, dest_abs)
+    cache.drop_path(src_rel)
+    cache.drop_path(dest_rel)
+    indexed = await update_index("move", {"from": src_rel, "to": dest_rel})
+    return {"path": dest_rel, "indexed": indexed}
+
+
+@app.delete("/api/files/{rel_path:path}", dependencies=[Depends(require_admin)])
+async def delete(rel_path: str):
+    """Moves a file or folder into .trash/<timestamp>/ under the library
+    root rather than deleting it -- empty that by hand on the NAS."""
+    rel = clean_rel(rel_path, status=400)
+    src_abs = literal_for(rel)
+    if not os.path.lexists(src_abs):
+        raise HTTPException(404, "Not found")
+    stamp = time.strftime("%Y%m%d-%H%M%S") + f"-{time.monotonic_ns() % 1_000_000}"
+    trash_abs = os.path.join(CONFIG["library"]["root"], TRASH_DIR, stamp, rel)
+
+    def to_trash():
+        os.makedirs(os.path.dirname(trash_abs), exist_ok=True)
+        os.rename(src_abs, trash_abs)
+
+    await asyncio.to_thread(to_trash)
+    cache.drop_path(rel)
+    return {"trashed": rel, "indexed": await update_index("remove", {"path": rel})}
 
 
 def main():

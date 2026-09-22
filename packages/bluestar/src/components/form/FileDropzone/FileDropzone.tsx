@@ -10,14 +10,36 @@ import Button from "../../buttons/Button/Button";
 
 export type FileDropzoneValue = { name: string; dataUrl: string };
 
-export type FileDropzoneProps = FormFieldProps & {
-  value: FileDropzoneValue | null;
-  onChange: (value: FileDropzoneValue | null) => void;
+type SharedProps = FormFieldProps & {
   /** Native `accept` attribute, e.g. `"image/*"`. */
   accept?: string;
   /** Prompt shown in the empty state. Defaults to "Drag a file here, or click to browse". */
   prompt?: string;
 };
+
+/** Controlled single-file mode: holds one file, read to a data URL. */
+type ValueProps = {
+  value: FileDropzoneValue | null;
+  onChange: (value: FileDropzoneValue | null) => void;
+  onFiles?: never;
+  multiple?: never;
+};
+
+/**
+ * Raw-files mode: hands every picked/dropped `File` straight to `onFiles`
+ * and holds nothing itself -- the dropzone stays empty and ready for the
+ * next batch. For uploads too big or too many for data URLs (a batch of
+ * photos streamed to a server).
+ */
+type FilesProps = {
+  onFiles: (files: File[]) => void;
+  /** Allow picking/dropping more than one file at once. */
+  multiple?: boolean;
+  value?: never;
+  onChange?: never;
+};
+
+export type FileDropzoneProps = SharedProps & (ValueProps | FilesProps);
 
 function readAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -34,14 +56,17 @@ function readAsDataUrl(file: File): Promise<string> {
 /**
  * A drag-and-drop file picker with a click-to-browse fallback (a real
  * `<label>` wrapping a hidden native input, so both interactions come free
- * -- no manual keyboard handling to get right). Reads the file to a data
- * URL itself, since every consumer needs that anyway; hands back
- * `{ name, dataUrl }` rather than a raw `File` so the caller never touches
- * `FileReader`.
+ * -- no manual keyboard handling to get right). By default it reads the
+ * file to a data URL itself and hands back `{ name, dataUrl }` via
+ * `value`/`onChange`, so the caller never touches `FileReader`. Pass
+ * `onFiles` instead to get raw `File`s (optionally `multiple`) with no
+ * reading at all.
  */
 export default function FileDropzone({
   value,
   onChange,
+  onFiles,
+  multiple,
   accept,
   prompt = "Drag a file here, or click to browse",
   label,
@@ -56,21 +81,28 @@ export default function FileDropzone({
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
 
-  async function handleFile(file: File | undefined) {
-    if (!file) return;
-    const dataUrl = await readAsDataUrl(file);
-    onChange({ name: file.name, dataUrl });
+  async function handleFiles(list: FileList | null | undefined) {
+    const files = Array.from(list ?? []);
+    if (files.length === 0) return;
+    if (onFiles) {
+      onFiles(multiple ? files : files.slice(0, 1));
+      // Clear the input so picking the same file again still fires.
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
+    const dataUrl = await readAsDataUrl(files[0]);
+    onChange?.({ name: files[0].name, dataUrl });
   }
 
   function handleDrop(e: DragEvent<HTMLLabelElement>) {
     e.preventDefault();
     setDragActive(false);
     if (isDisabled) return;
-    void handleFile(e.dataTransfer.files?.[0]);
+    void handleFiles(e.dataTransfer.files);
   }
 
   function removeFile() {
-    onChange(null);
+    onChange?.(null);
     if (inputRef.current) inputRef.current.value = "";
   }
 
@@ -174,8 +206,9 @@ export default function FileDropzone({
               name={name}
               type="file"
               accept={accept}
+              multiple={multiple}
               disabled={isDisabled}
-              onChange={(e) => void handleFile(e.target.files?.[0])}
+              onChange={(e) => void handleFiles(e.target.files)}
               style={{
                 position: "absolute",
                 width: 1,

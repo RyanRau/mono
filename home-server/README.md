@@ -15,7 +15,7 @@ of the `apps/` deploy pipeline described in the root README:
 
 ## Tools
 
-| Directory                              | What                                                                                                                         |
-| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| [`llm-gateway`](llm-gateway/README.md) | Auth + on-demand model swap + concurrency cap in front of llama-server                                                       |
-| [`cdn-gateway`](cdn-gateway/README.md) | Authenticated, cached file server + thumbnails in front of a NAS share, and the indexer that syncs its files into PocketBase |
+| Directory                              | What                                                                                                                                                                            |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`llm-gateway`](llm-gateway/README.md) | Auth + on-demand model swap + concurrency cap in front of llama-server                                                                                                          |
+| [`cdn-gateway`](cdn-gateway/README.md) | Cached file server + thumbnails in front of a NAS share (admin-only, plus publicly shared collections), its admin file routes, and the indexer that syncs files into PocketBase |

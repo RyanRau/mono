@@ -417,6 +417,13 @@ the file to a data URL itself and hands back `{ name, dataUrl }` — the
 caller never touches `FileReader`. Shows a thumbnail for an image value, an
 upload icon otherwise, plus a Remove button once a file's selected.
 
+**Raw-files mode:** pass `onFiles: (files: File[]) => void` (and optionally
+`multiple`) _instead of_ `value`/`onChange`. It hands over the raw `File`s
+with no reading and holds nothing itself, staying empty and ready for the
+next batch. Use it for uploads too big or too many for data URLs, such as a
+batch of photos streamed to a server. The two modes are a type-level union,
+so mixing their props is a compile error.
+
 ### Feedback
 
 #### `Alert`
@@ -486,7 +493,7 @@ a general-purpose icon library; a name is added only when a real consumer
 needs it. Names: `settings`, `logOut`, `close`, `chevronDown`, `chevronLeft`,
 `chevronRight`, `check`, `user`, `plus`, `trash`, `search`, `externalLink`,
 `image`, `key`, `chat`, `menu`, `upload`, `grid`, `switch`, `palette`,
-`edit`, `docs`, `copy`, `info`
+`edit`, `docs`, `folder`, `copy`, `info`
 (`key`/`chat`/`menu`/`switch`/`palette` are hand-drawn for this repo, not
 adapted from Lucide).
 `color` defaults to `"currentColor"` so it inherits surrounding text/button
@@ -583,6 +590,26 @@ spinner + "Generating…" below the content (and a placeholder "…" while
 `content` renders through `Markdown` below (code blocks included); a
 user's own message stays plain, whitespace-preserved text so pasting
 something with `#`/`*` in it isn't reformatted as markdown underneath them.
+
+#### `MediaTile`
+
+| Prop       | Type         | Default   |
+| ---------- | ------------ | --------- |
+| `title`    | `string`     | required  |
+| `subtitle` | `string`     | —         |
+| `src`      | `string`     | —         |
+| `icon`     | `IconName`   | `"image"` |
+| `badge`    | `ReactNode`  | —         |
+| `selected` | `boolean`    | `false`   |
+| `onClick`  | `() => void` | required  |
+
+One square, clickable tile in a media grid: a photo, a file, a folder. The
+preview is an `<img>` cropped to fill a square, lazy-loaded so a grid of
+hundreds only fetches what's on screen. It falls back to `icon` when there's
+no `src` or the image fails to load. `badge` overlays the preview's top-right
+corner (e.g. a "Public" `Badge`). Selection uses the primary color, like
+`ListRow`. The tile fills its cell, so lay tiles out with a CSS grid, e.g.
+`gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))"`.
 
 #### `Disclosure`
 

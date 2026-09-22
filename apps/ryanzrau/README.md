@@ -51,6 +51,28 @@ stores — a slug with no matching icon falls back to a generic mark. Mark a
 new app public in the Admin UI (`registry_apps` → the app's row → `public`)
 to add it to the home page too.
 
+## Admin: Access and CDN tabs
+
+`/admin` (admins only) has two tabs, kept in the URL (`/admin`,
+`/admin?tab=cdn&path=<folder>`) so a reload or a shared link lands in the
+same place:
+
+- **Access** (`AdminPage.tsx`): which users can open which apps, invites.
+- **CDN** (`CdnAdmin.tsx`): the NAS library behind
+  [`home-server/cdn-gateway`](../../home-server/cdn-gateway/README.md).
+  Browse by folder; upload, create folders, rename/move and delete (to the
+  library's `.trash/`) through the gateway's admin `/api/` routes; and edit
+  what lives in PocketBase: tags and descriptions (`media_files`,
+  `media_tags`) and which files or folders are public in which named
+  collection (`media_public`).
+
+The CDN tab talks to the gateway with the signed-in session as a Bearer
+token (`src/cdn.ts`), and loads thumbnails as plain `<img>` URLs, which
+carry the shared `.ryanzrau.dev` cookie. For local development against a
+local gateway, set `VITE_CDN_URL` (e.g. `http://localhost:8001`) alongside
+`VITE_PB_URL`, and use `localhost` for both rather than `127.0.0.1` so the
+local auth cookie reaches the gateway for thumbnails.
+
 ## Local development
 
 ```bash
@@ -70,8 +92,10 @@ React + TypeScript + Vite, with [bluestar](../../packages/bluestar) for UI.
 It authenticates against the shared PocketBase backend the same way every
 other app does (`src/pb.ts`, `src/useAuth.ts`, `src/CookieAuthStore.ts` — a
 hand-copy of `infra/templates/app`'s auth files, predating the scaffolder),
-but has no collection of its own yet; if it needs data, add one the same way
-scaffolded apps do (see `apps/pocketbase/README.md`).
+but has no collection of its own; the admin page's CDN tab edits the
+`media_*` collections owned by `home-server/cdn-gateway`. If it needs data
+of its own, add a collection the same way scaffolded apps do (see
+`apps/pocketbase/README.md`).
 
 ## Deployment
 

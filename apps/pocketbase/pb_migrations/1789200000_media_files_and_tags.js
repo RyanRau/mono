@@ -12,7 +12,13 @@
 // `missing` rather than deleted, so its tags and description survive a
 // NAS that's briefly unmounted or a file that's moved back.
 //
-// Admin-only for now (`is_admin`), matching what the gateway itself allows
+// media_public makes chosen files or whole folders viewable by anyone,
+// grouped into named collections ("homepage") that a page can list via the
+// unauthenticated GET /api/custom/media/public/<collection>. The gateway
+// pulls the rules (path + folder only) and serves covered paths without a
+// session; everything else stays admin-only.
+//
+// Admin-only otherwise (`is_admin`), matching what the gateway itself allows
 // -- see /api/custom/media/access in pb_hooks/media.pb.js. Admins may edit
 // tags/description and correct EXIF-derived fields (taken_at, location),
 // but not the fields that describe the file on disk; the update rule
@@ -93,8 +99,36 @@ migrate(
         deleteRule: null,
       })
     );
+
+    app.save(
+      new Collection({
+        type: "base",
+        name: "media_public",
+        fields: [
+          // Library-relative, like media_files.path. With `folder`, covers
+          // everything under that directory, including files added later.
+          { type: "text", name: "path", required: true, max: 1024 },
+          { type: "bool", name: "folder" },
+          {
+            type: "text",
+            name: "collection",
+            required: true,
+            max: 60,
+            pattern: "^[a-z0-9][a-z0-9-]*$",
+          },
+          { type: "autodate", name: "created", onCreate: true },
+        ],
+        indexes: ["CREATE UNIQUE INDEX idx_media_public_rule ON media_public (collection, path)"],
+        listRule: adminOnly,
+        viewRule: adminOnly,
+        createRule: adminOnly,
+        updateRule: adminOnly,
+        deleteRule: adminOnly,
+      })
+    );
   },
   (app) => {
+    app.delete(app.findCollectionByNameOrId("media_public"));
     app.delete(app.findCollectionByNameOrId("media_files"));
     app.delete(app.findCollectionByNameOrId("media_tags"));
   }

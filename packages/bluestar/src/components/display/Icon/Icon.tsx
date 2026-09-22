@@ -24,6 +24,7 @@ export type IconName =
   | "switch"
   | "edit"
   | "docs"
+  | "folder"
   | "copy"
   | "info";
 

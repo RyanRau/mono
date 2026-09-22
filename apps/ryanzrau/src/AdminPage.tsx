@@ -16,6 +16,7 @@ import {
   Spinner,
   SubmitButton,
   Table,
+  Tabs,
   Text,
   TextInput,
   TokenSelect,
@@ -23,6 +24,7 @@ import {
   useToast,
 } from "bluestar";
 import { pb } from "./pb";
+import { CdnAdmin } from "./CdnAdmin";
 
 type AdminUser = { id: string; email: string; name: string; verified: boolean };
 type AdminApp = { id: string; slug: string; name: string };
@@ -194,7 +196,46 @@ function ManageUserModal({
   );
 }
 
+type AdminTab = "access" | "cdn";
+
+function tabFromUrl(): AdminTab {
+  return new URLSearchParams(window.location.search).get("tab") === "cdn" ? "cdn" : "access";
+}
+
 export function AdminPage() {
+  const [tab, setTab] = useState<AdminTab>(tabFromUrl);
+
+  useEffect(() => {
+    const onPop = () => setTab(tabFromUrl());
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  return (
+    <Flexbox direction="column" gap={16}>
+      <Tabs
+        items={[
+          { key: "access", label: "Access", icon: "user" },
+          { key: "cdn", label: "CDN", icon: "image" },
+        ]}
+        activeKey={tab}
+        onSelect={(key) => {
+          window.history.pushState(null, "", key === "cdn" ? "/admin?tab=cdn" : "/admin");
+          setTab(key as AdminTab);
+        }}
+      />
+      {tab === "cdn" ? (
+        <Card padding={24}>
+          <CdnAdmin />
+        </Card>
+      ) : (
+        <AccessPanel />
+      )}
+    </Flexbox>
+  );
+}
+
+function AccessPanel() {
   const toast = useToast();
   const [data, setData] = useState<AccessData | null>(null);
   const [granted, setGranted] = useState<Set<string>>(new Set());

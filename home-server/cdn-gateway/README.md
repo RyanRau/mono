@@ -1,9 +1,14 @@
 # CDN Gateway
 
-Read-only, authenticated file server in front of a NAS directory. Adds a
-local disk cache (so repeat views don't touch the NAS), on-the-fly WebP
-thumbnails, and a metadata indexer that syncs every file into PocketBase for
-tags and search. Served publicly at `https://cdn.ryanzrau.dev`.
+Cached file server in front of a NAS directory, served at
+`https://cdn.ryanzrau.dev`. Adds a local disk cache (so repeat views don't
+touch the NAS), on-the-fly WebP thumbnails, and a metadata indexer that
+syncs every file into PocketBase for tags and search.
+
+Everything is admin-only by default. Chosen files or folders can be made
+public in named collections, e.g. photos for the home page. Admins browse
+and manage the library from the **CDN tab of `ryanzrau.dev/admin`**: upload,
+new folder, rename/move, delete, tags, descriptions and sharing.
 
 ```
  browser ──▶ cdn.ryanzrau.dev ──▶ Traefik (droplet) ──WireGuard──▶ gateway.py :8001 (home Mac)
@@ -28,18 +33,19 @@ The gateway does files only. It serves bytes by path and knows nothing
 about tags, albums or search. Everything about what a file _is_ lives in
 PocketBase:
 
-| Piece                                  | Owns                                                                                   |
-| -------------------------------------- | -------------------------------------------------------------------------------------- |
-| `gateway.py`                           | Serving `/files/<path>`: auth check, cache, thumbnails. No database, no credentials.   |
-| `indexer.py`                           | Keeping `media_files` in step with the NAS: new/changed files, EXIF, missing flags.    |
-| PocketBase `media_files`/`media_tags`  | Metadata, tags, descriptions, search (by tag, date, location radius, kind, camera).    |
-| A future `apps/photos` (not built yet) | The UI: browse/search via PocketBase queries, show images via `cdn.ryanzrau.dev` URLs. |
+| Piece                                 | Owns                                                                                         |
+| ------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `gateway.py`                          | Serving `/files/<path>` (auth or public check, cache, thumbnails) and the admin file routes. |
+| `indexer.py`                          | Keeping `media_files` in step with the NAS: new/changed files, EXIF, missing flags.          |
+| PocketBase `media_files`/`media_tags` | Metadata, tags, descriptions, search (by tag, date, location radius, kind, camera).          |
+| PocketBase `media_public`             | Which files/folders anyone may view, grouped into named collections.                         |
+| `apps/ryanzrau` → `/admin` → CDN      | The admin UI: folder browser, file operations, tags, descriptions, sharing.                  |
 
 The link between them is just the path: a `media_files` row's `path` is the
 file's location relative to the library root, and
-`https://cdn.ryanzrau.dev/files/<path>` serves it. A photos app therefore
-never talks to the gateway except through `<img>`/`<video>` tags, and the
-gateway never needs to change when tagging or search features do.
+`https://cdn.ryanzrau.dev/files/<path>` serves it. A page that only shows
+files never talks to the gateway except through `<img>`/`<video>` tags,
+and the gateway never needs to change when tagging or search features do.
 
 ## Install
 
@@ -55,7 +61,9 @@ still works but HEIC thumbnails return 415.
 ## Mount the NAS
 
 Mount the share on this machine and point `library.root` at the mounted
-directory. A read-only mount is enough; nothing here writes to the NAS. On
+directory. Mount it read-write if you want the admin page's upload, move
+and delete to work; with a read-only mount, viewing still works and those
+operations fail. On
 macOS, for example, Finder → Go → Connect to Server
 (`smb://nas.local/media`), then add it to Login Items so it remounts after
 a reboot. It appears under `/Volumes/<share>`.
@@ -66,33 +74,97 @@ point outside the root are skipped by both the gateway and the indexer. If
 there's anything on the share you don't want reachable, point `root` at a
 subdirectory.
 
-## Auth
+## Who can do what
 
-The gateway holds no credentials. For each request it takes the viewer's
-PocketBase session token, from the `pb_auth` cookie every `*.ryanzrau.dev`
-app already sets (`CookieAuthStore`) or from an `Authorization: Bearer`
-header. It forwards that token to PocketBase's
+| Who             | Can                                          | How it's checked                                                     |
+| --------------- | -------------------------------------------- | -------------------------------------------------------------------- |
+| Anyone          | Read files covered by a `media_public` rule  | Gateway's local copy of the rules, re-pulled every 30s               |
+| Signed-in admin | Read everything                              | `pb_auth` cookie or `Authorization: Bearer`, checked with PocketBase |
+| Signed-in admin | List, upload, mkdir, move, delete (`/api/*`) | `Authorization: Bearer` only, never the cookie                       |
+| Anyone else     | Nothing (401)                                |                                                                      |
+
+**Admin sessions.** For each request the gateway takes the viewer's
+PocketBase session token, either from the `pb_auth` cookie every
+`*.ryanzrau.dev` app already sets (`CookieAuthStore`) or from an
+`Authorization: Bearer` header. It forwards that token to PocketBase's
 `GET /api/custom/media/access` (`apps/pocketbase/pb_hooks/media.pb.js`),
-which answers as that user. This is the same technique llm-gateway uses for
-session tokens. A signed-in user's `<img src="https://cdn.ryanzrau.dev/...">`
-works with no JavaScript, because the browser sends the cookie on its own.
+which answers as that user: allowed only if `users.is_admin`. This is the
+same technique llm-gateway uses for session tokens. A signed-in admin's
+`<img src="https://cdn.ryanzrau.dev/...">` works with no JavaScript,
+because the browser sends the cookie on its own.
 
-- **Admin-only for now** (`users.is_admin`), the same audience as the
-  `media_files`/`media_tags` collection rules. Widening it means changing
-  the one check in `media.pb.js` and those collection rules together.
 - Answers are cached per token for `session_cache_seconds` (denials for
   5s), and simultaneous requests with the same token share one PocketBase
   call. A 200-thumbnail grid costs one access check, not 200.
 - Fails closed. If PocketBase can't be reached, no new sessions are
   admitted, but sessions already cached keep working until they expire.
 
-The indexer is the one part that needs credentials: a service account.
-Set it up once per fresh `pb_data` volume:
+**Writes take the header only.** The `/api/*` routes ignore the cookie, so
+another site can't make a signed-in browser upload or delete anything:
+a cross-site form or `<img>` can send cookies but not an `Authorization`
+header. They also refuse to run while the NAS looks unmounted, so an
+upload can't land on the Mac's own disk under an empty mount point.
+
+**The service account.** Both `gateway.py` and `indexer.py` log in as a
+PocketBase service account. The indexer uses it to write the index. The
+gateway uses it to pull the public-sharing rules and to update the index
+right after its own uploads, moves and deletes. It is never used to decide
+whether a viewer is an admin. Set it up once per fresh `pb_data` volume:
 
 1. In the PocketBase admin UI, create a `users` record (e.g.
    `cdn-indexer@service.internal`) with `is_service` checked.
 2. Put its email and password in `config.yaml` under
    `auth.service_email`/`service_password`.
+
+`is_service` is one flag shared by every service account, so this account
+can also call the llm-gateway's service routes. Keep `config.yaml` as
+private as llm-gateway's.
+
+## Public sharing
+
+A `media_public` row makes one path public under a named collection
+(lowercase letters, digits and dashes, e.g. `homepage`):
+
+- **A file rule** covers exactly that file.
+- **A folder rule** covers everything under that folder, including files
+  added later.
+- A path can be in several collections. A collection can mix files and
+  folders.
+
+Manage these from the admin page: open a file, or go into a folder, and add
+it to a collection under **Public collections**. The gateway re-pulls the
+rules every `public_refresh_seconds` (30), so a new share or a revoked one
+takes effect within about half a minute. Browsers may keep a public file
+for `public_cache_seconds` (1 hour) after that.
+
+Public files are served at the same `/files/<path>` URL as always, just
+without needing a session. That means anyone who can guess a path under a
+public folder can view it; keep private things out of public folders.
+Moving a file keeps its sharing. Deleting it removes its sharing, so a new
+file later created at the same path isn't public by accident.
+
+To show a collection on a page, e.g. the home page, list it from
+PocketBase (no auth) and point `<img>` tags at the CDN:
+
+```ts
+const res = await fetch("https://api.ryanzrau.dev/api/custom/media/public/homepage");
+const { files } = await res.json(); // [{ path, name, kind, mime, width, height, taken_at, description }]
+```
+
+```tsx
+{
+  files.map((f) => (
+    <img
+      key={f.path}
+      src={`https://cdn.ryanzrau.dev/files/${encodeURI(f.path)}?w=1024`}
+      alt={f.description}
+    />
+  ));
+}
+```
+
+The listing returns at most 500 files, newest `taken_at` first, and only
+display fields: never tags, camera or GPS location.
 
 ## Run
 
@@ -113,11 +185,16 @@ curl -H "Authorization: Bearer $PB_TOKEN" \
 
 ## Routes
 
-| Route                                  | Auth | Purpose                                                                                                    |
-| -------------------------------------- | ---- | ---------------------------------------------------------------------------------------------------------- |
-| `GET /health`                          | no   | `library_mounted` and cache size/entries                                                                   |
-| `GET` or `HEAD` `/files/<path>`        | yes  | The original file. Range requests work, so video seeking works.                                            |
-| `GET` or `HEAD` `/files/<path>?w=<px>` | yes  | A WebP thumbnail, `w` px wide (EXIF rotation applied, never upscaled). `w` must be in `thumbnails.widths`. |
+| Route                                  | Auth             | Purpose                                                                                                    |
+| -------------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------- |
+| `GET /health`                          | no               | `library_mounted` and cache size/entries                                                                   |
+| `GET` or `HEAD` `/files/<path>`        | admin, or public | The original file. Range requests work, so video seeking works.                                            |
+| `GET` or `HEAD` `/files/<path>?w=<px>` | admin, or public | A WebP thumbnail, `w` px wide (EXIF rotation applied, never upscaled). `w` must be in `thumbnails.widths`. |
+| `GET /api/list?path=<folder>`          | admin (Bearer)   | A folder's direct subfolders and files. Omit `path` for the root.                                          |
+| `PUT /api/files/<path>`                | admin (Bearer)   | Upload: the raw request body is the file. 409 if it exists, unless `?overwrite=true`.                      |
+| `POST /api/mkdir` `{path}`             | admin (Bearer)   | New folder. The parent must exist.                                                                         |
+| `POST /api/move` `{from, to}`          | admin (Bearer)   | Rename or move a file or folder. Never overwrites. Tags, descriptions and sharing move with it.            |
+| `DELETE /api/files/<path>`             | admin (Bearer)   | Move a file or folder to `.trash/<timestamp>/` in the library. Removes its sharing.                        |
 
 Every response has an `X-Cache` header:
 
@@ -129,7 +206,7 @@ Every response has an `X-Cache` header:
 
 Errors:
 
-- 401: no session, or a session without access.
+- 401: not public, and no admin session.
 - 404: no such file. Anything outside the root or hidden also returns 404.
 - 415: a thumbnail was requested for something that isn't a renderable
   image.
@@ -148,8 +225,12 @@ Errors:
 - **Bounded.** An LRU capped at `max_gb`. When the cap is exceeded, the
   oldest-accessed entries are evicted down to 90%. The index is SQLite in
   the cache dir, so the cache stays warm across restarts.
-- **Browsers cache too.** `Cache-Control: private, max-age=86400` plus an
-  ETag, so a page revisit doesn't cross the WireGuard link at all.
+- **Browsers cache too.** Admin-only files get `Cache-Control: private,
+max-age=86400`, public ones `public, max-age=3600`, plus an ETag, so a
+  page revisit doesn't cross the WireGuard link at all.
+- **Changes through the gateway take effect at once.** An upload, move or
+  delete drops the affected cache entries, rather than waiting out
+  `revalidate_seconds`.
 - **One fill per file.** Simultaneous requests for the same uncached file
   or thumbnail wait for a single NAS read or render.
 
@@ -239,16 +320,21 @@ its EXIF-derived fields from the new file.
 
 ## Limitations
 
-- **Read-only.** Files get onto the NAS through the usual channels (SMB,
-  phone backup apps). Uploading through the gateway isn't built.
+- **Delete is a move to `.trash/`**, which nothing empties automatically.
+  Clear it on the NAS by hand when you're sure.
+- **Moves made outside the gateway lose metadata.** A file renamed over
+  SMB looks to the indexer like a deleted file plus a new one, so its tags,
+  description and sharing stay behind on the old (now `missing`) row. Move
+  things from the admin page to keep them.
+- **Uploads are one request per file**, streamed to the NAS, up to
+  `uploads.max_mb` each.
 - **No video thumbnails** (they would need ffmpeg). Videos serve as
   originals.
 - **Home upload bandwidth is the ceiling on a cache miss.** The cache saves
   NAS reads, not WireGuard transfer. Thumbnails keep this cheap. There's no
   shared cache on the droplet; browser caching covers repeat views.
-- **No share links.** Every request needs a signed-in admin session.
-  Public or expiring links (e.g. HMAC-signed URLs issued by PocketBase)
-  would be an addition to `media.pb.js` and `gateway.py`.
+- **Public means public.** There are no unguessable or expiring share
+  links. A public file is reachable by its plain path.
 - **Unknown location is `{lat: 0, lon: 0}`**, because PocketBase's
   `geoPoint` has no null. Filter on `location.lat != 0` for "has a
   location".
