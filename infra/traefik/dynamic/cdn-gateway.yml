@@ -1,0 +1,44 @@
+# Static Traefik route for home-server/cdn-gateway -- same shape and same
+# reasoning as llm-gateway.yml next to it: gateway.py runs on the Mac at
+# home, reachable from this droplet only over the WireGuard tunnel, so there
+# is no container label to generate this from.
+#
+# Same Mac as llm-gateway, different port (8001). Update the IP here too if
+# its DHCP reservation ever changes.
+http:
+  routers:
+    cdn-gateway:
+      rule: "Host(`cdn.ryanzrau.dev`)"
+      entrypoints:
+        - websecure
+      tls:
+        certResolver: le
+      service: cdn-gateway
+      middlewares:
+        - cdn-gateway-security
+        - cdn-gateway-ratelimit
+
+  middlewares:
+    cdn-gateway-security:
+      headers:
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        customFrameOptionsValue: SAMEORIGIN
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: strict-origin-when-cross-origin
+    # Looser than the 100/50 default on purpose: one photo-grid page load is
+    # a burst of a hundred-plus thumbnail requests from one IP. Every request
+    # still needs a valid session (checked by gateway.py), so this is a
+    # politeness limit, not the access control.
+    cdn-gateway-ratelimit:
+      rateLimit:
+        average: 200
+        burst: 300
+
+  services:
+    cdn-gateway:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.72:8001"

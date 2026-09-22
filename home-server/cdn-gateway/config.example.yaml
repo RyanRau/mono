@@ -1,0 +1,36 @@
+# Copy to config.yaml. Keep config.yaml out of git -- it holds the PocketBase
+# service-account password the indexer uses.
+
+server:
+  host: "0.0.0.0" # needs to be reachable on the LAN (the droplet's WireGuard route), not just localhost
+  port: 8001 # llm-gateway already has 8000 on the same Mac
+  browser_cache_seconds: 86400 # Cache-Control max-age on every file response
+
+library:
+  # The NAS directory, mounted on this machine (SMB/NFS). Read-only is
+  # plenty -- nothing here writes to it. Everything under it is servable at
+  # https://cdn.ryanzrau.dev/files/<path relative to root>.
+  root: "/Volumes/media"
+  stat_timeout_seconds: 5 # a sleeping/disconnected share shouldn't hang requests
+
+cache:
+  dir: "~/server/cdn-cache" # local SSD
+  max_gb: 20 # LRU-evicted down to 90% when exceeded
+  max_file_mb: 200 # bigger originals stream straight from the NAS, uncached
+  revalidate_seconds: 300 # how long a cache hit skips even stat()ing the NAS
+
+thumbnails:
+  # ?w=<width> renders a WebP at that width (never upscaled), cached like any
+  # other file. Only these widths are accepted.
+  widths: [256, 512, 1024, 2048]
+  quality: 80
+  max_parallel: 2 # concurrent renders -- decoding a 48MP photo is CPU/RAM heavy
+
+auth:
+  pocketbase_url: "https://api.ryanzrau.dev"
+  session_cache_seconds: 60 # how long a viewer's "allowed" answer is cached
+  # Used by indexer.py only -- gateway.py holds no credentials, it forwards
+  # each viewer's own session token. Create in the PocketBase admin UI with
+  # is_service: true (e.g. cdn-indexer@service.internal).
+  service_email: "cdn-indexer@service.internal"
+  service_password: "REPLACE-ME"

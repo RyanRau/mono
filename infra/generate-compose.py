@@ -74,9 +74,9 @@ def traefik_service(email):
             "--providers.docker=true",
             "--providers.docker.exposedbydefault=false",
             # Static routes to backends Traefik can't discover via Docker labels
-            # (nothing's running in a container it can see) -- currently just
-            # home-server/llm-gateway, reachable over the WireGuard tunnel to
-            # the home network. See infra/traefik/dynamic/.
+            # (nothing's running in a container it can see) -- home-server's
+            # llm-gateway and cdn-gateway, reachable over the WireGuard tunnel
+            # to the home network. See infra/traefik/dynamic/.
             "--providers.file.directory=/etc/traefik/dynamic",
             "--providers.file.watch=true",
             "--entrypoints.web.address=:80",

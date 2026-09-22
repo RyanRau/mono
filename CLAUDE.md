@@ -21,6 +21,7 @@ packages/
   PACKAGES.md      # Component + prop reference — read before writing UI
 home-server/       # Tools that run on home hardware, NOT the deploy pipeline
   llm-gateway/     # Auth + on-demand model swap in front of llama-server
+  cdn-gateway/     # Cached, authenticated NAS file server + metadata indexer
 infra/             # deploy tooling: generate-compose, validate_deploy, select_apps,
                    # new_app, retire_test_apps, templates/, README, AUDIT
 deploy.yml         # Source of truth for which apps are deployed and their subdomains

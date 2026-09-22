@@ -16,7 +16,7 @@ reach it, and how to debug it when they don't.
 | `new_app.py`          | Scaffolds a new app from `templates/app` and registers it in `deploy.yml`                                                                         |
 | `templates/app/`      | The app template (`.tpl` files, placeholders substituted by `new_app.py`)                                                                         |
 | `AUDIT.md`            | Architecture assessment, known weaknesses, deliberate omissions                                                                                   |
-| `traefik/dynamic/`    | Static Traefik routes for backends that aren't Docker containers Traefik can discover via labels — currently just `home-server/llm-gateway`       |
+| `traefik/dynamic/`    | Static Traefik routes for backends that aren't Docker containers Traefik can discover via labels — `home-server/llm-gateway` and `cdn-gateway`    |
 
 `generate-compose.py` and `validate_deploy.py` need `pyyaml` and nothing else.
 
@@ -30,10 +30,11 @@ reach it, and how to debug it when they don't.
 
 One droplet runs everything: Traefik, every enabled app, and PocketBase. Apps
 never bind host ports — Traefik reaches them over the shared `traefik_web`
-network. The one exception is `llm.ryanzrau.dev`: `home-server/llm-gateway`
-runs on a Mac at home, not on this droplet, so Traefik reaches it over a
-static route (`traefik/dynamic/llm-gateway.yml`, via Traefik's file provider)
-through a WireGuard tunnel to the home network instead of a Docker label.
+network. The exceptions are `llm.ryanzrau.dev` and `cdn.ryanzrau.dev`:
+`home-server/llm-gateway` and `home-server/cdn-gateway` run on a Mac at home,
+not on this droplet, so Traefik reaches them over static routes
+(`traefik/dynamic/*.yml`, via Traefik's file provider) through a WireGuard
+tunnel to the home network instead of Docker labels.
 
 ## 1. Droplet setup
 
