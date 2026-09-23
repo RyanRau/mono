@@ -33,7 +33,7 @@ thumbnails:
 auth:
   pocketbase_url: "https://api.ryanzrau.dev"
   session_cache_seconds: 60 # how long an admin session's "allowed" answer is cached
-  public_refresh_seconds: 30 # how often shared paths (media_public) are re-pulled
+  public_refresh_seconds: 30 # how often public paths (cdn_public + public files) are re-pulled
   # Service account for indexer.py and for gateway.py's own index updates
   # (after an upload/move/delete) and public-rules pulls. Viewer access is
   # never checked with this -- that uses each viewer's own session. Create

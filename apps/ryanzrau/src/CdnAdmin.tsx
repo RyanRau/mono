@@ -8,6 +8,7 @@ import {
   Button,
   ConfirmDialog,
   Drawer,
+  Dropdown,
   EmptyState,
   FileDropzone,
   Flexbox,
@@ -29,11 +30,16 @@ import { pb } from "./pb";
 import { cdnApi, encodePath, fileUrl, formatBytes, isPublic, joinPath, parentOf } from "./cdn";
 import type { CdnFile, CdnListing, PublicRule } from "./cdn";
 
-// Same pattern media_public.collection enforces server-side.
+// Same pattern cdn_public.collection enforces server-side.
 const COLLECTION_RE = /^[a-z0-9][a-z0-9-]*$/;
 
-type MediaRecord = RecordModel & {
+type Visibility = "private" | "shared" | "app" | "public";
+type CdnRecord = RecordModel & {
   path: string;
+  app: string;
+  owner: string;
+  visibility: Visibility;
+  shared_with: string[];
   description: string;
   tags: string[];
   taken_at: string;
@@ -43,6 +49,14 @@ type MediaRecord = RecordModel & {
   location: { lat: number; lon: number };
 };
 type Tag = { id: string; name: string };
+type UserOption = { id: string; email: string; name: string };
+
+const VISIBILITY_OPTIONS: { label: string; value: Visibility }[] = [
+  { label: "Private: only the owner (and admins)", value: "private" },
+  { label: "Shared: the owner and chosen people", value: "shared" },
+  { label: "App: everyone with access to its app", value: "app" },
+  { label: "Public: anyone, no sign-in", value: "public" },
+];
 
 function pathFromUrl() {
   return new URLSearchParams(window.location.search).get("path") ?? "";
@@ -61,7 +75,7 @@ function errorMessage(error: unknown) {
 
 /**
  * Which named public collections one exact path (a file, or a folder and
- * everything under it) belongs to. Edits media_public directly -- the
+ * everything under it) belongs to. Edits cdn_public directly -- the
  * gateway re-pulls the rules every public_refresh_seconds, so a change
  * takes effect on the CDN within about half a minute.
  */
@@ -87,10 +101,10 @@ function SharingEditor({
     setIsSaving(true);
     try {
       for (const name of next.filter((n) => !own.some((r) => r.collection === n))) {
-        await pb.collection("media_public").create({ path, folder, collection: name });
+        await pb.collection("cdn_public").create({ path, folder, collection: name });
       }
       for (const rule of own.filter((r) => !next.includes(r.collection))) {
-        await pb.collection("media_public").delete(rule.id);
+        await pb.collection("cdn_public").delete(rule.id);
       }
     } catch (error) {
       toast.error(errorMessage(error));
@@ -155,10 +169,10 @@ function TagEditor({
   onTagsChanged,
   onRecordChanged,
 }: {
-  record: MediaRecord;
+  record: CdnRecord;
   tags: Tag[];
   onTagsChanged: () => void;
-  onRecordChanged: (next: MediaRecord) => void;
+  onRecordChanged: (next: CdnRecord) => void;
 }) {
   const toast = useToast();
   const [newTag, setNewTag] = useState("");
@@ -168,7 +182,7 @@ function TagEditor({
     setIsSaving(true);
     try {
       onRecordChanged(
-        await pb.collection("media_files").update<MediaRecord>(record.id, { tags: next })
+        await pb.collection("cdn_files").update<CdnRecord>(record.id, { tags: next })
       );
     } catch (error) {
       toast.error(errorMessage(error));
@@ -184,7 +198,7 @@ function TagEditor({
     let tag = tags.find((t) => t.name === name);
     if (!tag) {
       try {
-        tag = await pb.collection("media_tags").create<Tag>({ name });
+        tag = await pb.collection("cdn_tags").create<Tag>({ name });
         onTagsChanged();
       } catch (error) {
         toast.error(errorMessage(error));
@@ -230,18 +244,76 @@ function TagEditor({
   );
 }
 
+/**
+ * Who can see one file: its cdn_files visibility and shared_with. The
+ * gateway re-checks per file, so a change applies to signed-in viewers
+ * within session_cache_seconds and to signed-out ones within
+ * public_refresh_seconds.
+ */
+function AccessEditor({
+  record,
+  users,
+  onRecordChanged,
+}: {
+  record: CdnRecord;
+  users: UserOption[];
+  onRecordChanged: (next: CdnRecord) => void;
+}) {
+  const toast = useToast();
+  const [isSaving, setIsSaving] = useState(false);
+  const owner = users.find((u) => u.id === record.owner);
+
+  async function save(patch: Partial<Pick<CdnRecord, "visibility" | "shared_with">>) {
+    setIsSaving(true);
+    try {
+      onRecordChanged(await pb.collection("cdn_files").update<CdnRecord>(record.id, patch));
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <Flexbox direction="column" gap={8}>
+      <Text variant="caption">
+        Owner: {owner ? owner.name || owner.email : "none (admins only)"}
+        {record.app ? ` · App: ${record.app}` : " · Your library"}
+      </Text>
+      <Dropdown
+        label="Who can see it"
+        isDisabled={isSaving}
+        options={VISIBILITY_OPTIONS.filter((o) => o.value !== "app" || record.app)}
+        value={record.visibility}
+        onChange={(v) => v && void save({ visibility: v as Visibility })}
+      />
+      {record.visibility === "shared" && (
+        <TokenSelect
+          label="Shared with"
+          isDisabled={isSaving}
+          options={users
+            .filter((u) => u.id !== record.owner)
+            .map((u) => ({ label: u.name || u.email, value: u.id }))}
+          value={record.shared_with}
+          onChange={(next) => void save({ shared_with: next })}
+        />
+      )}
+    </Flexbox>
+  );
+}
+
 function DescriptionForm({
   record,
   onSaved,
 }: {
-  record: MediaRecord;
-  onSaved: (next: MediaRecord) => void;
+  record: CdnRecord;
+  onSaved: (next: CdnRecord) => void;
 }) {
   const toast = useToast();
   const form = useForm({
     initialValues: { description: record.description },
     onSubmit: async (values) => {
-      onSaved(await pb.collection("media_files").update<MediaRecord>(record.id, values));
+      onSaved(await pb.collection("cdn_files").update<CdnRecord>(record.id, values));
       toast.success("Saved");
     },
   });
@@ -257,6 +329,7 @@ function FileDetails({
   file,
   rules,
   tags,
+  users,
   onRulesChanged,
   onTagsChanged,
   onMove,
@@ -265,19 +338,20 @@ function FileDetails({
   file: CdnFile;
   rules: PublicRule[];
   tags: Tag[];
+  users: UserOption[];
   onRulesChanged: () => void;
   onTagsChanged: () => void;
   onMove: () => void;
   onDelete: () => void;
 }) {
   // undefined = loading, null = not indexed yet.
-  const [record, setRecord] = useState<MediaRecord | null | undefined>(undefined);
+  const [record, setRecord] = useState<CdnRecord | null | undefined>(undefined);
 
   // Keyed by file.path at the call site, so this starts over (back to
   // undefined) for each file rather than resetting state here.
   useEffect(() => {
-    pb.collection("media_files")
-      .getFirstListItem<MediaRecord>(pb.filter("path = {:path}", { path: file.path }), {
+    pb.collection("cdn_files")
+      .getFirstListItem<CdnRecord>(pb.filter("path = {:path}", { path: file.path }), {
         requestKey: "cdn-file-details",
       })
       .then(setRecord)
@@ -335,6 +409,7 @@ function FileDetails({
         ))}
       </Flexbox>
 
+      {record && <AccessEditor record={record} users={users} onRecordChanged={setRecord} />}
       <SharingEditor path={file.path} folder={false} rules={rules} onChange={onRulesChanged} />
 
       {record === undefined && <Spinner />}
@@ -481,7 +556,8 @@ type Dialog =
  * The CDN tab of /admin: browse home-server/cdn-gateway's NAS library by
  * folder, manage files (upload, new folder, rename/move, delete to trash)
  * through the gateway's admin /api/ routes, and edit what lives in
- * PocketBase -- tags, descriptions, and public sharing (media_public).
+ * PocketBase -- who can see each file (owner, visibility, shared_with),
+ * tags, descriptions, and public collections (cdn_public).
  */
 export function CdnAdmin() {
   const toast = useToast();
@@ -490,6 +566,7 @@ export function CdnAdmin() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [rules, setRules] = useState<PublicRule[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
+  const [users, setUsers] = useState<UserOption[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [dialog, setDialog] = useState<Dialog>(null);
 
@@ -506,14 +583,14 @@ export function CdnAdmin() {
   }, [path]);
 
   const loadRules = useCallback(() => {
-    pb.collection("media_public")
+    pb.collection("cdn_public")
       .getFullList<PublicRule>({ requestKey: "cdn-rules" })
       .then(setRules)
       .catch(() => setRules([]));
   }, []);
 
   const loadTags = useCallback(() => {
-    pb.collection("media_tags")
+    pb.collection("cdn_tags")
       .getFullList<Tag>({ sort: "name", requestKey: "cdn-tags" })
       .then(setTags)
       .catch(() => setTags([]));
@@ -524,6 +601,16 @@ export function CdnAdmin() {
     loadRules();
     loadTags();
   }, [loadRules, loadTags]);
+
+  useEffect(() => {
+    // The Access tab's own endpoint -- admins only, which this page is.
+    pb.send<{ users: UserOption[] }>("/api/custom/admin/access", {
+      method: "GET",
+      requestKey: "cdn-users",
+    })
+      .then((res) => setUsers(res.users))
+      .catch(() => setUsers([]));
+  }, []);
 
   useEffect(() => {
     const onPop = () => {
@@ -693,6 +780,7 @@ export function CdnAdmin() {
             file={selectedFile}
             rules={rules}
             tags={tags}
+            users={users}
             onRulesChanged={loadRules}
             onTagsChanged={loadTags}
             onMove={() => setDialog({ kind: "move", path: selectedFile.path })}

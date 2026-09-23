@@ -15,7 +15,7 @@ export type CdnFile = {
 };
 export type CdnListing = { path: string; folders: CdnFolder[]; files: CdnFile[] };
 
-/** One of media_public's rows -- see apps/pocketbase/pb_migrations/1789200000_media_files_and_tags.js. */
+/** One of cdn_public's rows -- see apps/pocketbase/pb_migrations/1789200000_cdn_files.js. */
 export type PublicRule = { id: string; path: string; folder: boolean; collection: string };
 
 /** Encodes each segment, keeping the slashes -- paths can contain spaces, #, ? etc. */

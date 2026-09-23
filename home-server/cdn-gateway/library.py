@@ -4,6 +4,7 @@ service-account client -- so the two never disagree about any of it."""
 
 import mimetypes
 import os
+import re
 import threading
 from datetime import datetime, timedelta, timezone
 from typing import Optional
@@ -55,6 +56,10 @@ DOCUMENT_MIMES = {
 }
 
 
+# registry_apps slugs, as cdn_files.app stores them.
+APP_SLUG_RE = re.compile(r"[a-z0-9][a-z0-9_-]{0,59}")
+
+
 def is_ignored(name: str) -> bool:
     return name in IGNORED_NAMES or name.startswith(".")
 
@@ -64,7 +69,7 @@ def guess_mime(path: str) -> str:
 
 
 def kind_for(mime: str) -> str:
-    """One of media_files.kind's select values."""
+    """One of cdn_files.kind's select values."""
     major = mime.split("/", 1)[0]
     if major in ("image", "video", "audio"):
         return major
@@ -159,7 +164,18 @@ def image_metadata(abs_path: str) -> dict:
     return meta
 
 
+def app_for(rel: str) -> str:
+    """The app a library path belongs to: apps/<slug>/... is that app's
+    storage, anything else is the admin's own library ("")."""
+    parts = rel.split("/")
+    if len(parts) >= 3 and parts[0] == "apps" and APP_SLUG_RE.fullmatch(parts[1]):
+        return parts[1]
+    return ""
+
+
 def describe(root: str, rel: str, st: os.stat_result) -> dict:
+    """A cdn_files upsert row for one file. `app` only takes effect when the
+    row is first created (see index/upsert in pb_hooks/cdn.pb.js)."""
     abs_path = os.path.join(root, rel)
     mime = guess_mime(abs_path)
     row = {
@@ -169,6 +185,7 @@ def describe(root: str, rel: str, st: os.stat_result) -> dict:
         "mime": mime,
         "size": st.st_size,
         "mtime": st.st_mtime,
+        "app": app_for(rel),
     }
     if row["kind"] == "image":
         row.update(image_metadata(abs_path))

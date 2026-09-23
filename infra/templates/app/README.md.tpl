@@ -20,6 +20,24 @@ from anywhere shared):
 | `useAuth.ts`         | `useAuthRecord()` — the current signed-in user's record, or `null`, re-rendering on auth changes. |
 | `LoginForm.tsx`      | A real login form built from bluestar's `useForm`/`Form` — kept out of bluestar itself since bluestar must not depend on the `pocketbase` package. |
 | `AccountMenu.tsx`    | The avatar-pill dropdown (name/email, a link to the shared settings page at `ryanzrau.dev/settings`, log out) that goes in `AppShell`'s `account` slot. |
+| `cdn.ts`             | The shared file store: `uploadFile()`, `fileUrl()`, `deleteFile()`, `setAccess()`. See "Files" below. |
+
+## Files
+
+Store files in the shared file store (`src/cdn.ts`, backed by
+[`home-server/cdn-gateway`](../../home-server/cdn-gateway/README.md)), not
+in PocketBase file fields:
+
+```ts
+const { id, path } = await uploadFile(file, "private"); // owned by the signed-in user
+await pb.collection("__APP_NAME___items").update(itemId, { photo: id }); // relation to cdn_files
+<img src={fileUrl(path, 512)} />; // resized WebP; the login cookie authorizes it
+```
+
+Each file's visibility is `private` (uploader only), `shared` (plus chosen
+users, via `setAccess(id, "shared", [userId])`), `app` (everyone granted
+this app) or `public` (anyone). Uploads need a `registry_grants` grant for
+this app, so `CDN_APP` in `cdn.ts` must match its `registry_apps` slug.
 
 ## Local development
 
@@ -47,6 +65,7 @@ After changing `packages/bluestar`, rebuild it (`npm run build` in
   one-off components here.
 - **PocketBase** for auth and data via `src/pb.ts` — collections live in
   `apps/pocketbase/pb_migrations`.
+- **The shared file store** for files via `src/cdn.ts`.
 
 ## Deployment
 

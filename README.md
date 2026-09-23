@@ -42,12 +42,13 @@ framework around them.
 Every new app uses the same three things. The point is that an app is _only_ its
 own logic — everything else is already solved.
 
-| Layer      | What                                    | Why                                                            |
-| ---------- | --------------------------------------- | -------------------------------------------------------------- |
-| Frontend   | React + TypeScript + Vite               | Static build, served by nginx; nothing to run server-side      |
-| UI         | [`bluestar`](packages/PACKAGES.md)      | Themed components — apps don't write CSS or one-off primitives |
-| Backend    | [PocketBase](apps/pocketbase/README.md) | One shared instance: auth, collections, files, custom routes   |
-| Deployment | `deploy.yml` + Traefik + GitHub Actions | Subdomain, TLS, and CI come free with the config entry         |
+| Layer      | What                                            | Why                                                                  |
+| ---------- | ----------------------------------------------- | -------------------------------------------------------------------- |
+| Frontend   | React + TypeScript + Vite                       | Static build, served by nginx; nothing to run server-side            |
+| UI         | [`bluestar`](packages/PACKAGES.md)              | Themed components — apps don't write CSS or one-off primitives       |
+| Backend    | [PocketBase](apps/pocketbase/README.md)         | One shared instance: auth, collections, custom routes                |
+| Files      | [File store](home-server/cdn-gateway/README.md) | NAS at home behind `cdn.ryanzrau.dev`; per-file owner and visibility |
+| Deployment | `deploy.yml` + Traefik + GitHub Actions         | Subdomain, TLS, and CI come free with the config entry               |
 
 Missing a component? Add it to bluestar. Need data? Add a collection to
 PocketBase. Neither is a reason to start a new stack.

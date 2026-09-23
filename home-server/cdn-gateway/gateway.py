@@ -1,6 +1,8 @@
-"""CDN Gateway: cached file server in front of a NAS directory, with
-on-the-fly image thumbnails. Admins (a PocketBase session) can read and
-manage everything; anyone can read the files media_public shares.
+"""CDN Gateway: the shared file store for every app -- a cached file server
+in front of a NAS directory, with on-the-fly image thumbnails. Who may read
+or change each file is decided per file by PocketBase (cdn_files'
+owner/visibility/shared_with, see apps/pocketbase/pb_hooks/cdn.pb.js);
+public files are served to anyone.
 
 Run: python3 gateway.py --config config.yaml
 """
@@ -27,7 +29,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from PIL import Image, ImageOps
 
-from library import ServiceClient, describe, guess_mime, is_ignored, kind_for
+from library import (
+    APP_SLUG_RE,
+    ServiceClient,
+    describe,
+    guess_mime,
+    is_ignored,
+    kind_for,
+)
 
 CONFIG: dict = {}
 
@@ -127,18 +136,22 @@ def literal_for(rel: str, status: int = 400) -> str:
     return os.path.join(CONFIG["library"]["root"], rel)
 
 
-class SessionAuth:
-    """Resolves a viewer's PocketBase session token to "is a library
-    admin", by forwarding it to PocketBase's GET /api/custom/media/access
-    (apps/pocketbase/pb_hooks/media.pb.js) -- which authenticates it as that
-    user's own session, the same trick as llm-gateway's resolve_session.
+class Authorizer:
+    """Answers "may the holder of this PocketBase session token do X" by
+    forwarding the token to PocketBase's POST /api/custom/cdn/authorize
+    (apps/pocketbase/pb_hooks/cdn.pb.js), which authenticates it as that
+    user's own session -- the same trick as llm-gateway's resolve_session.
+    The gateway's service account is never used for these decisions.
 
-    Results are cached per token (allows for session_cache_seconds, denials
-    for a few seconds), and concurrent lookups of the same token share one
-    request -- a photo grid fires dozens of thumbnail requests at once with
-    the same cookie, and shouldn't fire dozens of PocketBase calls. Fails
-    closed: PocketBase unreachable means no new sessions are admitted,
-    though already-cached ones keep working until they expire.
+    Two layers, both cached (allows for session_cache_seconds, denials for
+    a few seconds) with concurrent identical lookups sharing one request:
+      - session(token): who this is and whether they're an admin. Admins
+        skip the per-file checks entirely.
+      - allowed(token, op, key): a per-file (or per-app, for uploads)
+        answer for everyone else. A thumbnail grid costs one check per
+        distinct file on first view, then nothing until the cache expires.
+    Fails closed: PocketBase unreachable means denied, though answers
+    already cached keep working until they expire.
     """
 
     DENY_TTL = 5
@@ -146,7 +159,7 @@ class SessionAuth:
     def __init__(self, cfg: dict):
         auth_cfg = cfg["auth"]
         self.allow_ttl = auth_cfg.get("session_cache_seconds", 60)
-        self._cache: dict[str, tuple[bool, float]] = {}
+        self._cache: dict[str, tuple[Optional[dict], float]] = {}
         self._inflight: dict[str, asyncio.Future] = {}
         self._client = httpx.AsyncClient(
             base_url=auth_cfg["pocketbase_url"].rstrip("/"), timeout=10
@@ -164,7 +177,7 @@ class SessionAuth:
 
     @staticmethod
     def token_from(request: Request) -> Optional[str]:
-        token = SessionAuth.bearer_from(request)
+        token = Authorizer.bearer_from(request)
         if token:
             return token
         cookie = request.cookies.get(AUTH_COOKIE)
@@ -175,47 +188,67 @@ class SessionAuth:
         except (ValueError, AttributeError):
             return None
 
-    async def allowed(self, token: str) -> bool:
-        digest = hashlib.sha256(token.encode()).hexdigest()
+    async def session(self, token: str) -> Optional[dict]:
+        """{"admin", "user_id"} for a valid user session, else None."""
+        answer = await self._ask(token, "session", "")
+        return answer if answer and answer["allowed"] else None
+
+    async def allowed(self, token: str, op: str, key: str) -> bool:
+        session = await self.session(token)
+        if not session:
+            return False
+        if session["admin"]:
+            return True
+        answer = await self._ask(token, op, key)
+        return bool(answer and answer["allowed"])
+
+    async def _ask(self, token: str, op: str, key: str) -> Optional[dict]:
+        cache_key = hashlib.sha256(f"{token}\0{op}\0{key}".encode()).hexdigest()
         now = time.time()
-        cached = self._cache.get(digest)
+        cached = self._cache.get(cache_key)
         if cached and cached[1] > now:
             return cached[0]
-        if digest in self._inflight:
-            return await asyncio.shield(self._inflight[digest])
+        if cache_key in self._inflight:
+            return await asyncio.shield(self._inflight[cache_key])
 
         future = asyncio.get_running_loop().create_future()
-        self._inflight[digest] = future
+        self._inflight[cache_key] = future
         try:
-            ok = await self._ask_pocketbase(token)
-            ttl = self.allow_ttl if ok else self.DENY_TTL
-            if len(self._cache) > 10_000:
-                self._cache = {d: e for d, e in self._cache.items() if e[1] > now}
-            self._cache[digest] = (ok, now + ttl)
-            future.set_result(ok)
-            return ok
+            answer = await self._ask_pocketbase(token, op, key)
+            ttl = self.allow_ttl if answer and answer["allowed"] else self.DENY_TTL
+            if len(self._cache) > 50_000:
+                self._cache = {k: e for k, e in self._cache.items() if e[1] > now}
+            self._cache[cache_key] = (answer, now + ttl)
+            future.set_result(answer)
+            return answer
         except BaseException:
             # Only cancellation gets here (_ask_pocketbase turns every HTTP
             # failure into a denial); waiters see the same cancellation.
             future.cancel()
             raise
         finally:
-            del self._inflight[digest]
+            del self._inflight[cache_key]
 
-    async def _ask_pocketbase(self, token: str) -> bool:
+    async def _ask_pocketbase(self, token: str, op: str, key: str) -> Optional[dict]:
+        body = {"op": op, "app" if op == "upload" else "path": key}
         try:
-            r = await self._client.get(
-                "/api/custom/media/access", headers={"Authorization": f"Bearer {token}"}
+            r = await self._client.post(
+                "/api/custom/cdn/authorize",
+                json=body,
+                headers={"Authorization": f"Bearer {token}"},
             )
         except httpx.HTTPError as e:
-            print(f"[cdn] access check failed (network), denying: {e}")
-            return False
-        return r.status_code == 200
+            print(f"[cdn] authorize failed (network), denying: {e}")
+            return None
+        if r.status_code != 200:
+            return None
+        return r.json()
 
 
 class PublicRules:
-    """The media_public rules (which files/folders anyone may read), pulled
-    from PocketBase every public_refresh_seconds -- the same deny-by-default
+    """Everything anyone may read without signing in -- cdn_public rules
+    plus every file whose visibility is "public" -- pulled from PocketBase
+    every public_refresh_seconds, with the same deny-by-default
     shape as llm-gateway's key cache: a path is public only if the last
     successful pull said so. Starts empty, so nothing is public until the
     first pull lands; a PocketBase outage keeps the last known-good rules,
@@ -240,7 +273,7 @@ class PublicRules:
 
     async def refresh(self):
         data = await asyncio.to_thread(
-            self.service.request, "GET", "/api/custom/media/public-rules"
+            self.service.request, "GET", "/api/custom/cdn/public-paths"
         )
         self.files = {r["path"] for r in data["rules"] if not r["folder"]}
         self.folders = [r["path"] for r in data["rules"] if r["folder"]]
@@ -470,7 +503,7 @@ def render_thumbnail(src_path: str, dest_path: str, width: int, quality: int):
 
 
 cache: Optional[Cache] = None
-auth: Optional[SessionAuth] = None
+auth: Optional[Authorizer] = None
 service: Optional[ServiceClient] = None
 public_rules: Optional[PublicRules] = None
 thumb_slots: Optional[asyncio.Semaphore] = None
@@ -548,7 +581,7 @@ async def update_index(route: str, payload: dict) -> bool:
     looks like a delete plus a new file, losing that file's tags."""
     try:
         await asyncio.to_thread(
-            service.request, "POST", f"/api/custom/media/index/{route}", json=payload
+            service.request, "POST", f"/api/custom/cdn/index/{route}", json=payload
         )
         return True
     except httpx.HTTPError as e:
@@ -556,18 +589,34 @@ async def update_index(route: str, payload: dict) -> bool:
         return False
 
 
-async def index_file(rel: str) -> bool:
+async def index_file(rel: str, owner: str, visibility: str) -> Optional[str]:
+    """Upserts one file's row and returns its cdn_files id (None if
+    PocketBase couldn't be reached -- the indexer will add the row later,
+    but without an owner, so only admins can see it until then). owner and
+    visibility only apply if the row is new; an overwrite keeps the existing
+    row's permissions."""
     abs_path = abs_for(rel)
     st = await asyncio.to_thread(os.stat, abs_path)
     row = await asyncio.to_thread(describe, CONFIG["library"]["root"], rel, st)
-    return await update_index("upsert", {"files": [row]})
+    row.update(owner=owner, visibility=visibility)
+    try:
+        result = await asyncio.to_thread(
+            service.request,
+            "POST",
+            "/api/custom/cdn/index/upsert",
+            json={"files": [row]},
+        )
+        return result["ids"].get(rel)
+    except httpx.HTTPError as e:
+        print(f"[cdn] index upsert failed for {rel}: {e}")
+        return None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global cache, auth, service, public_rules, thumb_slots
     cache = Cache(CONFIG)
-    auth = SessionAuth(CONFIG)
+    auth = Authorizer(CONFIG)
     service = ServiceClient(CONFIG["auth"])
     public_rules = PublicRules(
         service, CONFIG["auth"].get("public_refresh_seconds", 30)
@@ -604,9 +653,17 @@ async def get_file(rel_path: str, request: Request, w: Optional[int] = None):
     rel = clean_rel(rel_path)
     public = public_rules.covers(rel) and public_rules.covers(real_rel(rel))
     if not public:
-        token = SessionAuth.token_from(request)
-        if not token or not await auth.allowed(token):
+        token = Authorizer.token_from(request)
+        if not token:
             raise HTTPException(401, "Sign in to view this file")
+        session = await auth.session(token)
+        if not session:
+            raise HTTPException(401, "Sign in to view this file")
+        if not session["admin"]:
+            # Per-file permission, from the file's cdn_files row. A symlink
+            # never gets a non-admin anywhere the row doesn't cover.
+            if real_rel(rel) != rel or not await auth.allowed(token, "read", rel):
+                raise HTTPException(403, "You don't have access to this file")
 
     widths = CONFIG["thumbnails"]["widths"]
     if w is not None and w not in widths:
@@ -675,19 +732,37 @@ async def get_file(rel_path: str, request: Request, w: Optional[int] = None):
     return respond(cache.path_for(key), content_type, "MISS")
 
 
-# --- Admin file management (the CDN tab of ryanzrau.dev/admin) -----------
+# --- Writes -----------------------------------------------------------------
+#
+# Every write route takes the session only as an Authorization header, never
+# the cookie, so no other site can drive them through a signed-in browser
+# (a cross-site form or <img> can send cookies, not headers). Every write
+# also refuses to run while the library looks unmounted, since writing into
+# an empty mount point would put files on this Mac's own disk instead.
+#
+#   - admins: the whole library (the CDN tab of ryanzrau.dev/admin)
+#   - apps: POST /api/apps/<app>/files uploads into apps/<app>/ for anyone
+#     granted that app; the uploader owns the file
+#   - owners: DELETE their own files
+
+VISIBILITIES = ("private", "shared", "app", "public")
 
 
-async def require_admin(request: Request):
-    """Admin session via the Authorization header only -- never the cookie,
-    so no other site can drive these routes through a logged-in browser --
-    and a mounted library, since writing into an unmounted mount point
-    would put files on this Mac's own disk instead of the NAS."""
-    token = SessionAuth.bearer_from(request)
-    if not token or not await auth.allowed(token):
-        raise HTTPException(401, "Admin session required")
+async def require_session(request: Request) -> tuple[str, dict]:
+    token = Authorizer.bearer_from(request)
+    session = await auth.session(token) if token else None
+    if not session:
+        raise HTTPException(401, "Sign in required")
     if not await library_mounted():
         raise HTTPException(503, "Library unreachable")
+    return token, session
+
+
+async def require_admin(request: Request) -> dict:
+    _, session = await require_session(request)
+    if not session["admin"]:
+        raise HTTPException(403, "Admin only")
+    return session
 
 
 def _list_dir(abs_path: str, rel: str) -> dict:
@@ -720,29 +795,10 @@ def _list_dir(abs_path: str, rel: str) -> dict:
     return {"path": rel, "folders": folders, "files": files}
 
 
-@app.get("/api/list", dependencies=[Depends(require_admin)])
-async def list_folder(path: str = ""):
-    rel = clean_rel(path, allow_root=True)
-    abs_path = abs_for(rel)
-    if not os.path.isdir(abs_path):
-        raise HTTPException(404, "Not a folder")
-    return await asyncio.to_thread(_list_dir, abs_path, rel)
-
-
-@app.put("/api/files/{rel_path:path}", dependencies=[Depends(require_admin)])
-async def upload(rel_path: str, request: Request, overwrite: bool = False):
-    """Raw request body is the file content (no multipart), streamed to a
-    hidden temp file beside the destination and renamed into place, so a
-    half-finished upload is never visible or indexed."""
-    rel = clean_rel(rel_path, status=400)
-    dest = abs_for(rel, status=400)
-    if not os.path.isdir(os.path.dirname(dest)):
-        raise HTTPException(404, "Folder doesn't exist")
-    if os.path.isdir(dest):
-        raise HTTPException(409, "A folder with that name exists")
-    if os.path.lexists(dest) and not overwrite:
-        raise HTTPException(409, "A file with that name exists")
-
+async def receive_file(request: Request, dest: str) -> int:
+    """Streams the raw request body (no multipart) to a hidden temp file
+    beside `dest`, then renames it into place, so a half-finished upload is
+    never visible or indexed. Returns the byte count."""
     max_bytes = CONFIG.get("uploads", {}).get("max_mb", 4096) * 1024**2
     declared = int(request.headers.get("content-length") or 0)
     if declared > max_bytes:
@@ -764,13 +820,94 @@ async def upload(rel_path: str, request: Request, overwrite: bool = False):
     finally:
         if os.path.exists(tmp):
             os.remove(tmp)
+    return written
 
+
+def safe_filename(name: str) -> str:
+    """An uploaded file's name, made safe to use as one path segment:
+    no directories, no leading dot, no control or path characters,
+    at most 100 characters (keeping the extension)."""
+    name = name.replace("\\", "/").rsplit("/", 1)[-1]
+    name = re.sub(r"[\x00-\x1f/:*?\"<>|#%]+", "-", name).strip(" .-")
+    stem, dot, ext = name.rpartition(".")
+    if not dot:
+        stem, ext = name, ""
+    stem = stem[: 100 - len(ext) - 1] if ext else stem[:100]
+    name = f"{stem}.{ext}" if ext and stem else (stem or "file")
+    return name if not is_ignored(name) else f"file-{name.lstrip('.')}"
+
+
+@app.get("/api/list")
+async def list_folder(path: str = "", _: dict = Depends(require_admin)):
+    rel = clean_rel(path, allow_root=True)
+    abs_path = abs_for(rel)
+    if not os.path.isdir(abs_path):
+        raise HTTPException(404, "Not a folder")
+    return await asyncio.to_thread(_list_dir, abs_path, rel)
+
+
+@app.put("/api/files/{rel_path:path}")
+async def upload(
+    rel_path: str,
+    request: Request,
+    overwrite: bool = False,
+    visibility: str = "private",
+    session: dict = Depends(require_admin),
+):
+    """Admin upload to any path in the library (the admin page)."""
+    if visibility not in VISIBILITIES:
+        raise HTTPException(400, f"visibility must be one of {VISIBILITIES}")
+    rel = clean_rel(rel_path, status=400)
+    dest = abs_for(rel, status=400)
+    if not os.path.isdir(os.path.dirname(dest)):
+        raise HTTPException(404, "Folder doesn't exist")
+    if os.path.isdir(dest):
+        raise HTTPException(409, "A folder with that name exists")
+    if os.path.lexists(dest) and not overwrite:
+        raise HTTPException(409, "A file with that name exists")
+
+    written = await receive_file(request, dest)
     cache.drop_path(rel)
-    return {"path": rel, "size": written, "indexed": await index_file(rel)}
+    record_id = await index_file(rel, session["user_id"], visibility)
+    return {"id": record_id, "path": rel, "size": written, "indexed": bool(record_id)}
 
 
-@app.post("/api/mkdir", dependencies=[Depends(require_admin)])
-async def mkdir(path: str = Body(embed=True)):
+@app.post("/api/apps/{app_slug}/files")
+async def app_upload(
+    app_slug: str, request: Request, name: str = "file", visibility: str = "private"
+):
+    """Upload from an app. The body is the raw file; `name` its original
+    filename. Stored at apps/<app>/<yyyy>/<mm>/<random>-<name>, so apps
+    never pick paths or collide, owned by the uploader, with the given
+    visibility (changeable later on the cdn_files row). Allowed for anyone
+    granted the app. Returns the new cdn_files record's id and path --
+    store the id in the app's own collection."""
+    if not APP_SLUG_RE.fullmatch(app_slug):
+        raise HTTPException(400, "Bad app")
+    if visibility not in VISIBILITIES:
+        raise HTTPException(400, f"visibility must be one of {VISIBILITIES}")
+    token, session = await require_session(request)
+    if not await auth.allowed(token, "upload", app_slug):
+        raise HTTPException(403, "You don't have access to this app")
+
+    filename = f"{os.urandom(4).hex()}-{safe_filename(name)}"
+    rel = "/".join(
+        ["apps", app_slug, time.strftime("%Y"), time.strftime("%m"), filename]
+    )
+    dest = abs_for(rel, status=400)
+    await asyncio.to_thread(os.makedirs, os.path.dirname(dest), exist_ok=True)
+    written = await receive_file(request, dest)
+    record_id = await index_file(rel, session["user_id"], visibility)
+    if not record_id:
+        # Without a row nobody but an admin could ever see or delete it --
+        # don't leave an orphan the uploader thinks failed anyway.
+        await asyncio.to_thread(os.remove, dest)
+        raise HTTPException(503, "Couldn't record the file; try again")
+    return {"id": record_id, "path": rel, "size": written}
+
+
+@app.post("/api/mkdir")
+async def mkdir(path: str = Body(embed=True), _: dict = Depends(require_admin)):
     rel = clean_rel(path, status=400)
     try:
         await asyncio.to_thread(os.mkdir, abs_for(rel, status=400))
@@ -781,9 +918,11 @@ async def mkdir(path: str = Body(embed=True)):
     return {"path": rel}
 
 
-@app.post("/api/move", dependencies=[Depends(require_admin)])
+@app.post("/api/move")
 async def move(
-    source: str = Body(alias="from", embed=True), to: str = Body(embed=True)
+    source: str = Body(alias="from", embed=True),
+    to: str = Body(embed=True),
+    _: dict = Depends(require_admin),
 ):
     """Rename or move a file or folder. Never overwrites."""
     src_rel = clean_rel(source, status=400)
@@ -805,14 +944,20 @@ async def move(
     return {"path": dest_rel, "indexed": indexed}
 
 
-@app.delete("/api/files/{rel_path:path}", dependencies=[Depends(require_admin)])
-async def delete(rel_path: str):
+@app.delete("/api/files/{rel_path:path}")
+async def delete(rel_path: str, request: Request):
     """Moves a file or folder into .trash/<timestamp>/ under the library
-    root rather than deleting it -- empty that by hand on the NAS."""
+    root rather than deleting it -- empty that by hand on the NAS. Admins
+    can delete anything; anyone else only a file they own."""
+    token, session = await require_session(request)
     rel = clean_rel(rel_path, status=400)
+    if not session["admin"] and not await auth.allowed(token, "manage", rel):
+        raise HTTPException(403, "You can only delete your own files")
     src_abs = literal_for(rel)
     if not os.path.lexists(src_abs):
         raise HTTPException(404, "Not found")
+    if not session["admin"] and not os.path.isfile(src_abs):
+        raise HTTPException(403, "You can only delete your own files")
     stamp = time.strftime("%Y%m%d-%H%M%S") + f"-{time.monotonic_ns() % 1_000_000}"
     trash_abs = os.path.join(CONFIG["library"]["root"], TRASH_DIR, stamp, rel)
 

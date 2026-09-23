@@ -21,7 +21,7 @@ packages/
   PACKAGES.md      # Component + prop reference — read before writing UI
 home-server/       # Tools that run on home hardware, NOT the deploy pipeline
   llm-gateway/     # Auth + on-demand model swap in front of llama-server
-  cdn-gateway/     # Cached, authenticated NAS file server + metadata indexer
+  cdn-gateway/     # The shared file store for every app (NAS + per-file permissions)
 infra/             # deploy tooling: generate-compose, validate_deploy, select_apps,
                    # new_app, retire_test_apps, templates/, README, AUDIT
 deploy.yml         # Source of truth for which apps are deployed and their subdomains
@@ -38,7 +38,7 @@ conventions and shared history. See `home-server/README.md`.
 
 ## The house stack (non-negotiable defaults)
 
-New apps use all three of these. Deviating means maintaining new infrastructure,
+New apps use all four of these. Deviating means maintaining new infrastructure,
 which defeats the purpose of the repo.
 
 1. **React + TypeScript + Vite**, built to static files and served by nginx.
@@ -61,9 +61,18 @@ which defeats the purpose of the repo.
    — `type` is the native HTML attribute). Forms use `useForm` + `field(name)`
    rather than a `useState` per field, and the theme ships dark mode via
    `colorScheme` / `useColorScheme`.
-3. **PocketBase** (`apps/pocketbase`) for auth, data, and file storage. One
-   shared instance for every app; a new app gets a collection, not a new
-   database. See `apps/pocketbase/README.md`.
+3. **PocketBase** (`apps/pocketbase`) for auth and data. One shared instance
+   for every app; a new app gets a collection, not a new database. See
+   `apps/pocketbase/README.md`.
+4. **The shared file store** (`home-server/cdn-gateway`, `cdn.ryanzrau.dev`)
+   for files: the NAS at home, with each file's owner and visibility
+   (private, shared with users, everyone granted the app, or public) in
+   PocketBase's `cdn_files`. Apps use the template's `src/cdn.ts`
+   (`uploadFile`, `fileUrl`, `setAccess`) and keep a relation to
+   `cdn_files`, not a PocketBase file field. The exception is anything that
+   must stay up when the home connection is down: that's served from home,
+   so use a PocketBase file field for it instead. See
+   `home-server/cdn-gateway/README.md`.
 
 ## Creating a new app
 
@@ -75,7 +84,7 @@ python3 infra/new_app.py recipe_box --title "Recipe Box"
 
 This creates `apps/recipe_box/` from `infra/templates/app` (Vite + TS config,
 `Dockerfile`, `nginx.conf`, bluestar-wired `App.tsx`, PocketBase client at
-`src/pb.ts`, `README.md`), runs `npm install`, and adds the app to `deploy.yml`
+`src/pb.ts`, file store client at `src/cdn.ts`, `README.md`), runs `npm install`, and adds the app to `deploy.yml`
 at `recipe-box.ryanzrau.dev`. Flags: `--subdomain` (`""` for the root domain),
 `--port`, `--disabled`, `--no-install`.
 

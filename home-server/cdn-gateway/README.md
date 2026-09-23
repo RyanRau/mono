@@ -1,20 +1,26 @@
-# CDN Gateway
+# CDN Gateway: the shared file store
 
-Cached file server in front of a NAS directory, served at
-`https://cdn.ryanzrau.dev`. Adds a local disk cache (so repeat views don't
-touch the NAS), on-the-fly WebP thumbnails, and a metadata indexer that
-syncs every file into PocketBase for tags and search.
+The file store for every app, served at `https://cdn.ryanzrau.dev`. Files
+live on a NAS at home. PocketBase records each file's owner and who may
+see it. This gateway, on the home Mac, serves the files with a local disk
+cache (so repeat views don't touch the NAS) and on-the-fly WebP
+thumbnails.
 
-Everything is admin-only by default. Chosen files or folders can be made
-public in named collections, e.g. photos for the home page. Admins browse
-and manage the library from the **CDN tab of `ryanzrau.dev/admin`**: upload,
-new folder, rename/move, delete, tags, descriptions and sharing.
+- **Apps** upload through `src/cdn.ts` in the app template and keep a
+  relation to the file's `cdn_files` row.
+- **Each file's visibility** is `private` (the uploader), `shared` (plus
+  chosen users), `app` (everyone granted its app) or `public` (anyone).
+- **Admins** see and manage everything from the **CDN tab of
+  `ryanzrau.dev/admin`**, including your own photo library outside any app.
+- **An indexer** picks up files that land on the NAS some other way (SMB,
+  phone backup) and reads photo EXIF for search.
 
 ```
  browser ──▶ cdn.ryanzrau.dev ──▶ Traefik (droplet) ──WireGuard──▶ gateway.py :8001 (home Mac)
-   <img src=".../files/2024/beach.jpg?w=512">          │ pb_auth cookie / Bearer
-                                                       │   → GET /api/custom/media/access
-                                                       │     (PocketBase, cached 60s)
+   <img src=".../files/apps/stash/…/lamp.jpg?w=512">   │ public path? serve. Otherwise the
+                                                       │ pb_auth cookie / Bearer token
+                                                       │   → POST /api/custom/cdn/authorize
+                                                       │     (PocketBase: this user, this file; cached)
                                             ┌──────────▼──────────┐
                                             │ local SSD cache     │ HIT → serve
                                             │ (LRU, SQLite index) │
@@ -22,30 +28,26 @@ new folder, rename/move, delete, tags, descriptions and sharing.
                                                        │ MISS → copy / render thumbnail
                                             ┌──────────▼──────────┐
                                             │ NAS share (mounted) │◀── indexer.py (scheduled)
-                                            └─────────────────────┘      walks it, upserts
-                                                                         media_files rows
-                                                                         → PocketBase
+                                            │ apps/<slug>/…       │
+                                            │ photos/…  (yours)   │
+                                            └─────────────────────┘
 ```
 
 ## How the pieces split
 
-The gateway does files only. It serves bytes by path and knows nothing
-about tags, albums or search. Everything about what a file _is_ lives in
-PocketBase:
+| Piece                                | Owns                                                                                                        |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| `gateway.py`                         | Serving `/files/<path>` (permission check, cache, thumbnails), app uploads, and the admin file routes.      |
+| `indexer.py`                         | Keeping `cdn_files` in step with files that change on the NAS directly: new/changed files, EXIF, missing.   |
+| PocketBase `cdn_files` / `cdn_tags`  | One row per file: path, app, owner, visibility, sharing, tags, description, EXIF.                           |
+| PocketBase `cdn_public`              | Named public collections (`homepage`) of files or whole folders, for pages to list.                         |
+| `apps/pocketbase/pb_hooks/cdn.pb.js` | The permission check (`authorize`) and the service-only index routes.                                       |
+| App template `src/cdn.ts`            | The client every app uses: `uploadFile`, `fileUrl`, `deleteFile`, `setAccess`.                              |
+| `apps/ryanzrau` → `/admin` → CDN     | The admin UI: folder browser, file operations, visibility, sharing, tags, descriptions, public collections. |
 
-| Piece                                 | Owns                                                                                         |
-| ------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `gateway.py`                          | Serving `/files/<path>` (auth or public check, cache, thumbnails) and the admin file routes. |
-| `indexer.py`                          | Keeping `media_files` in step with the NAS: new/changed files, EXIF, missing flags.          |
-| PocketBase `media_files`/`media_tags` | Metadata, tags, descriptions, search (by tag, date, location radius, kind, camera).          |
-| PocketBase `media_public`             | Which files/folders anyone may view, grouped into named collections.                         |
-| `apps/ryanzrau` → `/admin` → CDN      | The admin UI: folder browser, file operations, tags, descriptions, sharing.                  |
-
-The link between them is just the path: a `media_files` row's `path` is the
-file's location relative to the library root, and
-`https://cdn.ryanzrau.dev/files/<path>` serves it. A page that only shows
-files never talks to the gateway except through `<img>`/`<video>` tags,
-and the gateway never needs to change when tagging or search features do.
+On the NAS, `apps/<slug>/<yyyy>/<mm>/<random>-<name>` is each app's
+storage (the gateway picks the path, so apps never collide). Everything
+else, like `photos/`, is your own library.
 
 ## Install
 
@@ -61,9 +63,8 @@ still works but HEIC thumbnails return 415.
 ## Mount the NAS
 
 Mount the share on this machine and point `library.root` at the mounted
-directory. Mount it read-write if you want the admin page's upload, move
-and delete to work; with a read-only mount, viewing still works and those
-operations fail. On
+directory. Mount it read-write: apps upload into it. With a read-only mount, viewing
+still works and every upload, move and delete fails. On
 macOS, for example, Finder → Go → Connect to Server
 (`smb://nas.local/media`), then add it to Login Items so it remounts after
 a reboot. It appears under `/Volumes/<share>`.
@@ -76,40 +77,59 @@ subdirectory.
 
 ## Who can do what
 
-| Who             | Can                                          | How it's checked                                                     |
-| --------------- | -------------------------------------------- | -------------------------------------------------------------------- |
-| Anyone          | Read files covered by a `media_public` rule  | Gateway's local copy of the rules, re-pulled every 30s               |
-| Signed-in admin | Read everything                              | `pb_auth` cookie or `Authorization: Bearer`, checked with PocketBase |
-| Signed-in admin | List, upload, mkdir, move, delete (`/api/*`) | `Authorization: Bearer` only, never the cookie                       |
-| Anyone else     | Nothing (401)                                |                                                                      |
+Reading a file (`GET /files/<path>`):
 
-**Admin sessions.** For each request the gateway takes the viewer's
-PocketBase session token, either from the `pb_auth` cookie every
-`*.ryanzrau.dev` app already sets (`CookieAuthStore`) or from an
-`Authorization: Bearer` header. It forwards that token to PocketBase's
-`GET /api/custom/media/access` (`apps/pocketbase/pb_hooks/media.pb.js`),
-which answers as that user: allowed only if `users.is_admin`. This is the
-same technique llm-gateway uses for session tokens. A signed-in admin's
-`<img src="https://cdn.ryanzrau.dev/...">` works with no JavaScript,
-because the browser sends the cookie on its own.
+| Who                               | Can read                                                                              |
+| --------------------------------- | ------------------------------------------------------------------------------------- |
+| Anyone, signed in or not          | Files with visibility `public`, and anything in a `cdn_public` collection             |
+| The file's owner                  | Their own files                                                                       |
+| Users in the file's `shared_with` | Files with visibility `shared`                                                        |
+| Users granted the file's app      | Files with visibility `app` (`registry_grants`, the same grants apps already gate on) |
+| Admins (`is_admin`)               | Everything                                                                            |
 
-- Answers are cached per token for `session_cache_seconds` (denials for
-  5s), and simultaneous requests with the same token share one PocketBase
-  call. A 200-thumbnail grid costs one access check, not 200.
-- Fails closed. If PocketBase can't be reached, no new sessions are
-  admitted, but sessions already cached keep working until they expire.
+Writing:
 
-**Writes take the header only.** The `/api/*` routes ignore the cookie, so
+| Route                                                                           | Who                                        |
+| ------------------------------------------------------------------------------- | ------------------------------------------ |
+| `POST /api/apps/<slug>/files`                                                   | Anyone granted that app; they own the file |
+| `DELETE /api/files/<path>`                                                      | The file's owner, or an admin              |
+| Everything else under `/api/`                                                   | Admins                                     |
+| Visibility, sharing, tags, description (on the `cdn_files` row, via PocketBase) | The owner, or an admin                     |
+
+**How reads are checked.** A signed-out visitor only ever gets public
+paths. The gateway keeps a local copy of them, re-pulled every
+`public_refresh_seconds` (30), so anonymous traffic never reaches
+PocketBase. A signed-in viewer's token comes from the `pb_auth` cookie every
+`*.ryanzrau.dev` app already sets, so a plain `<img>` works, or from an
+`Authorization: Bearer` header. The gateway forwards that token to
+PocketBase's `POST /api/custom/cdn/authorize`, which answers as that user.
+It evaluates `cdn_files`' own `viewRule` against the file's row, so the
+gateway and the PocketBase API can never disagree about who sees what.
+
+- Admins are recognized once per session and skip per-file checks.
+- Everyone else gets one check per distinct file, cached for
+  `session_cache_seconds` (denials for 5s). A grid of 200 thumbnails costs
+  200 small checks on first view, then none until they expire, and
+  simultaneous identical checks share one request.
+- So a permission change reaches signed-in viewers within
+  `session_cache_seconds`, and signed-out ones within
+  `public_refresh_seconds`.
+- A file with no row yet (just dropped on the NAS, not indexed) is
+  admins-only. A symlink never extends a non-admin's access past what the
+  row covers.
+- Fails closed. If PocketBase can't be reached, nothing new is allowed;
+  answers already cached keep working until they expire.
+
+**Writes take the header only.** The write routes ignore the cookie, so
 another site can't make a signed-in browser upload or delete anything:
 a cross-site form or `<img>` can send cookies but not an `Authorization`
 header. They also refuse to run while the NAS looks unmounted, so an
 upload can't land on the Mac's own disk under an empty mount point.
 
 **The service account.** Both `gateway.py` and `indexer.py` log in as a
-PocketBase service account. The indexer uses it to write the index. The
-gateway uses it to pull the public-sharing rules and to update the index
-right after its own uploads, moves and deletes. It is never used to decide
-whether a viewer is an admin. Set it up once per fresh `pb_data` volume:
+PocketBase service account. They use it to write the index and, for the
+gateway, to pull the public paths. It is never used to decide what a
+viewer may do. Set it up once per fresh `pb_data` volume:
 
 1. In the PocketBase admin UI, create a `users` record (e.g.
    `cdn-indexer@service.internal`) with `is_service` checked.
@@ -120,51 +140,52 @@ whether a viewer is an admin. Set it up once per fresh `pb_data` volume:
 can also call the llm-gateway's service routes. Keep `config.yaml` as
 private as llm-gateway's.
 
-## Public sharing
+## Using it from an app
 
-A `media_public` row makes one path public under a named collection
-(lowercase letters, digits and dashes, e.g. `homepage`):
-
-- **A file rule** covers exactly that file.
-- **A folder rule** covers everything under that folder, including files
-  added later.
-- A path can be in several collections. A collection can mix files and
-  folders.
-
-Manage these from the admin page: open a file, or go into a folder, and add
-it to a collection under **Public collections**. The gateway re-pulls the
-rules every `public_refresh_seconds` (30), so a new share or a revoked one
-takes effect within about half a minute. Browsers may keep a public file
-for `public_cache_seconds` (1 hour) after that.
-
-Public files are served at the same `/files/<path>` URL as always, just
-without needing a session. That means anyone who can guess a path under a
-public folder can view it; keep private things out of public folders.
-Moving a file keeps its sharing. Deleting it removes its sharing, so a new
-file later created at the same path isn't public by accident.
-
-To show a collection on a page, e.g. the home page, list it from
-PocketBase (no auth) and point `<img>` tags at the CDN:
+New apps get `src/cdn.ts` from the template (`infra/templates/app`); its
+`CDN_APP` must match the app's `registry_apps` slug. For an existing app,
+copy that file in.
 
 ```ts
-const res = await fetch("https://api.ryanzrau.dev/api/custom/media/public/homepage");
-const { files } = await res.json(); // [{ path, name, kind, mime, width, height, taken_at, description }]
+import { uploadFile, fileUrl, setAccess, deleteFile } from "./cdn";
+
+// Upload, owned by the signed-in user. Store the id as a relation to cdn_files.
+const { id, path } = await uploadFile(file, "private");
+await pb.collection("stash_items").update(itemId, { photo: id });
+
+// Show it. The login cookie authorizes the <img>.
+<img src={fileUrl(path, 512)} />;
+
+// Change who can see it (owner or admin only).
+await setAccess(id, "shared", [otherUserId]);
+await setAccess(id, "app"); // everyone granted this app
+await setAccess(id, "public"); // anyone
+
+// Delete it (to the NAS trash).
+await deleteFile(path);
 ```
 
-```tsx
-{
-  files.map((f) => (
-    <img
-      key={f.path}
-      src={`https://cdn.ryanzrau.dev/files/${encodeURI(f.path)}?w=1024`}
-      alt={f.description}
-    />
-  ));
-}
+Reading rows works like any collection. A user can list exactly the files
+they're allowed to see, e.g. with `pb.collection("cdn_files").getList(...)`
+or by expanding the relation from the app's own record.
+
+## Public collections
+
+On top of per-file visibility, a `cdn_public` row puts a file, or a whole
+folder including files added later, into a named public collection
+(lowercase letters, digits and dashes, e.g. `homepage`). Manage these from
+the admin page. A page lists a collection from PocketBase with no auth:
+
+```ts
+const res = await fetch("https://api.ryanzrau.dev/api/custom/cdn/public/homepage");
+const { files } = await res.json(); // [{ path, name, kind, mime, width, height, taken_at, description }]
+// <img src={`https://cdn.ryanzrau.dev/files/${encodeURI(f.path)}?w=1024`} />
 ```
 
 The listing returns at most 500 files, newest `taken_at` first, and only
-display fields: never tags, camera or GPS location.
+display fields: never tags, camera or GPS location. Moving a file keeps it
+in its collections. Deleting it drops it from them, so a new file later
+created at the same path isn't public by accident.
 
 ## Run
 
@@ -185,18 +206,19 @@ curl -H "Authorization: Bearer $PB_TOKEN" \
 
 ## Routes
 
-| Route                                  | Auth             | Purpose                                                                                                    |
-| -------------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------- |
-| `GET /health`                          | no               | `library_mounted` and cache size/entries                                                                   |
-| `GET` or `HEAD` `/files/<path>`        | admin, or public | The original file. Range requests work, so video seeking works.                                            |
-| `GET` or `HEAD` `/files/<path>?w=<px>` | admin, or public | A WebP thumbnail, `w` px wide (EXIF rotation applied, never upscaled). `w` must be in `thumbnails.widths`. |
-| `GET /api/list?path=<folder>`          | admin (Bearer)   | A folder's direct subfolders and files. Omit `path` for the root.                                          |
-| `PUT /api/files/<path>`                | admin (Bearer)   | Upload: the raw request body is the file. 409 if it exists, unless `?overwrite=true`.                      |
-| `POST /api/mkdir` `{path}`             | admin (Bearer)   | New folder. The parent must exist.                                                                         |
-| `POST /api/move` `{from, to}`          | admin (Bearer)   | Rename or move a file or folder. Never overwrites. Tags, descriptions and sharing move with it.            |
-| `DELETE /api/files/<path>`             | admin (Bearer)   | Move a file or folder to `.trash/<timestamp>/` in the library. Removes its sharing.                        |
+| Route                                           | Who                   | Purpose                                                                                                    |
+| ----------------------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `GET /health`                                   | anyone                | `library_mounted` and cache size/entries                                                                   |
+| `GET` or `HEAD` `/files/<path>`                 | see "Who can do what" | The original file. Range requests work, so video seeking works.                                            |
+| `GET` or `HEAD` `/files/<path>?w=<px>`          | see "Who can do what" | A WebP thumbnail, `w` px wide (EXIF rotation applied, never upscaled). `w` must be in `thumbnails.widths`. |
+| `POST /api/apps/<slug>/files?name=&visibility=` | granted users         | App upload; the raw body is the file. Returns `{ id, path, size }`.                                        |
+| `DELETE /api/files/<path>`                      | owner or admin        | Move to `.trash/<timestamp>/` in the library. Drops it from public collections. Admins can delete folders. |
+| `GET /api/list?path=<folder>`                   | admin                 | A folder's direct subfolders and files. Omit `path` for the root.                                          |
+| `PUT /api/files/<path>?overwrite=&visibility=`  | admin                 | Upload to any path. 409 if it exists, unless `overwrite=true`.                                             |
+| `POST /api/mkdir` `{path}`                      | admin                 | New folder. The parent must exist.                                                                         |
+| `POST /api/move` `{from, to}`                   | admin                 | Rename or move. Never overwrites. The row (owner, visibility, tags, sharing) moves with it.                |
 
-Every response has an `X-Cache` header:
+Every file response has an `X-Cache` header:
 
 - `HIT`: served from the local cache.
 - `MISS`: just copied or rendered into the cache.
@@ -206,11 +228,13 @@ Every response has an `X-Cache` header:
 
 Errors:
 
-- 401: not public, and no admin session.
+- 401: not public and no valid session.
+- 403: signed in, but not allowed this file or action.
 - 404: no such file. Anything outside the root or hidden also returns 404.
 - 415: a thumbnail was requested for something that isn't a renderable
   image.
-- 503: the NAS is unreachable and nothing is cached.
+- 503: the NAS is unreachable and nothing is cached, or a write was
+  attempted while it's unmounted.
 
 ## Caching
 
@@ -225,7 +249,7 @@ Errors:
 - **Bounded.** An LRU capped at `max_gb`. When the cap is exceeded, the
   oldest-accessed entries are evicted down to 90%. The index is SQLite in
   the cache dir, so the cache stays warm across restarts.
-- **Browsers cache too.** Admin-only files get `Cache-Control: private,
+- **Browsers cache too.** Non-public files get `Cache-Control: private,
 max-age=86400`, public ones `public, max-age=3600`, plus an ETag, so a
   page revisit doesn't cross the WireGuard link at all.
 - **Changes through the gateway take effect at once.** An upload, move or
@@ -249,12 +273,15 @@ What a run does:
    `kind` (image/video/audio/document/other), `mime`, `size`, and for
    images `taken_at` (EXIF, offset-aware), `width`/`height` (as displayed,
    after EXIF rotation), `location` (GPS) and `camera`.
-3. Upserts those rows into `media_files`.
+3. Upserts those rows into `cdn_files`. A new file under `apps/<slug>/`
+   gets `app: <slug>`; any new file the indexer finds (rather than one
+   uploaded through the gateway) has no owner and starts `private`, so
+   only admins see it until you change that.
 4. Flags rows for files that no longer exist as `missing`, and unflags
    them if the files come back.
 
-Unchanged files cost one `stat` each. Rows are never deleted, and tags and
-descriptions are never touched, so a file that's moved temporarily or a
+Unchanged files cost one `stat` each. Rows are never deleted, and owners,
+visibility, sharing, tags and descriptions are never touched, so a file that's moved temporarily or a
 share that's briefly unmounted loses nothing. The sweep is skipped when:
 
 - the root is empty (probably unmounted; the run exits 1),
@@ -287,57 +314,59 @@ Schedule it hourly with launchd. Save this as
 
 ## Querying the metadata
 
-The collections are ordinary PocketBase collections (admin-only rules), so
-an app queries them with the JS SDK:
+`cdn_files` is an ordinary PocketBase collection. Each user's queries only
+return the files they're allowed to see (its list rule is the same as the
+read rules above).
 
 ```ts
 // Tagged "beach", newest first
-pb.collection("media_files").getList(1, 50, {
+pb.collection("cdn_files").getList(1, 50, {
   filter: 'tags.name ?= "beach" && missing = false',
   sort: "-taken_at",
 });
 
 // Within 25 km of Portland
-pb.collection("media_files").getList(1, 50, {
+pb.collection("cdn_files").getList(1, 50, {
   filter: "geoDistance(location.lon, location.lat, -122.68, 45.52) < 25",
 });
 
-// Photos from July 2024
-pb.collection("media_files").getList(1, 50, {
-  filter: 'kind = "image" && taken_at >= "2024-07-01" && taken_at < "2024-08-01"',
+// Everything one app stored for me
+pb.collection("cdn_files").getList(1, 50, {
+  filter: pb.filter("app = {:app} && owner = {:me}", { app: "stash", me: pb.authStore.record?.id }),
 });
 ```
 
-```tsx
-<img src={`https://cdn.ryanzrau.dev/files/${encodeURI(file.path)}?w=512`} />
-```
-
-Admins can edit `tags`, `description`, `taken_at`, `location` and `camera`.
-The fields that describe the file on disk (`path`, `name`, `kind`, `mime`,
-`size`, `mtime`, `missing`) belong to the indexer, and the update rule
-rejects changes to them. If a file changes on disk, the indexer overwrites
-its EXIF-derived fields from the new file.
+The owner or an admin can edit `visibility`, `shared_with`, `tags`,
+`description`, `taken_at`, `location` and `camera`. Only admins can change
+`owner` or `app`. Nobody can edit the fields that describe the file on
+disk (`path`, `name`, `kind`, `mime`, `size`, `mtime`, `missing`); the
+update rule rejects them. Tag names are one shared vocabulary: any
+signed-in user can see and add them, and only admins rename or delete them.
 
 ## Limitations
 
+- **Everything is served from home.** If the home internet or power is
+  down, every app's files are unavailable; the droplet has no copy. Home
+  upload speed also caps first loads. For anything that must stay up
+  regardless, use a PocketBase file field instead.
 - **Delete is a move to `.trash/`**, which nothing empties automatically.
   Clear it on the NAS by hand when you're sure.
 - **Moves made outside the gateway lose metadata.** A file renamed over
-  SMB looks to the indexer like a deleted file plus a new one, so its tags,
-  description and sharing stay behind on the old (now `missing`) row. Move
-  things from the admin page to keep them.
+  SMB looks to the indexer like a deleted file plus a new one, so its
+  owner, sharing, tags and description stay behind on the old (now
+  `missing`) row, and the new row is admins-only. Move things from the
+  admin page to keep them. Admin moves don't change a row's `app`.
 - **Uploads are one request per file**, streamed to the NAS, up to
   `uploads.max_mb` each.
 - **No video thumbnails** (they would need ffmpeg). Videos serve as
   originals.
-- **Home upload bandwidth is the ceiling on a cache miss.** The cache saves
-  NAS reads, not WireGuard transfer. Thumbnails keep this cheap. There's no
-  shared cache on the droplet; browser caching covers repeat views.
 - **Public means public.** There are no unguessable or expiring share
-  links. A public file is reachable by its plain path.
+  links. A public file is reachable by its plain path, and a browser may
+  keep one it has seen for `public_cache_seconds` (1 hour) after it's made
+  private again.
 - **Unknown location is `{lat: 0, lon: 0}`**, because PocketBase's
   `geoPoint` has no null. Filter on `location.lat != 0` for "has a
   location".
-- Every response carries a `sandbox` Content-Security-Policy, so an `.html`
-  or `.svg` on the share can't run script on `cdn.ryanzrau.dev` and read
-  the `.ryanzrau.dev` session cookie.
+- Every response carries a `sandbox` Content-Security-Policy, so an
+  uploaded `.html` or `.svg` can't run script on `cdn.ryanzrau.dev` and
+  read the `.ryanzrau.dev` session cookie.

@@ -62,9 +62,9 @@ same place:
   [`home-server/cdn-gateway`](../../home-server/cdn-gateway/README.md).
   Browse by folder; upload, create folders, rename/move and delete (to the
   library's `.trash/`) through the gateway's admin `/api/` routes; and edit
-  what lives in PocketBase: tags and descriptions (`media_files`,
-  `media_tags`) and which files or folders are public in which named
-  collection (`media_public`).
+  what lives in PocketBase: who can see each file (owner, visibility,
+  sharing), tags and descriptions (`cdn_files`, `cdn_tags`), and which
+  files or folders are in which public collection (`cdn_public`).
 
 The CDN tab talks to the gateway with the signed-in session as a Bearer
 token (`src/cdn.ts`), and loads thumbnails as plain `<img>` URLs, which
@@ -93,7 +93,7 @@ It authenticates against the shared PocketBase backend the same way every
 other app does (`src/pb.ts`, `src/useAuth.ts`, `src/CookieAuthStore.ts` — a
 hand-copy of `infra/templates/app`'s auth files, predating the scaffolder),
 but has no collection of its own; the admin page's CDN tab edits the
-`media_*` collections owned by `home-server/cdn-gateway`. If it needs data
+`cdn_*` collections owned by `home-server/cdn-gateway`. If it needs data
 of its own, add a collection the same way scaffolded apps do (see
 `apps/pocketbase/README.md`).
 

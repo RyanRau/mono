@@ -1,4 +1,4 @@
-"""Walks the NAS library and syncs one media_files row per file into
+"""Walks the NAS library and syncs one cdn_files row per file into
 PocketBase: new and changed files get their metadata (type, size, EXIF date,
 GPS location, camera, dimensions) read and upserted; files that are gone
 get flagged `missing`. Tags and descriptions are never touched.
@@ -68,7 +68,7 @@ def main():
     started = time.time()
     known = {
         f["path"]: (f["size"], f["mtime"])
-        for f in pb.request("GET", "/api/custom/media/index/state")["files"]
+        for f in pb.request("GET", "/api/custom/cdn/index/state")["files"]
     }
     print(f"[indexer] {len(known)} files already indexed; scanning {root}")
 
@@ -79,7 +79,7 @@ def main():
     def flush():
         if pending and not args.dry_run:
             result = pb.request(
-                "POST", "/api/custom/media/index/upsert", json={"files": pending}
+                "POST", "/api/custom/cdn/index/upsert", json={"files": pending}
             )
             totals["created"] += result["created"]
             totals["updated"] += result["updated"]
@@ -122,7 +122,7 @@ def main():
         print("[indexer] --limit reached; skipping the missing-file sweep")
     elif not args.dry_run:
         swept = pb.request(
-            "POST", "/api/custom/media/index/sweep", json={"present": present}
+            "POST", "/api/custom/cdn/index/sweep", json={"present": present}
         )
 
     print(
