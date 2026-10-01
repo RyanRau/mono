@@ -13,12 +13,12 @@
     "new-app": "python3 infra/new_app.py"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
-    "eslint": "^9.39.2",
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.11.0",
     "eslint-plugin-react": "^7.37.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.11.0",
-    "prettier": "^3.9.6",
-    "typescript-eslint": "^8.68.0"
+    "prettier": "^3.9.9",
+    "typescript-eslint": "^8.70.1"
   }
 }
