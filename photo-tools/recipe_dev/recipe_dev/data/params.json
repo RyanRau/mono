@@ -1,0 +1,12 @@
+{
+  "baseline_ev": 0.4,
+  "base_contrast": 2.0,
+  "contrast_per_step": 0.15,
+  "saturation_per_step": 0.12,
+  "sharpness_base": 0.35,
+  "sharpness_per_step": 0.25,
+  "ab_mired_per_step": 5.0,
+  "gm_duv_per_step": 0.002,
+  "dro_strength": [0.12, 0.22, 0.32, 0.42, 0.55],
+  "dro_auto_level": 3
+}

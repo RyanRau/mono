@@ -21,6 +21,8 @@ packages/
   PACKAGES.md      # Component + prop reference — read before writing UI
 home-server/       # Tools that run on home hardware, NOT the deploy pipeline
   llm-gateway/     # Auth + on-demand model swap in front of llama-server
+photo-tools/       # Local photography tools, NOT the deploy pipeline
+  recipe_dev/      # Sony RAW + Recipe Lab film recipes → JPEG (Tk editor, Python)
 infra/             # deploy tooling: generate-compose, validate_deploy, select_apps,
                    # new_app, retire_test_apps, templates/, README, AUDIT
 deploy.yml         # Source of truth for which apps are deployed and their subdomains

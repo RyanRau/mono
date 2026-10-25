@@ -1,0 +1,22 @@
+[project]
+name = "recipe-dev"
+version = "0.1.0"
+description = "Apply Recipe Lab film recipes to Sony RAW files, with a live-preview editor"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24", "pillow>=10", "rawpy>=0.19"]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[project.scripts]
+recipe-dev = "recipe_dev.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["recipe_dev"]
+
+[tool.setuptools.package-data]
+recipe_dev = ["data/*.json", "data/luts/*.cube"]
