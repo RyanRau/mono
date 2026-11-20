@@ -95,6 +95,28 @@ const appIcons: Record<string, ReactNode> = {
       />
     </>
   ),
+  budget: (
+    <>
+      <rect
+        x="3"
+        y="6"
+        width="18"
+        height="14"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        fill="none"
+      />
+      <path
+        d="M5 6l10-3 1.5 3M21 11h-4a2 2 0 0 0 0 4h4"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        fill="none"
+      />
+    </>
+  ),
   bluestar: (
     <path
       d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2L12 3z"

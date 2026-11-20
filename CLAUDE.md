@@ -14,6 +14,7 @@ apps/              # Deployable apps (Dockerfile + nginx.conf per app)
                    # (/apps), admin console (/admin), and account settings
                    # (/settings) — everything hub used to do, now here.
   stash/           # Household inventory with sharing → stash.ryanzrau.dev
+  budget/          # Savings buckets + forecast → budget.ryanzrau.dev (test- while in development)
   tony/            # LLM dashboard (home-lab) → tony.ryanzrau.dev
   pocketbase/      # Shared backend: auth + data + admin UI → api.ryanzrau.dev
 packages/

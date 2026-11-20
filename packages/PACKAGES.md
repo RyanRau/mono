@@ -289,6 +289,19 @@ floating panel. Pass `theme.shadow.sm/md/lg` for a card that should read as
 genuinely elevated (rare; reserve real shadow for overlays like `Menu` and
 `Modal`).
 
+#### `Grid`
+
+| Prop             | Type        | Default  |
+| ---------------- | ----------- | -------- |
+| `minColumnWidth` | `number`    | required |
+| `gap`            | `Spacing`   | `16`     |
+| `children`       | `ReactNode` | required |
+
+Equal-width columns that reflow on their own: as many `minColumnWidth`-wide
+columns as fit, stretched to fill the row, down to one column on a phone. For
+a set of same-kind tiles (a `StatTile` row, a `Card` per item); `Flexbox` is
+still the tool for one row or column of unlike things.
+
 #### `Divider`
 
 | Prop        | Type                         | Default        |
@@ -368,6 +381,7 @@ small functional shadow (`theme.shadow.sm`), not an ambient card shadow.
 | --------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `TextInput`     | `string`                                     | `placeholder`, `type` (`text\|email\|password\|url\|tel`), `autoComplete` (the HTML hint, e.g. `"username"`/`"current-password"`/`"new-password"` — set it on any login/identity field or password managers won't reliably offer autofill), `readOnly` for a copyable but non-editable value (e.g. a generated link), `onKeyDown`/`onBlur`/`autoFocus` (raw passthrough to the `<input>`, e.g. for an inline-editable field where Enter commits, Escape cancels, and it's ready to type into the moment it appears) |
 | `NumberInput`   | `number \| null`                             | `min`, `max`, `step`, `placeholder`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `DateInput`     | `string` (`"YYYY-MM-DD"`, `""` when empty)   | `min`, `max` (same format). Native date picker in the shared control box. Deliberately a string, not a `Date` — a date-only value has no zone, and a `Date` would shift it a day west of UTC                                                                                                                                                                                                                                                                                                                        |
 | `TextAreaInput` | `string`                                     | `rows` (default `4`), `placeholder`, `onKeyDown` (raw passthrough to the `<textarea>`, e.g. for a chat composer where Enter sends and Shift+Enter inserts a newline), `autoFocus`                                                                                                                                                                                                                                                                                                                                   |
 | `Checkbox`      | `boolean`                                    | `label` is the text beside the box; `hideLabel` visually hides it (sr-only, still wired via `htmlFor`) for dense grids where the label would be redundant                                                                                                                                                                                                                                                                                                                                                           |
 | `Switch`        | `boolean`                                    | same shape as `Checkbox`, toggle UI                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
@@ -486,7 +500,7 @@ a general-purpose icon library; a name is added only when a real consumer
 needs it. Names: `settings`, `logOut`, `close`, `chevronDown`, `chevronLeft`,
 `chevronRight`, `check`, `user`, `plus`, `trash`, `search`, `externalLink`,
 `image`, `key`, `chat`, `menu`, `upload`, `grid`, `switch`, `palette`,
-`edit`, `docs`, `copy`, `info`
+`edit`, `docs`, `copy`, `info`, `trendingUp`
 (`key`/`chat`/`menu`/`switch`/`palette` are hand-drawn for this repo, not
 adapted from Lucide).
 `color` defaults to `"currentColor"` so it inherits surrounding text/button
@@ -528,6 +542,25 @@ table view. Colors are caller-supplied — pick a categorical pair with the
 dataviz skill's `scripts/validate_palette.js` and pass different hexes for
 light vs. dark mode (`useColorScheme().resolved`); a pair validated against
 one surface can fail against the other.
+
+`ariaLabel` (default `"Usage over time"`) names the chart image for screen
+readers — pass one describing the actual data. X-axis labels are thinned to
+roughly one per 90px of plot width (at most six), so a phone-width chart
+doesn't overlap them.
+
+#### `ProgressBar`
+
+| Prop      | Type                                             | Default     |
+| --------- | ------------------------------------------------ | ----------- |
+| `value`   | `number`                                         | required    |
+| `max`     | `number`                                         | `100`       |
+| `label`   | `string` (accessible name, not rendered)         | required    |
+| `variant` | `"primary" \| "success" \| "warning" \| "error"` | `"primary"` |
+| `height`  | `number`                                         | `8`         |
+
+A thin horizontal meter for progress toward a known total (a savings goal, an
+upload) with `role="progressbar"`. No built-in text — put the numbers beside
+it in the caller's own words. `value` is clamped for drawing only.
 
 #### `BarChart`
 
@@ -806,7 +839,9 @@ selecting a page from the drawer does not auto-close it — there's no
 plumbing between an opaque `sideNav` node and AppShell's drawer state to
 detect "that click was a navigation, not a collapse-toggle," so it stays
 open until dismissed. Nothing here needs wiring from the app; it's automatic
-based on `sideNav` being passed and the viewport width.
+based on `sideNav` being passed and the viewport width. When there's no
+header, `main`'s top padding grows from 24px to 60px on mobile so the page's
+first line starts below that floating button instead of under it.
 
 #### `StickyHeader`
 

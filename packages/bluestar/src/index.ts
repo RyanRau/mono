@@ -6,6 +6,7 @@ export * from "./theme";
 export * from "./components/layout/Flexbox";
 export * from "./components/layout/Card";
 export * from "./components/layout/Divider";
+export * from "./components/layout/Grid";
 
 // Buttons
 export * from "./components/buttons/Button";
@@ -32,6 +33,7 @@ export * from "./components/display/ChatBubble";
 export * from "./components/display/StatusDot";
 export * from "./components/display/Markdown";
 export * from "./components/display/Disclosure";
+export * from "./components/display/ProgressBar";
 
 // Overlay
 export * from "./components/overlay/Modal";
@@ -63,6 +65,7 @@ export * from "./components/text/TextPairing";
 export * from "./components/form/FormInputLayout";
 export * from "./components/form/TextInput";
 export * from "./components/form/NumberInput";
+export * from "./components/form/DateInput";
 export * from "./components/form/TextAreaInput";
 export * from "./components/form/CheckboxList";
 export * from "./components/form/Checkbox";

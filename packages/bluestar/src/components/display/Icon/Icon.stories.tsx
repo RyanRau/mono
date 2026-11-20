@@ -34,6 +34,7 @@ const ALL_NAMES: IconName[] = [
   "search",
   "externalLink",
   "info",
+  "trendingUp",
 ];
 
 export const AllIcons: Story = {

@@ -161,4 +161,10 @@ export const iconPaths: Record<IconName, React.ReactNode> = {
       <path d="M12 8h.01" />
     </>
   ),
+  trendingUp: (
+    <>
+      <path d="M16 7h6v6" />
+      <path d="m22 7-8.5 8.5-5-5L2 17" />
+    </>
+  ),
 };

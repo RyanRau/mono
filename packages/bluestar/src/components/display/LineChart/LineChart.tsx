@@ -20,6 +20,8 @@ export type LineChartProps = {
   height?: number;
   /** Formats a value for axis ticks and the tooltip. Defaults to toLocaleString. */
   formatValue?: (n: number) => string;
+  /** Accessible name for the chart image. Defaults to "Usage over time". */
+  ariaLabel?: string;
 };
 
 const PAD_LEFT = 48;
@@ -42,7 +44,12 @@ function niceMax(max: number): number {
  * table-view toggle -- the accessibility twin every chart needs, not an
  * upgrade. No y-axis dual-scale: every series here shares one unit.
  */
-export default function LineChart({ series, height = 260, formatValue }: LineChartProps) {
+export default function LineChart({
+  series,
+  height = 260,
+  formatValue,
+  ariaLabel = "Usage over time",
+}: LineChartProps) {
   const theme = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(600);
@@ -79,7 +86,10 @@ export default function LineChart({ series, height = 260, formatValue }: LineCha
 
   const yTicks = [0, 0.25, 0.5, 0.75, 1].map((f) => f * maxValue);
   const xLabels = series[0]?.points.map((p) => p.x) ?? [];
-  const xLabelStride = Math.max(1, Math.ceil(xLabels.length / 6));
+  // Roughly one label per 90px of plot (at most six), so dates don't
+  // collide on a phone-width chart.
+  const maxXLabels = Math.max(2, Math.min(6, Math.floor(plotWidth / 90)));
+  const xLabelStride = Math.max(1, Math.ceil(xLabels.length / maxXLabels));
 
   // End-of-line direct labels can land on top of each other when two series
   // converge to a similar value -- nudge apart any pair closer than one line
@@ -195,7 +205,7 @@ export default function LineChart({ series, height = 260, formatValue }: LineCha
             height={height}
             viewBox={`0 0 ${width} ${height}`}
             role="img"
-            aria-label="Usage over time"
+            aria-label={ariaLabel}
           >
             {yTicks.map((tick) => (
               <g key={tick}>

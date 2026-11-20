@@ -253,7 +253,10 @@ export default function AppShell({
           className={css`
             ${centredRules}
             flex: 1;
-            padding-top: 24px;
+            /* On mobile with no header, the floating menu button (12px +
+               ~38px tall, fixed top-left) would sit on top of the page's
+               first line -- start the content below it instead. */
+            padding-top: ${sideNav && isMobile && !hasHeaderContent ? 60 : 24}px;
             padding-bottom: 24px;
             ${showRail ? "overflow-y: auto;" : ""}
           `}

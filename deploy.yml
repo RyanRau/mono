@@ -72,3 +72,8 @@ apps:
     subdomain: "tony"
     enabled: true
     port: 80
+  budget:
+    subdomain: "budget"
+    enabled: true
+    development: true # serves at test-<subdomain> until flipped
+    port: 80

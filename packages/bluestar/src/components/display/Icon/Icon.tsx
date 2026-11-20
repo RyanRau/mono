@@ -25,7 +25,8 @@ export type IconName =
   | "edit"
   | "docs"
   | "copy"
-  | "info";
+  | "info"
+  | "trendingUp";
 
 export type IconProps = {
   name: IconName;
